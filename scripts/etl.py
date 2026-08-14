@@ -92,18 +92,17 @@ def classify_by_code(code):
     sub = OTHERS_SUBBRAND_PREFIX.get(prefix)
     return brand, sub
 
-VFF_MODEL_RE = re.compile(r'VFF\s+(.+)')
-def vff_model_from_name(name):
+def model_from_name(name):
+    """Generic model label for ANY brand: full product name up to the first '(',
+    e.g. 'VFF V-Soul', 'CP Arm Sleeves', 'Marugo TabiRela', 'BFJ Socks', 'Oleno Ultimate'.
+    Kept brand-prefixed (not stripped) so top/bottom-model rankings read the same way
+    across every source file."""
     if not name:
         return 'Other'
-    n = str(name)
-    m = VFF_MODEL_RE.search(n)
-    if m:
-        model = m.group(1).split('(')[0].strip()
-        return model
-    return n.split('(')[0].strip()
+    return str(name).split('(')[0].strip()
 
-# name-based classification for Siam Discovery (no product codes)
+# name-based classification for Siam Discovery (no product codes) -- normalized to the
+# same brand-prefixed naming convention used by every other (code-based) source file.
 NAME_VFF_KEYWORDS = ['V-SOUL','V-RUN','V-TREK','V-ALPHA','V-TRAIN','V-AQUA','KSO','BREEZANDAL',
                       'SPIDRWALK','SCRAMKEY','TRAILOPE','GROUNDSPLAY','GRASPIFIER','SOCKS MINI CREW',
                       'SOCKS CREW','SOCKS HIGH CREW','HIGH CREW','CVT HEMP','KMD','VFF']
@@ -111,16 +110,17 @@ def classify_by_name(name):
     if not name:
         return None, None, 'Other'
     n = str(name).upper()
+    base = n.split('(')[0].strip().title()
     if 'BFJ' in n:
-        return 'BFJ', None, n.split('(')[0].strip()
+        return 'BFJ', None, base
     if n.startswith('OLENO') or n.startswith('OLN'):
-        return 'Oleno', None, n.split('(')[0].strip()
+        return 'Oleno', None, base
     if n.startswith('TABI'):
-        return 'TabiRela', None, n.split('(')[0].strip()
+        return 'TabiRela', None, ('Marugo ' + base if not base.upper().startswith('MARUGO') else base)
     for kw in NAME_VFF_KEYWORDS:
         if kw in n:
-            return 'VFF', None, n.split('(')[0].strip().title()
-    return 'Unknown', None, n.split('(')[0].strip()
+            return 'VFF', None, ('VFF ' + base if not base.upper().startswith('VFF') else base)
+    return 'Unknown', None, base
 
 def add_record(store, category, date_, brand, model, sub, qty, amount, order_id,
                 channel=None, payment=None, entity=None):
@@ -135,12 +135,13 @@ def add_record(store, category, date_, brand, model, sub, qty, amount, order_id,
         channel=channel, payment=payment, entity=entity,
     ))
 
-# ================================================================== VFF numeric-code -> model lookup
-# Central_Total_Department uses short codes like "VFF08"/"VFF22" instead of "VFF0008"/"VFF0022"
-# used elsewhere. Build a normalized-numeric-code -> model-name table from the well-labeled
-# files (product name is present) so short-code files can be backfilled.
-VFF_CODE_TO_MODEL = {}
-def _scan_vff_codes(fn, sheet, header_row_idx, code_key, name_key):
+# ================================================================== brand-prefix numeric-code -> model lookup
+# Central_Total_Department uses short codes like "VFF08"/"BFJ01"/"OLN05" instead of the
+# "VFF0008"/"BFJ0001"/"OLN0005"-style codes used elsewhere. Build a (prefix, normalized-numeric)
+# -> model-name table from the well-labeled files (product name is present) so short-code files
+# can be backfilled, for every brand prefix -- not just VFF.
+CODE_TO_MODEL = {}
+def _scan_codes(fn, sheet, header_row_idx, code_key, name_key):
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
     ws = wb[sheet]
     rows = list(ws.iter_rows(values_only=True))
@@ -151,21 +152,22 @@ def _scan_vff_codes(fn, sheet, header_row_idx, code_key, name_key):
             continue
         code = r[idx.get(code_key)] if code_key in idx else None
         name = r[idx.get(name_key)] if name_key in idx else None
-        if not code or not str(code).upper().startswith('VFF'):
+        if not code:
             continue
-        m = re.match(r'^VFF0*(\d+)', str(code).upper())
+        m = re.match(r'^([A-Za-z]+)0*(\d+)', str(code).upper())
         if not m:
             continue
-        num_code = int(m.group(1))
-        model = vff_model_from_name(name)
-        if model and model not in ('Other',) and num_code not in VFF_CODE_TO_MODEL:
-            VFF_CODE_TO_MODEL[num_code] = model
+        prefix, num_code = m.group(1), int(m.group(2))
+        model = model_from_name(name)
+        key = (prefix, num_code)
+        if model and model not in ('Other',) and key not in CODE_TO_MODEL:
+            CODE_TO_MODEL[key] = model
 
-_scan_vff_codes(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
-_scan_vff_codes(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
-_scan_vff_codes(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
-_scan_vff_codes(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
-print(f"Built VFF code->model lookup with {len(VFF_CODE_TO_MODEL)} entries")
+_scan_codes(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_codes(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_codes(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_codes(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+print(f"Built brand code->model lookup with {len(CODE_TO_MODEL)} entries")
 
 # ================================================================== 1. VFF Cart LP (csv)
 def load_vff_cart_lp():
@@ -179,7 +181,7 @@ def load_vff_cart_lp():
         order_id, dt, sku, item, qty, net = r[0], r[1], r[2], r[3], r[4], r[5]
         d = parse_dmy(dt)
         brand, sub = classify_by_code(sku)
-        model = vff_model_from_name(item) if brand == 'VFF' else None
+        model = model_from_name(item)
         add_record('VFF Cart LP', 'store', d, brand, model, sub, num(qty), num(net), order_id)
 load_vff_cart_lp()
 
@@ -224,7 +226,7 @@ def load_orders_style(fn, sheet, store_label, category, header_row_idx=1,
         order_id = r[idx.get('Sales order No.')]
         brand, sub = classify_by_code(pc)
         pname = r[idx.get('Product name')]
-        model = vff_model_from_name(pname) if brand == 'VFF' else None
+        model = model_from_name(pname)
         channel = normalize_channel(order_channel.get(order_id)) if has_channel else None
         payment_raw = order_payment.get(order_id) if has_payment_channel else None
         payment = normalize_payment(payment_raw)
@@ -282,7 +284,7 @@ def load_central_lp3f():
         order_id = r[idx['รายการ']]
         brand, sub = classify_by_code(pc)
         pname = r[idx['ชื่อสินค้า']]
-        model = vff_model_from_name(pname) if brand == 'VFF' else None
+        model = model_from_name(pname)
         add_record('Central Ladprao 3F (Coollabo)', 'store', d, brand, model, sub, qty, amt, order_id)
         n += 1
     print(f"loaded {n} rows -> Central Ladprao 3F")
@@ -313,7 +315,7 @@ def load_consignment(fn, sheet, store_label):
         amt = num(amt_col) if amt_col not in (None, '') else 0.0
         brand, sub = classify_by_code(pc)
         pname = r[idx['ชื่อสินค้า/บริการ']]
-        model = vff_model_from_name(pname) if brand == 'VFF' else None
+        model = model_from_name(pname)
         add_record(store_label, 'consignment', d, brand, model, sub, qty, amt, doc)
         n += 1
     print(f"loaded {n} rows -> {store_label}")
@@ -343,7 +345,7 @@ def load_edv_consignment():
         amt = num(amt_col) if amt_col not in (None, '') else 0.0
         brand, sub = classify_by_code(pc)
         pname = r[COL['prodname']]
-        model = vff_model_from_name(pname) if brand == 'VFF' else None
+        model = model_from_name(pname)
         add_record('EDV Consignment', 'consignment', d, brand, model, sub, qty, amt, order)
         n += 1
     print(f"loaded {n} rows -> EDV Consignment")
@@ -365,7 +367,7 @@ def load_siam_discovery():
         qty = num(r[2])
         net = num(r[3])
         brand, sub, model = classify_by_name(item)
-        add_record('Siam Discovery', 'store', d, brand, model if brand == 'VFF' else None, sub,
+        add_record('Siam Discovery', 'store', d, brand, model, sub,
                     qty, net, f'SIAMDIS-{i}')
         n += 1
     print(f"loaded {n} rows -> Siam Discovery")
@@ -395,7 +397,7 @@ def load_simple_online(fn, store_label, category, entity=None):
         channel = normalize_channel(r[idx['Channel']])
         brand, sub = classify_by_code(sku)
         item = r[idx['Item']]
-        model = vff_model_from_name(item) if brand == 'VFF' else None
+        model = model_from_name(item)
         add_record(store_label, category, d, brand, model, sub, qty, amt, order_id, channel=channel,
                     entity=entity)
         n += 1
@@ -458,7 +460,7 @@ def load_bft_merged_new_only():
         warehouse = r[idx['warehouse']]
         brand, sub = classify_by_code(sku)
         item = r[idx['Item']]
-        model = vff_model_from_name(item) if brand == 'VFF' else None
+        model = model_from_name(item)
         if warehouse == 'Paradise Park':
             add_record('Paradise Park', 'store', d, brand, model, sub, qty, amt, onum, channel=channel)
         else:
@@ -499,10 +501,9 @@ def load_central_total_department():
         amt = num(r[idx['Total Net Sales (Sales Amount)']])
         brand, sub = classify_by_code(cat)
         model = None
-        if brand == 'VFF':
-            mcode = re.match(r'^VFF0*(\d+)', str(cat).upper())
-            if mcode:
-                model = VFF_CODE_TO_MODEL.get(int(mcode.group(1)), 'Other')
+        mcode = re.match(r'^([A-Za-z]+)0*(\d+)', str(cat).upper())
+        if mcode:
+            model = CODE_TO_MODEL.get((mcode.group(1), int(mcode.group(2))), 'Other')
         store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
         add_record(store_label, 'central_dept', d, brand, model, sub, qty, amt,
                    order_id=None)

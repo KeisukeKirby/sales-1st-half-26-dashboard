@@ -24,6 +24,21 @@ GROUP_LABEL = {
 def new_acc():
     return {'amount': 0.0, 'qty': 0.0, 'orders': set()}
 
+# ---------------------------------------------------------------- model-name casing normalization
+# Different source files render the same model with different casing
+# ("VFF KSO EVO" vs "VFF Kso Evo") -- collapse by uppercase key, keep whichever casing
+# variant carries the most revenue as the canonical display label.
+_casing_amount = defaultdict(lambda: defaultdict(float))
+for r in records:
+    if r['model']:
+        _casing_amount[r['model'].upper()][r['model']] += r['amount']
+MODEL_CANON = {
+    upper_key: max(variants.items(), key=lambda kv: kv[1])[0]
+    for upper_key, variants in _casing_amount.items()
+}
+def canon_model(m):
+    return MODEL_CANON.get(m.upper(), m) if m else m
+
 # ---------------------------------------------------------------- store-level
 store_acc = defaultdict(new_acc)
 store_month = defaultdict(lambda: defaultdict(new_acc))
@@ -38,6 +53,8 @@ online_channel = defaultdict(new_acc)
 online_channel_month = defaultdict(lambda: defaultdict(new_acc))
 event_payment = defaultdict(new_acc)
 brand_month = defaultdict(lambda: defaultdict(new_acc))
+model_overall = defaultdict(new_acc)
+brand_model = defaultdict(lambda: defaultdict(new_acc))
 
 for r in records:
     store, month, brand = r['store'], r['month'], r['brand']
@@ -68,9 +85,16 @@ for r in records:
     brand_month[brand][month]['amount'] += amt
     brand_month[brand][month]['qty'] += qty
 
-    if brand == 'VFF' and r['model']:
-        vff_model[r['model']]['amount'] += amt
-        vff_model[r['model']]['qty'] += qty
+    model_c = canon_model(r['model'])
+    if brand == 'VFF' and model_c:
+        vff_model[model_c]['amount'] += amt
+        vff_model[model_c]['qty'] += qty
+
+    if model_c:
+        model_overall[model_c]['amount'] += amt
+        model_overall[model_c]['qty'] += qty
+        brand_model[brand][model_c]['amount'] += amt
+        brand_model[brand][model_c]['qty'] += qty
 
     if brand == 'Others' and r['sub']:
         others_sub[r['sub']]['amount'] += amt
@@ -95,11 +119,19 @@ def ser(acc):
 # ---------------------------------------------------------------- build output
 out = {}
 
+_total_amount = round(sum(v['amount'] for v in store_acc.values()), 2)
+_total_qty = round(sum(v['qty'] for v in store_acc.values()), 1)
+_total_orders = sum(len(v['orders']) for v in store_acc.values())
 out['kpi'] = {
-    'total_amount': round(sum(v['amount'] for v in store_acc.values()), 2),
-    'total_qty': round(sum(v['qty'] for v in store_acc.values()), 1),
-    'total_orders': sum(len(v['orders']) for v in store_acc.values()),
+    'total_amount': _total_amount,
+    'total_qty': _total_qty,
+    'total_orders': _total_orders,
+    'avg_ticket': round(_total_amount / _total_orders, 2) if _total_orders else None,
     'period': '2026-01-01 ~ 2026-06-30',
+    # last-year figures are not yet available (2025 H1 data not received) -- kept as an
+    # explicit null block so the dashboard's YoY badges stay wired up and light up
+    # automatically the moment this is filled in, instead of needing new UI code later.
+    'last_year': None,
 }
 
 stores_out = []
@@ -138,6 +170,16 @@ out['brand_monthly'] = {
 out['vff_models'] = [
     {'model': m, **ser(v)} for m, v in sorted(vff_model.items(), key=lambda x: -x[1]['amount'])
 ]
+
+_models_sorted = sorted(model_overall.items(), key=lambda x: -x[1]['amount'])
+out['model_top10'] = [{'model': m, **ser(v)} for m, v in _models_sorted[:10]]
+out['model_bottom10'] = [{'model': m, **ser(v)} for m, v in _models_sorted[-10:][::-1]]
+out['model_count'] = len(model_overall)
+
+out['brand_models'] = {
+    b: [{'model': m, **ser(v)} for m, v in sorted(models.items(), key=lambda x: -x[1]['amount'])]
+    for b, models in brand_model.items()
+}
 
 out['others_sub'] = [
     {'brand': b, **ser(v)} for b, v in sorted(others_sub.items(), key=lambda x: -x[1]['amount'])
