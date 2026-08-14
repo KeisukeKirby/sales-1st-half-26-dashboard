@@ -28,12 +28,14 @@ GROUP_LABEL = {
 CHANNEL5 = {
     'Online': 'オンラインストア',
     'BFT Consignment': '委託販売(オフライン)', 'EDV Consignment': '委託販売(オフライン)',
-    'K Village': '直営実店舗', 'Thaniya': '直営実店舗', 'Paradise Park': '直営実店舗',
-    'Central Ladprao 3F (Coollabo)': '直営実店舗', 'VFF Cart LP': '直営実店舗', 'Event': '直営実店舗',
+    'K Village': '直営実店舗', 'Paradise Park': '直営実店舗',
+    'Central Ladprao 3F (Coollabo)': 'Central百貨店', 'VFF Cart LP': 'Central百貨店',
     'Central Chidlom': 'Central百貨店', 'Central Chidlom Online': 'Central百貨店',
     'Central World (CDS)': 'Central百貨店', 'Central Lardprao (Dept.)': 'Central百貨店',
     'Central Eastville': 'Central百貨店',
     'Siam Discovery': 'Siam Discovery',
+    'Thaniya': 'Thaniya',
+    'Event': 'イベント',
 }
 GENDER_LABEL = {'Women': '女性', 'Men': '男性', 'Unisex': 'ユニセックス'}
 
