@@ -122,15 +122,47 @@ def classify_by_name(name):
             return 'VFF', None, ('VFF ' + base if not base.upper().startswith('VFF') else base)
     return 'Unknown', None, base
 
+# VFF shoe / non-shoe (socks, furoshiki-wrap accessories with no numeric size, etc.)
+# classifier, plus gender inference. VFF footwear codes/names always carry a size token
+# shaped like an optional single gender letter + a number in the last parenthesized
+# group -- "(BK,W37)" (code) or "(W37, Baby Blue)" (name) -- e.g. W37=Women's 37,
+# M43=Men's 43, U/no-letter=Unisex. Sock-type items use letter-only sizing (S/M/L/XL)
+# with no digits, which this pattern deliberately does not match.
+VFF_SIZE_TOKEN_RE = re.compile(r'^([MWUmwu]?)(\d+)$')
+def vff_shoe_gender(text):
+    if not text:
+        return False, None
+    s = str(text)
+    m = re.search(r'\(([^()]*)\)', s)
+    if m:
+        for token in (p.strip() for p in m.group(1).split(',')):
+            gm = VFF_SIZE_TOKEN_RE.match(token)
+            if gm:
+                g = gm.group(1).upper()
+                return True, ('Women' if g == 'W' else 'Men' if g == 'M' else 'Unisex')
+    # fallback for malformed source codes missing the comma/closing paren
+    # (seen in Central_Total_Department, e.g. "VFF02(TTBKM42" instead of
+    # "VFF02(TTBK,M42)") -- look for a trailing gender-letter + size at the
+    # very end of the string.
+    fm = re.search(r'([MWUmwu])(\d{2,3})\)?\s*$', s)
+    if fm:
+        g = fm.group(1).upper()
+        return True, ('Women' if g == 'W' else 'Men' if g == 'M' else 'Unisex')
+    return False, None
+
 def add_record(store, category, date_, brand, model, sub, qty, amount, order_id,
-                channel=None, payment=None, entity=None):
+                channel=None, payment=None, entity=None, vff_source_text=None):
     if date_ is None:
         return
     if brand == 'EXCLUDE':
         return
+    is_shoe, gender = (False, None)
+    if brand == 'VFF':
+        is_shoe, gender = vff_shoe_gender(vff_source_text)
     records.append(dict(
         store=store, category=category, date=date_.isoformat(),
         month=date_.strftime('%Y-%m'), brand=brand or 'Unknown', model=model,
+        is_vff_shoe=is_shoe, gender=gender,
         sub=sub, qty=qty, amount=amount, order_id=order_id,
         channel=channel, payment=payment, entity=entity,
     ))
@@ -182,7 +214,7 @@ def load_vff_cart_lp():
         d = parse_dmy(dt)
         brand, sub = classify_by_code(sku)
         model = model_from_name(item)
-        add_record('VFF Cart LP', 'store', d, brand, model, sub, num(qty), num(net), order_id)
+        add_record('VFF Cart LP', 'store', d, brand, model, sub, num(qty), num(net), order_id, vff_source_text=sku)
 load_vff_cart_lp()
 
 # ================================================================== generic "Orders" schema loader
@@ -236,7 +268,7 @@ def load_orders_style(fn, sheet, store_label, category, header_row_idx=1,
             store = 'Online'
             cat = 'online'
         add_record(store, cat, d, brand, model, sub, qty, amt, order_id, channel=channel,
-                    payment=payment, entity=entity)
+                    payment=payment, entity=entity, vff_source_text=pc)
         n += 1
     print(f"loaded {n} rows from {fn.split('/')[-1]} -> {store_label}")
 
@@ -285,7 +317,7 @@ def load_central_lp3f():
         brand, sub = classify_by_code(pc)
         pname = r[idx['ชื่อสินค้า']]
         model = model_from_name(pname)
-        add_record('Central Ladprao 3F (Coollabo)', 'store', d, brand, model, sub, qty, amt, order_id)
+        add_record('Central Ladprao 3F (Coollabo)', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc)
         n += 1
     print(f"loaded {n} rows -> Central Ladprao 3F")
 load_central_lp3f()
@@ -316,7 +348,7 @@ def load_consignment(fn, sheet, store_label):
         brand, sub = classify_by_code(pc)
         pname = r[idx['ชื่อสินค้า/บริการ']]
         model = model_from_name(pname)
-        add_record(store_label, 'consignment', d, brand, model, sub, qty, amt, doc)
+        add_record(store_label, 'consignment', d, brand, model, sub, qty, amt, doc, vff_source_text=pc)
         n += 1
     print(f"loaded {n} rows -> {store_label}")
 load_consignment(SRC + 'c49fbb57-BFT_consignment__JanJun_26.xlsx', 'รายงานใบแจ้งหนี้', 'BFT Consignment')
@@ -346,7 +378,7 @@ def load_edv_consignment():
         brand, sub = classify_by_code(pc)
         pname = r[COL['prodname']]
         model = model_from_name(pname)
-        add_record('EDV Consignment', 'consignment', d, brand, model, sub, qty, amt, order)
+        add_record('EDV Consignment', 'consignment', d, brand, model, sub, qty, amt, order, vff_source_text=pc)
         n += 1
     print(f"loaded {n} rows -> EDV Consignment")
 load_edv_consignment()
@@ -368,7 +400,7 @@ def load_siam_discovery():
         net = num(r[3])
         brand, sub, model = classify_by_name(item)
         add_record('Siam Discovery', 'store', d, brand, model, sub,
-                    qty, net, f'SIAMDIS-{i}')
+                    qty, net, f'SIAMDIS-{i}', vff_source_text=item)
         n += 1
     print(f"loaded {n} rows -> Siam Discovery")
 load_siam_discovery()
@@ -399,7 +431,7 @@ def load_simple_online(fn, store_label, category, entity=None):
         item = r[idx['Item']]
         model = model_from_name(item)
         add_record(store_label, category, d, brand, model, sub, qty, amt, order_id, channel=channel,
-                    entity=entity)
+                    entity=entity, vff_source_text=sku)
         n += 1
     print(f"loaded {n} rows -> {store_label}")
     return set(str(r[idx['No.']]).strip() for r in data if any(r) and r[idx.get('No.')])
@@ -462,9 +494,9 @@ def load_bft_merged_new_only():
         item = r[idx['Item']]
         model = model_from_name(item)
         if warehouse == 'Paradise Park':
-            add_record('Paradise Park', 'store', d, brand, model, sub, qty, amt, onum, channel=channel)
+            add_record('Paradise Park', 'store', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku)
         else:
-            add_record('Online', 'online', d, brand, model, sub, qty, amt, onum, channel=channel)
+            add_record('Online', 'online', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku)
         n += 1
     print(f"loaded {n} rows (non-duplicate only) -> BFT merged supplemental")
 load_bft_merged_new_only()
@@ -506,7 +538,7 @@ def load_central_total_department():
             model = CODE_TO_MODEL.get((mcode.group(1), int(mcode.group(2))), 'Other')
         store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
         add_record(store_label, 'central_dept', d, brand, model, sub, qty, amt,
-                   order_id=None)
+                   order_id=None, vff_source_text=cat)
         n += 1
     print(f"loaded {n} rows -> Central Total Department (5 stores)")
 load_central_total_department()

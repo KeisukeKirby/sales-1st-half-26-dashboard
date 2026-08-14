@@ -21,6 +21,22 @@ GROUP_LABEL = {
     'event': 'イベント', 'consignment': '委託販売',
 }
 
+# 5-way channel split requested specifically for the "VFF shoes only" section --
+# distinct from STORE_GROUP above (which the rest of the dashboard still uses).
+# Event is folded into 直営実店舗 since it's company staff selling at a temporary
+# venue, operationally the same as the other directly-run touchpoints.
+CHANNEL5 = {
+    'Online': 'オンラインストア',
+    'BFT Consignment': '委託販売(オフライン)', 'EDV Consignment': '委託販売(オフライン)',
+    'K Village': '直営実店舗', 'Thaniya': '直営実店舗', 'Paradise Park': '直営実店舗',
+    'Central Ladprao 3F (Coollabo)': '直営実店舗', 'VFF Cart LP': '直営実店舗', 'Event': '直営実店舗',
+    'Central Chidlom': 'Central百貨店', 'Central Chidlom Online': 'Central百貨店',
+    'Central World (CDS)': 'Central百貨店', 'Central Lardprao (Dept.)': 'Central百貨店',
+    'Central Eastville': 'Central百貨店',
+    'Siam Discovery': 'Siam Discovery',
+}
+GENDER_LABEL = {'Women': '女性', 'Men': '男性', 'Unisex': 'ユニセックス'}
+
 def new_acc():
     return {'amount': 0.0, 'qty': 0.0, 'orders': set()}
 
@@ -55,6 +71,14 @@ event_payment = defaultdict(new_acc)
 brand_month = defaultdict(lambda: defaultdict(new_acc))
 model_overall = defaultdict(new_acc)
 brand_model = defaultdict(lambda: defaultdict(new_acc))
+
+# VFF shoes only (excludes VFF socks/furoshiki-without-size etc.)
+vff_shoe_month = defaultdict(new_acc)
+vff_shoe_channel = defaultdict(new_acc)
+vff_shoe_channel_month = defaultdict(lambda: defaultdict(new_acc))
+vff_shoe_model = defaultdict(new_acc)
+vff_shoe_gender = defaultdict(new_acc)
+vff_shoe_total = new_acc()
 
 for r in records:
     store, month, brand = r['store'], r['month'], r['brand']
@@ -111,6 +135,22 @@ for r in records:
         if store == 'Event':
             event_payment[r['payment']]['amount'] += amt
             event_payment[r['payment']]['qty'] += qty
+
+    if brand == 'VFF' and r.get('is_vff_shoe'):
+        vff_shoe_total['amount'] += amt
+        vff_shoe_total['qty'] += qty
+        vff_shoe_month[month]['amount'] += amt
+        vff_shoe_month[month]['qty'] += qty
+        ch5 = CHANNEL5.get(store, store)
+        vff_shoe_channel[ch5]['amount'] += amt
+        vff_shoe_channel[ch5]['qty'] += qty
+        vff_shoe_channel_month[ch5][month]['qty'] += qty
+        if model_c:
+            vff_shoe_model[model_c]['amount'] += amt
+            vff_shoe_model[model_c]['qty'] += qty
+        g = r.get('gender') or 'Unisex'
+        vff_shoe_gender[g]['amount'] += amt
+        vff_shoe_gender[g]['qty'] += qty
 
 def ser(acc):
     return {'amount': round(acc['amount'], 2), 'qty': round(acc['qty'], 1),
@@ -189,6 +229,26 @@ out['online_channel'] = [
     {'channel': c, **ser(v), 'monthly': {m: round(online_channel_month[c].get(m, new_acc())['amount'], 2) for m in MONTHS}}
     for c, v in sorted(online_channel.items(), key=lambda x: -x[1]['amount'])
 ]
+
+_shoe_models_sorted = sorted(vff_shoe_model.items(), key=lambda x: -x[1]['qty'])
+out['vff_shoes'] = {
+    'note': 'VFFブランドのうちシューズのみ（ソックス・Furoshiki等の非シューズ商品は除く）。'
+            'サイズ表記（W=女性/M=男性/U=ユニセックス）から性別区分を推定',
+    'total_qty': round(vff_shoe_total['qty'], 1),
+    'total_amount': round(vff_shoe_total['amount'], 2),
+    'monthly': [
+        {'month': m, 'qty': round(vff_shoe_month[m]['qty'], 1), 'amount': round(vff_shoe_month[m]['amount'], 2)}
+        for m in MONTHS
+    ],
+    'channel_share': [
+        {'channel': c, **ser(v)} for c, v in sorted(vff_shoe_channel.items(), key=lambda x: -x[1]['qty'])
+    ],
+    'model_ranking_by_qty': [{'model': m, **ser(v)} for m, v in _shoe_models_sorted],
+    'gender': [
+        {'gender': GENDER_LABEL.get(g, g), **ser(v)}
+        for g, v in sorted(vff_shoe_gender.items(), key=lambda x: -x[1]['qty'])
+    ],
+}
 
 event_pay_total = sum(v['amount'] for v in event_payment.values())
 out['payment_overall'] = {
