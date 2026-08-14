@@ -1,0 +1,683 @@
+<title>Barefoot 販売実績ダッシュボード</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f4f3f0;
+    --surface-1: #fcfcfb;
+    --surface-2: #ffffff;
+    --border: #e4e2dc;
+    --text-primary: #16150f;
+    --text-secondary: #52514e;
+    --text-muted: #8a887f;
+    --series-1: #2a78d6; /* blue   - VFF */
+    --series-2: #eb6834; /* orange - Coolcore */
+    --series-3: #1baf7a; /* aqua   - Oleno */
+    --series-4: #eda100; /* yellow - BFJ */
+    --series-5: #e87ba4; /* magenta- TabiRela */
+    --series-6: #008300; /* green  - Others */
+    --series-7: #4a3aa7; /* violet */
+    --series-8: #e34948; /* red */
+    --good: #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+    --grid: #e9e7e1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #131311;
+      --surface-1: #1a1a19;
+      --surface-2: #202020;
+      --border: #333230;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #8f8d83;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #d55181;
+      --series-6: #008300;
+      --series-7: #9085e9;
+      --series-8: #e66767;
+      --grid: #2a2a28;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #131311;
+    --surface-1: #1a1a19;
+    --surface-2: #202020;
+    --border: #333230;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8d83;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --grid: #2a2a28;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0 0 4rem;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 1.75rem 1.5rem 0; }
+
+  header.page { padding: 0.25rem 0 1.25rem; }
+  header.page h1 { font-size: 1.5rem; margin: 0 0 0.3rem; font-weight: 700; }
+  header.page .meta { color: var(--text-secondary); font-size: 0.85rem; }
+
+  nav.tabs {
+    display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem; overflow-x: auto;
+  }
+  nav.tabs button {
+    background: none; border: none; padding: 0.65rem 0.9rem; font-size: 0.88rem;
+    color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent;
+    white-space: nowrap; font-weight: 500; font-family: inherit;
+  }
+  nav.tabs button.active { color: var(--text-primary); border-bottom-color: var(--series-1); }
+  nav.tabs button:hover { color: var(--text-primary); }
+
+  section.tabpanel { display: none; }
+  section.tabpanel.active { display: block; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9rem; margin-bottom: 1.5rem; }
+  .kpi-tile {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.9rem 1.05rem;
+  }
+  .kpi-tile .label { color: var(--text-secondary); font-size: 0.78rem; margin-bottom: 0.35rem; }
+  .kpi-tile .value { font-size: 1.55rem; font-weight: 700; font-variant-numeric: proportional-nums; }
+  .kpi-tile .sub { color: var(--text-muted); font-size: 0.74rem; margin-top: 0.2rem; }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.15rem 1.25rem; margin-bottom: 1.25rem;
+  }
+  .card h2 { font-size: 1rem; margin: 0 0 0.15rem; font-weight: 700; }
+  .card .card-sub { color: var(--text-secondary); font-size: 0.78rem; margin-bottom: 0.9rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 860px) { .grid-2, .kpi-row { grid-template-columns: 1fr 1fr; } }
+
+  table.data { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  table.data th, table.data td { padding: 0.5rem 0.6rem; text-align: right; border-bottom: 1px solid var(--border); }
+  table.data th:first-child, table.data td:first-child { text-align: left; }
+  table.data th { color: var(--text-secondary); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  table.data td { font-variant-numeric: tabular-nums; }
+  table.data tr:hover td { background: color-mix(in srgb, var(--series-1) 6%, transparent); }
+  .badge {
+    display: inline-block; font-size: 0.68rem; padding: 0.12rem 0.5rem; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary);
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 0.7rem; font-size: 0.78rem; color: var(--text-secondary); }
+  .legend .item { display: flex; align-items: center; gap: 0.4rem; }
+  .legend .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .store-picker { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+  .store-picker button {
+    font-family: inherit; font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-secondary); cursor: pointer;
+  }
+  .store-picker button.active { background: var(--series-1); border-color: var(--series-1); color: #fff; }
+  .store-picker .grp-label { font-size: 0.72rem; color: var(--text-muted); align-self: center; margin-left: 0.4rem; }
+
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.5rem 0.7rem; font-size: 0.76rem; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    opacity: 0; transition: opacity 0.1s; z-index: 20; white-space: nowrap; color: var(--text-primary);
+  }
+  .chart-wrap { position: relative; }
+  svg text { fill: var(--text-secondary); font-size: 11px; font-family: inherit; }
+  svg .value-label { fill: var(--text-primary); font-weight: 600; font-size: 11px; }
+  svg .axis-line { stroke: var(--grid); stroke-width: 1; }
+
+  .note-box {
+    background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--series-4);
+    border-radius: 8px; padding: 0.8rem 1rem; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;
+  }
+  .note-box.critical { border-left-color: var(--series-8); }
+  .note-box b { color: var(--text-primary); }
+
+  ul.filelist { margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: 0.82rem; color: var(--text-secondary); }
+  ul.filelist li { margin-bottom: 0.3rem; }
+  code { background: var(--surface-2); padding: 0.05rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
+
+  .two-col-list { columns: 2; column-gap: 2rem; }
+  @media (max-width: 700px) { .two-col-list { columns: 1; } .grid-2 { grid-template-columns: 1fr; } .kpi-row { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <h1>Barefoot Inc. 販売実績ダッシュボード</h1>
+    <div class="meta">対象期間: 2026年1月〜6月（上期） ・ 全17ソースファイルを統合 ・ 前年（2025年）比較データは未取得</div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="overview" class="active">概要</button>
+    <button data-tab="stores">店舗別</button>
+    <button data-tab="brand">商品・ブランド別</button>
+    <button data-tab="payment">決済別</button>
+    <button data-tab="notes">データについて</button>
+  </nav>
+
+  <section class="tabpanel active" id="tab-overview"></section>
+  <section class="tabpanel" id="tab-stores"></section>
+  <section class="tabpanel" id="tab-brand"></section>
+  <section class="tabpanel" id="tab-payment"></section>
+  <section class="tabpanel" id="tab-notes"></section>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const DATA = {"kpi": {"total_amount": 25101471.55, "total_qty": 12610.0, "total_orders": 7068, "period": "2026-01-01 ~ 2026-06-30"}, "stores": [{"amount": 7478352.4, "qty": 3380.0, "orders": 2684, "store": "Online", "group": "online", "avg_ticket": 2786.27, "monthly": {"2026-01": {"amount": 1310466.0, "qty": 511.0, "orders": 411}, "2026-02": {"amount": 1186306.5, "qty": 521.0, "orders": 414}, "2026-03": {"amount": 1009838.1, "qty": 487.0, "orders": 355}, "2026-04": {"amount": 934981.3, "qty": 531.0, "orders": 420}, "2026-05": {"amount": 1381868.3, "qty": 679.0, "orders": 551}, "2026-06": {"amount": 1654892.2, "qty": 651.0, "orders": 533}}, "brand": {"VFF": {"amount": 6133423.0, "qty": 1270.0, "orders": 0}, "Oleno": {"amount": 114184.0, "qty": 114.0, "orders": 0}, "BFJ": {"amount": 47650.0, "qty": 97.0, "orders": 0}, "TabiRela": {"amount": 10400.0, "qty": 2.0, "orders": 0}, "Coolcore": {"amount": 1166759.7, "qty": 1892.0, "orders": 0}, "Others": {"amount": 5935.7, "qty": 5.0, "orders": 0}}}, {"amount": 4509352.2, "qty": 1604.0, "orders": 763, "store": "K Village", "group": "retail", "avg_ticket": 5910.03, "monthly": {"2026-01": {"amount": 849054.6, "qty": 347.0, "orders": 139}, "2026-02": {"amount": 610734.2, "qty": 251.0, "orders": 108}, "2026-03": {"amount": 594331.7, "qty": 230.0, "orders": 110}, "2026-04": {"amount": 732436.3, "qty": 235.0, "orders": 119}, "2026-05": {"amount": 856032.3, "qty": 285.0, "orders": 142}, "2026-06": {"amount": 866763.1, "qty": 256.0, "orders": 145}}, "brand": {"VFF": {"amount": 4235328.3, "qty": 951.0, "orders": 0}, "BFJ": {"amount": 94440.0, "qty": 294.0, "orders": 0}, "Oleno": {"amount": 85428.4, "qty": 94.0, "orders": 0}, "Coolcore": {"amount": 44872.0, "qty": 241.0, "orders": 0}, "Others": {"amount": 49283.5, "qty": 24.0, "orders": 0}}}, {"amount": 2727624.6, "qty": 1660.0, "orders": 799, "store": "Central Ladprao 3F (Coollabo)", "group": "retail", "avg_ticket": 3413.8, "monthly": {"2026-01": {"amount": 613640.6, "qty": 396.0, "orders": 177}, "2026-02": {"amount": 390747.0, "qty": 248.0, "orders": 124}, "2026-03": {"amount": 470814.6, "qty": 283.0, "orders": 124}, "2026-04": {"amount": 379421.8, "qty": 250.0, "orders": 120}, "2026-05": {"amount": 466369.0, "qty": 295.0, "orders": 146}, "2026-06": {"amount": 406631.6, "qty": 188.0, "orders": 108}}, "brand": {"Coolcore": {"amount": 300653.0, "qty": 957.0, "orders": 0}, "VFF": {"amount": 2243621.6, "qty": 466.0, "orders": 0}, "BFJ": {"amount": 30500.0, "qty": 109.0, "orders": 0}, "Oleno": {"amount": 70800.0, "qty": 77.0, "orders": 0}, "Others": {"amount": 82050.0, "qty": 51.0, "orders": 0}}}, {"amount": 2509545.0, "qty": 1118.0, "orders": 758, "store": "Event", "group": "event", "avg_ticket": 3310.75, "monthly": {"2026-01": {"amount": 570636.0, "qty": 188.0, "orders": 127}, "2026-02": {"amount": 57.0, "qty": 6.0, "orders": 6}, "2026-03": {"amount": 604285.0, "qty": 232.0, "orders": 167}, "2026-04": {"amount": 215050.0, "qty": 94.0, "orders": 61}, "2026-05": {"amount": 623737.0, "qty": 238.0, "orders": 178}, "2026-06": {"amount": 495780.0, "qty": 360.0, "orders": 219}}, "brand": {"VFF": {"amount": 1924081.0, "qty": 519.0, "orders": 0}, "BFJ": {"amount": 23000.0, "qty": 54.0, "orders": 0}, "Coolcore": {"amount": 216385.0, "qty": 377.0, "orders": 0}, "Oleno": {"amount": 78552.0, "qty": 96.0, "orders": 0}, "Others": {"amount": 221525.0, "qty": 56.0, "orders": 0}, "TabiRela": {"amount": 46002.0, "qty": 16.0, "orders": 0}}, "payment": {"Cash": {"amount": 110213.0, "qty": 94.0, "orders": 0}, "QR Code": {"amount": 1430600.0, "qty": 557.0, "orders": 0}, "Credit Card": {"amount": 924270.0, "qty": 431.0, "orders": 0}}, "payment_total": 2465083.0}, {"amount": 1881346.35, "qty": 2757.0, "orders": 1420, "store": "Thaniya", "group": "retail", "avg_ticket": 1324.89, "monthly": {"2026-01": {"amount": 310508.25, "qty": 454.0, "orders": 233}, "2026-02": {"amount": 333838.05, "qty": 486.0, "orders": 243}, "2026-03": {"amount": 339092.25, "qty": 459.0, "orders": 255}, "2026-04": {"amount": 339511.1, "qty": 495.0, "orders": 249}, "2026-05": {"amount": 309226.15, "qty": 488.0, "orders": 235}, "2026-06": {"amount": 249170.55, "qty": 375.0, "orders": 205}}, "brand": {"Coolcore": {"amount": 1438672.0, "qty": 2476.0, "orders": 0}, "Others": {"amount": 328154.35, "qty": 128.0, "orders": 0}, "Oleno": {"amount": 114520.0, "qty": 153.0, "orders": 0}}}, {"amount": 1672168.38, "qty": 465.0, "orders": 0, "store": "Central Chidlom", "group": "central_dept", "avg_ticket": null, "monthly": {"2026-01": {"amount": 272667.22, "qty": 74.0, "orders": 0}, "2026-02": {"amount": 269473.79, "qty": 63.0, "orders": 0}, "2026-03": {"amount": 210918.24, "qty": 72.0, "orders": 0}, "2026-04": {"amount": 239100.68, "qty": 70.0, "orders": 0}, "2026-05": {"amount": 370335.69, "qty": 104.0, "orders": 0}, "2026-06": {"amount": 309672.76, "qty": 82.0, "orders": 0}}, "brand": {"BFJ": {"amount": 20800.22, "qty": 45.0, "orders": 0}, "Coolcore": {"amount": 8168.58, "qty": 16.0, "orders": 0}, "Oleno": {"amount": 28843.66, "qty": 30.0, "orders": 0}, "TabiRela": {"amount": 53958.19, "qty": 14.0, "orders": 0}, "VFF": {"amount": 1560397.73, "qty": 360.0, "orders": 0}}}, {"amount": 1463117.5, "qty": 390.0, "orders": 386, "store": "Siam Discovery", "group": "retail", "avg_ticket": 3790.46, "monthly": {"2026-01": {"amount": 103982.4, "qty": 31.0, "orders": 31}, "2026-02": {"amount": 204892.6, "qty": 52.0, "orders": 51}, "2026-03": {"amount": 143209.5, "qty": 40.0, "orders": 40}, "2026-04": {"amount": 308429.2, "qty": 80.0, "orders": 78}, "2026-05": {"amount": 363017.3, "qty": 98.0, "orders": 97}, "2026-06": {"amount": 339586.5, "qty": 89.0, "orders": 89}}, "brand": {"VFF": {"amount": 1375917.7, "qty": 295.0, "orders": 0}, "BFJ": {"amount": 21465.0, "qty": 45.0, "orders": 0}, "Oleno": {"amount": 39267.8, "qty": 43.0, "orders": 0}, "TabiRela": {"amount": 26467.0, "qty": 7.0, "orders": 0}}}, {"amount": 855441.8, "qty": 249.0, "orders": 164, "store": "Paradise Park", "group": "retail", "avg_ticket": 5216.11, "monthly": {"2026-01": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-02": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-03": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-04": {"amount": 410000.8, "qty": 140.0, "orders": 90}, "2026-05": {"amount": 255010.6, "qty": 62.0, "orders": 41}, "2026-06": {"amount": 190430.4, "qty": 47.0, "orders": 33}}, "brand": {"VFF": {"amount": 824273.8, "qty": 187.0, "orders": 0}, "Others": {"amount": 0.0, "qty": 6.0, "orders": 0}, "Oleno": {"amount": 13672.0, "qty": 22.0, "orders": 0}, "BFJ": {"amount": 2900.0, "qty": 29.0, "orders": 0}, "TabiRela": {"amount": 14596.0, "qty": 5.0, "orders": 0}}}, {"amount": 658055.6, "qty": 242.0, "orders": 40, "store": "BFT Consignment", "group": "consignment", "avg_ticket": 16451.39, "monthly": {"2026-01": {"amount": 363890.0, "qty": 136.0, "orders": 15}, "2026-02": {"amount": 90470.0, "qty": 46.0, "orders": 6}, "2026-03": {"amount": 55264.4, "qty": 16.0, "orders": 5}, "2026-04": {"amount": 46264.0, "qty": 12.0, "orders": 4}, "2026-05": {"amount": 69060.0, "qty": 22.0, "orders": 5}, "2026-06": {"amount": 33107.2, "qty": 10.0, "orders": 5}}, "brand": {"VFF": {"amount": 638701.6, "qty": 191.0, "orders": 0}, "Oleno": {"amount": 19354.0, "qty": 51.0, "orders": 0}}}, {"amount": 452112.59, "qty": 133.0, "orders": 0, "store": "Central World (CDS)", "group": "central_dept", "avg_ticket": null, "monthly": {"2026-01": {"amount": 97236.2, "qty": 29.0, "orders": 0}, "2026-02": {"amount": 130387.0, "qty": 29.0, "orders": 0}, "2026-03": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-04": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-05": {"amount": 102850.29, "qty": 38.0, "orders": 0}, "2026-06": {"amount": 121639.1, "qty": 37.0, "orders": 0}}, "brand": {"BFJ": {"amount": 6740.98, "qty": 14.0, "orders": 0}, "Oleno": {"amount": 12433.0, "qty": 12.0, "orders": 0}, "TabiRela": {"amount": 16107.0, "qty": 4.0, "orders": 0}, "VFF": {"amount": 416831.61, "qty": 103.0, "orders": 0}}}, {"amount": 364619.92, "qty": 106.0, "orders": 0, "store": "Central Lardprao (Dept.)", "group": "central_dept", "avg_ticket": null, "monthly": {"2026-01": {"amount": 144245.4, "qty": 41.0, "orders": 0}, "2026-02": {"amount": 126500.9, "qty": 38.0, "orders": 0}, "2026-03": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-04": {"amount": 6845.6, "qty": 3.0, "orders": 0}, "2026-05": {"amount": 46062.6, "qty": 14.0, "orders": 0}, "2026-06": {"amount": 40965.42, "qty": 10.0, "orders": 0}}, "brand": {"BFJ": {"amount": 3484.05, "qty": 9.0, "orders": 0}, "Oleno": {"amount": 11250.8, "qty": 12.0, "orders": 0}, "TabiRela": {"amount": 7761.0, "qty": 2.0, "orders": 0}, "VFF": {"amount": 342124.07, "qty": 83.0, "orders": 0}}}, {"amount": 148822.91, "qty": 53.0, "orders": 0, "store": "Central Chidlom Online", "group": "central_dept", "avg_ticket": null, "monthly": {"2026-01": {"amount": 13460.0, "qty": 5.0, "orders": 0}, "2026-02": {"amount": 8380.0, "qty": 5.0, "orders": 0}, "2026-03": {"amount": 20644.0, "qty": 5.0, "orders": 0}, "2026-04": {"amount": 38586.6, "qty": 11.0, "orders": 0}, "2026-05": {"amount": 32605.85, "qty": 11.0, "orders": 0}, "2026-06": {"amount": 35146.46, "qty": 16.0, "orders": 0}}, "brand": {"Coolcore": {"amount": 9190.0, "qty": 17.0, "orders": 0}, "Oleno": {"amount": 0.0, "qty": 0.0, "orders": 0}, "TabiRela": {"amount": 3292.3, "qty": 1.0, "orders": 0}, "VFF": {"amount": 136340.61, "qty": 35.0, "orders": 0}}}, {"amount": 137909.8, "qty": 383.0, "orders": 31, "store": "EDV Consignment", "group": "consignment", "avg_ticket": 4448.7, "monthly": {"2026-01": {"amount": 17461.5, "qty": 49.0, "orders": 5}, "2026-02": {"amount": 10284.4, "qty": 29.0, "orders": 4}, "2026-03": {"amount": 24973.2, "qty": 69.0, "orders": 5}, "2026-04": {"amount": 33300.4, "qty": 95.0, "orders": 6}, "2026-05": {"amount": 23258.9, "qty": 61.0, "orders": 6}, "2026-06": {"amount": 28631.4, "qty": 80.0, "orders": 5}}, "brand": {"Coolcore": {"amount": 137909.8, "qty": 383.0, "orders": 0}}}, {"amount": 124800.0, "qty": 26.0, "orders": 23, "store": "VFF Cart LP", "group": "retail", "avg_ticket": 5426.09, "monthly": {"2026-01": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-02": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-03": {"amount": 14400.0, "qty": 3.0, "orders": 3}, "2026-04": {"amount": 38400.0, "qty": 8.0, "orders": 6}, "2026-05": {"amount": 33600.0, "qty": 7.0, "orders": 6}, "2026-06": {"amount": 38400.0, "qty": 8.0, "orders": 8}}, "brand": {"VFF": {"amount": 124800.0, "qty": 26.0, "orders": 0}}}, {"amount": 118202.5, "qty": 44.0, "orders": 0, "store": "Central Eastville", "group": "central_dept", "avg_ticket": null, "monthly": {"2026-01": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-02": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-03": {"amount": 0.0, "qty": 0.0, "orders": 0}, "2026-04": {"amount": 71881.8, "qty": 24.0, "orders": 0}, "2026-05": {"amount": 36956.7, "qty": 18.0, "orders": 0}, "2026-06": {"amount": 9364.0, "qty": 2.0, "orders": 0}}, "brand": {"BFJ": {"amount": 4934.75, "qty": 11.0, "orders": 0}, "Coolcore": {"amount": 495.0, "qty": 1.0, "orders": 0}, "TabiRela": {"amount": 3980.0, "qty": 1.0, "orders": 0}, "VFF": {"amount": 108792.75, "qty": 31.0, "orders": 0}}}], "group_label": {"retail": "実店舗", "central_dept": "Central百貨店内", "online": "オンライン", "event": "イベント", "consignment": "委託販売"}, "monthly_overall": [{"month": "2026-01", "amount": 4667248.17, "qty": 2261.0, "orders": 1138}, {"month": "2026-02", "amount": 3362071.44, "qty": 1774.0, "orders": 956}, {"month": "2026-03", "amount": 3487770.99, "qty": 1896.0, "orders": 1064}, {"month": "2026-04", "amount": 3794209.58, "qty": 2048.0, "orders": 1153}, {"month": "2026-05", "amount": 4969990.68, "qty": 2420.0, "orders": 1407}, {"month": "2026-06", "amount": 4820180.69, "qty": 2211.0, "orders": 1350}], "brand_overall": [{"brand": "VFF", "amount": 20064633.77, "qty": 4517.0, "orders": 0}, {"brand": "Coolcore", "amount": 3323105.08, "qty": 6360.0, "orders": 0}, {"brand": "Others", "amount": 686948.55, "qty": 270.0, "orders": 0}, {"brand": "Oleno", "amount": 588305.66, "qty": 704.0, "orders": 0}, {"brand": "BFJ", "amount": 255915.0, "qty": 707.0, "orders": 0}, {"brand": "TabiRela", "amount": 182563.49, "qty": 52.0, "orders": 0}], "brand_monthly": {"VFF": [{"month": "2026-01", "amount": 3833475.55, "qty": 830.0}, {"month": "2026-02", "amount": 2615884.3, "qty": 579.0}, {"month": "2026-03", "amount": 2694253.4, "qty": 632.0}, {"month": "2026-04", "amount": 3008644.89, "qty": 701.0}, {"month": "2026-05", "amount": 4110775.94, "qty": 955.0}, {"month": "2026-06", "amount": 3801599.69, "qty": 820.0}], "Oleno": [{"month": "2026-01", "amount": 137653.26, "qty": 153.0}, {"month": "2026-02", "amount": 82869.8, "qty": 105.0}, {"month": "2026-03", "amount": 86524.2, "qty": 103.0}, {"month": "2026-04", "amount": 77878.6, "qty": 98.0}, {"month": "2026-05", "amount": 116469.95, "qty": 140.0}, {"month": "2026-06", "amount": 86909.85, "qty": 105.0}], "BFJ": [{"month": "2026-01", "amount": 61392.76, "qty": 193.0}, {"month": "2026-02", "amount": 28239.05, "qty": 75.0}, {"month": "2026-03", "amount": 54843.34, "qty": 123.0}, {"month": "2026-04", "amount": 27901.71, "qty": 87.0}, {"month": "2026-05", "amount": 51038.14, "qty": 136.0}, {"month": "2026-06", "amount": 32500.0, "qty": 93.0}], "TabiRela": [{"month": "2026-01", "amount": 39609.85, "qty": 12.0}, {"month": "2026-02", "amount": 45666.34, "qty": 11.0}, {"month": "2026-03", "amount": 37098.0, "qty": 11.0}, {"month": "2026-04", "amount": 22484.0, "qty": 8.0}, {"month": "2026-05", "amount": 21119.3, "qty": 6.0}, {"month": "2026-06", "amount": 16586.0, "qty": 4.0}], "Others": [{"month": "2026-01", "amount": 82360.25, "qty": 31.0}, {"month": "2026-02", "amount": 101246.55, "qty": 45.0}, {"month": "2026-03", "amount": 104747.75, "qty": 41.0}, {"month": "2026-04", "amount": 73078.1, "qty": 38.0}, {"month": "2026-05", "amount": 58665.15, "qty": 31.0}, {"month": "2026-06", "amount": 266850.75, "qty": 84.0}], "Coolcore": [{"month": "2026-01", "amount": 512756.5, "qty": 1042.0}, {"month": "2026-02", "amount": 488165.4, "qty": 959.0}, {"month": "2026-03", "amount": 510304.3, "qty": 986.0}, {"month": "2026-04", "amount": 584222.28, "qty": 1116.0}, {"month": "2026-05", "amount": 611922.2, "qty": 1152.0}, {"month": "2026-06", "amount": 615734.4, "qty": 1105.0}]}, "vff_models": [{"model": "V-Soul", "amount": 8848492.91, "qty": 1954.0, "orders": 0}, {"model": "V-Run", "amount": 3770267.07, "qty": 655.0, "orders": 0}, {"model": "KSO EVO", "amount": 1559929.48, "qty": 342.0, "orders": 0}, {"model": "Breezandal", "amount": 1079529.99, "qty": 187.0, "orders": 0}, {"model": "V-Alpha", "amount": 779822.13, "qty": 141.0, "orders": 0}, {"model": "Spidrwalk", "amount": 670233.31, "qty": 117.0, "orders": 0}, {"model": "Graspifier", "amount": 512198.19, "qty": 108.0, "orders": 0}, {"model": "Trailope", "amount": 510384.67, "qty": 94.0, "orders": 0}, {"model": "V-Trek", "amount": 351872.2, "qty": 64.0, "orders": 0}, {"model": "V-Train 2.0", "amount": 278632.0, "qty": 52.0, "orders": 0}, {"model": "KMD Evo", "amount": 261359.68, "qty": 41.0, "orders": 0}, {"model": "Vibram Furoshiki Eco F", "amount": 210156.0, "qty": 76.0, "orders": 0}, {"model": "Socks Mini Crew Summer", "amount": 188434.8, "qty": 331.0, "orders": 0}, {"model": "V-Trail 2.0", "amount": 131766.0, "qty": 28.0, "orders": 0}, {"model": "CVT-Hemp", "amount": 123261.22, "qty": 28.0, "orders": 0}, {"model": "Scramkey", "amount": 118690.62, "qty": 21.0, "orders": 0}, {"model": "Kso Evo", "amount": 103584.0, "qty": 21.0, "orders": 0}, {"model": "Groundsplay", "amount": 101990.0, "qty": 18.0, "orders": 0}, {"model": "V-Aqua", "amount": 78674.0, "qty": 19.0, "orders": 0}, {"model": "EL-X Knit", "amount": 59780.0, "qty": 15.0, "orders": 0}, {"model": "Vibram Furoshiki Yuwa", "amount": 59280.0, "qty": 23.0, "orders": 0}, {"model": "KSO ECO", "amount": 48620.0, "qty": 13.0, "orders": 0}, {"model": "KSO", "amount": 40932.0, "qty": 8.0, "orders": 0}, {"model": "Socks Crew Summer", "amount": 35443.0, "qty": 60.0, "orders": 0}, {"model": "Socks High Crew Summer", "amount": 32362.0, "qty": 49.0, "orders": 0}, {"model": "Kmd Evo", "amount": 27720.0, "qty": 4.0, "orders": 0}, {"model": "V-Train", "amount": 23870.0, "qty": 4.0, "orders": 0}, {"model": "CVT-Leather", "amount": 18966.0, "qty": 4.0, "orders": 0}, {"model": "Socks Mini Crew", "amount": 12690.0, "qty": 22.0, "orders": 0}, {"model": "Kso", "amount": 5130.0, "qty": 1.0, "orders": 0}, {"model": "Cvt Hemp", "amount": 5130.0, "qty": 1.0, "orders": 0}, {"model": "Vibram Furoshiki", "amount": 4980.0, "qty": 2.0, "orders": 0}, {"model": "V-Run Retro", "amount": 2900.0, "qty": 1.0, "orders": 0}, {"model": "Socks Crew", "amount": 2502.5, "qty": 4.0, "orders": 0}, {"model": "Socks High Crew", "amount": 1995.0, "qty": 3.0, "orders": 0}, {"model": "Socks", "amount": 700.0, "qty": 1.0, "orders": 0}, {"model": "Vff Socks High Crew", "amount": 700.0, "qty": 1.0, "orders": 0}, {"model": "High Crew", "amount": 665.0, "qty": 1.0, "orders": 0}, {"model": "Vff Socks Mini Crew", "amount": 600.0, "qty": 1.0, "orders": 0}, {"model": "Socks Pack1", "amount": 390.0, "qty": 1.0, "orders": 0}, {"model": "Socks Pack2", "amount": 0.0, "qty": 1.0, "orders": 0}], "others_sub": [{"brand": "Swans", "amount": 436785.0, "qty": 105.0, "orders": 0}, {"brand": "Knockaround", "amount": 157443.5, "qty": 98.0, "orders": 0}, {"brand": "Klean Kanteen", "amount": 57080.05, "qty": 45.0, "orders": 0}, {"brand": "LUNA", "amount": 35640.0, "qty": 16.0, "orders": 0}, {"brand": "Tube", "amount": 0.0, "qty": 6.0, "orders": 0}], "online_channel": [{"channel": "Shopee", "amount": 6300618.0, "qty": 3014.0, "orders": 0, "monthly": {"2026-01": 1110374.0, "2026-02": 954149.0, "2026-03": 854391.0, "2026-04": 815400.0, "2026-05": 1206468.0, "2026-06": 1359836.0}}, {"channel": "Lazada", "amount": 839031.7, "qty": 242.0, "orders": 0, "monthly": {"2026-01": 118772.0, "2026-02": 171250.0, "2026-03": 128404.1, "2026-04": 82213.3, "2026-05": 126996.3, "2026-06": 211396.0}}, {"channel": "LINE", "amount": 127839.0, "qty": 44.0, "orders": 0, "monthly": {"2026-01": 43228.0, "2026-02": 17350.0, "2026-03": 11499.0, "2026-04": 19110.0, "2026-05": 8388.0, "2026-06": 28264.0}}, {"channel": "Facebook", "amount": 82690.0, "qty": 36.0, "orders": 0, "monthly": {"2026-01": 15328.0, "2026-02": 12538.0, "2026-03": 10344.0, "2026-04": 4800.0, "2026-05": 5980.0, "2026-06": 33700.0}}, {"channel": "Instagram", "amount": 16760.0, "qty": 3.0, "orders": 0, "monthly": {"2026-01": 0.0, "2026-02": 0.0, "2026-03": 0.0, "2026-04": 0.0, "2026-05": 5980.0, "2026-06": 10780.0}}, {"channel": "POS", "amount": 14326.2, "qty": 8.0, "orders": 0, "monthly": {"2026-01": 0.0, "2026-02": 0.0, "2026-03": 0.0, "2026-04": 9390.0, "2026-05": 0.0, "2026-06": 4936.2}}, {"channel": "Website", "amount": 5200.0, "qty": 1.0, "orders": 0, "monthly": {"2026-01": 0.0, "2026-02": 0.0, "2026-03": 5200.0, "2026-04": 0.0, "2026-05": 0.0, "2026-06": 0.0}}], "payment_overall": {"note": "決済方法データがあるのは「イベント」カテゴリのみ（他の店舗・チャネルには決済方法の記録がありません）", "coverage_amount": 2465083.0, "breakdown": [{"method": "QR Code", "amount": 1430600.0, "qty": 557.0, "orders": 0}, {"method": "Credit Card", "amount": 924270.0, "qty": 431.0, "orders": 0}, {"method": "Cash", "amount": 110213.0, "qty": 94.0, "orders": 0}]}};
+
+const PALETTE = ['var(--series-1)','var(--series-2)','var(--series-3)','var(--series-4)','var(--series-5)','var(--series-6)','var(--series-7)','var(--series-8)'];
+const MONTH_LABEL = {'2026-01':'1月','2026-02':'2月','2026-03':'3月','2026-04':'4月','2026-05':'5月','2026-06':'6月'};
+const MONTHS = Object.keys(MONTH_LABEL);
+const GROUP_ORDER = ['retail','central_dept','online','event','consignment'];
+const BRAND_COLOR = {'VFF':'var(--series-1)','Coolcore':'var(--series-2)','Oleno':'var(--series-3)','BFJ':'var(--series-4)','TabiRela':'var(--series-5)','Others':'var(--series-6)'};
+
+function fmtTHB(v){
+  if (v==null) return '—';
+  return '฿' + Math.round(v).toLocaleString('en-US');
+}
+function fmtNum(v){ if(v==null) return '—'; return Math.round(v).toLocaleString('en-US'); }
+function fmtPct(v){ return (v*100).toFixed(1) + '%'; }
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+const tooltipEl = document.getElementById('tooltip');
+function showTip(evt, html){
+  tooltipEl.innerHTML = html;
+  tooltipEl.style.opacity = '1';
+  const x = evt.clientX + window.scrollX + 14;
+  const y = evt.clientY + window.scrollY + 14;
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = y + 'px';
+}
+function hideTip(){ tooltipEl.style.opacity = '0'; }
+
+// ---------------------------------------------------------------- tabs
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('section.tabpanel').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ================================================================== chart primitives
+// Horizontal bar chart: [{label, value, color}], returns svg string
+function hBarChart(items, opts){
+  opts = opts || {};
+  const w = opts.width || 560, barH = opts.barH || 22, gap = 10, labelW = opts.labelW || 150;
+  const maxV = Math.max(...items.map(d => d.value), 1);
+  const chartW = w - labelW - 70;
+  const h = items.length * (barH + gap) + gap;
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" preserveAspectRatio="xMinYMin meet">`;
+  items.forEach((d, i) => {
+    const y = gap + i * (barH + gap);
+    const bw = Math.max((d.value / maxV) * chartW, 1);
+    svg += `<text x="${labelW-8}" y="${y+barH/2+4}" text-anchor="end">${esc(d.label)}</text>`;
+    svg += `<rect x="${labelW}" y="${y}" width="${bw}" height="${barH}" rx="4" fill="${d.color}" class="hbar" data-i="${i}"></rect>`;
+    svg += `<text class="value-label" x="${labelW + bw + 8}" y="${y+barH/2+4}">${opts.fmt ? opts.fmt(d.value) : fmtNum(d.value)}</text>`;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+// Line chart (single or multi series), months on x-axis
+function lineChart(series, opts){
+  opts = opts || {};
+  const w = opts.width || 560, h = opts.height || 200;
+  const padL = 56, padR = 16, padT = 16, padB = 28;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const allVals = series.flatMap(s => s.values);
+  const maxV = Math.max(...allVals, 1) * 1.12;
+  const n = MONTHS.length;
+  const x = i => padL + (plotW * i) / (n - 1);
+  const y = v => padT + plotH - (v / maxV) * plotH;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" preserveAspectRatio="xMinYMin meet">`;
+  // gridlines (4 steps)
+  const steps = 4;
+  for (let s = 0; s <= steps; s++) {
+    const v = (maxV / steps) * s;
+    const yy = y(v);
+    svg += `<line x1="${padL}" y1="${yy}" x2="${w-padR}" y2="${yy}" class="axis-line"></line>`;
+    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${opts.fmtAxis ? opts.fmtAxis(v) : fmtNum(v)}</text>`;
+  }
+  MONTHS.forEach((m,i) => {
+    svg += `<text x="${x(i)}" y="${h-8}" text-anchor="middle">${MONTH_LABEL[m]}</text>`;
+  });
+  series.forEach((s) => {
+    let path = '';
+    s.values.forEach((v,i) => { path += (i===0?'M':'L') + x(i) + ' ' + y(v) + ' '; });
+    svg += `<path d="${path}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
+    s.values.forEach((v,i) => {
+      svg += `<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="${s.color}" stroke="var(--surface-1)" stroke-width="2" class="pt" data-s="${s.name}" data-m="${MONTHS[i]}" data-v="${v}"></circle>`;
+    });
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+// Stacked single-row horizontal bar (composition), items [{label,value,color}]
+function stackedBar(items, opts){
+  opts = opts || {};
+  const w = opts.width || 720, h = opts.height || 40;
+  const total = items.reduce((a,d) => a+d.value, 0) || 1;
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" preserveAspectRatio="xMinYMin meet">`;
+  let xoff = 0;
+  const gapPx = 2;
+  items.forEach((d,i) => {
+    const bw = Math.max((d.value/total) * w - gapPx, 0);
+    svg += `<rect x="${xoff}" y="0" width="${bw}" height="${h}" rx="4" fill="${d.color}" class="seg" data-i="${i}"></rect>`;
+    xoff += bw + gapPx;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+function attachBarTooltip(container, items, fmt){
+  container.querySelectorAll('.hbar').forEach(el => {
+    const d = items[+el.dataset.i];
+    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmt ? fmt(d.value) : fmtNum(d.value)}`));
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+function attachLineTooltip(container){
+  container.querySelectorAll('.pt').forEach(el => {
+    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(el.dataset.s)}</b><br>${MONTH_LABEL[el.dataset.m]}: ${fmtTHB(+el.dataset.v)}`));
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+function attachStackTooltip(container, items, total){
+  container.querySelectorAll('.seg').forEach(el => {
+    const d = items[+el.dataset.i];
+    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmtTHB(d.value)} (${fmtPct(d.value/total)})`));
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+
+// ================================================================== OVERVIEW TAB
+function renderOverview(){
+  const el = document.getElementById('tab-overview');
+  const kpi = DATA.kpi;
+  const avgTicket = kpi.total_orders ? kpi.total_amount / kpi.total_orders : null;
+
+  el.innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi-tile"><div class="label">総売上金額</div><div class="value">${fmtTHB(kpi.total_amount)}</div><div class="sub">2026年1〜6月 合計</div></div>
+      <div class="kpi-tile"><div class="label">総足数</div><div class="value">${fmtNum(kpi.total_qty)}</div><div class="sub">販売点数（足・個）</div></div>
+      <div class="kpi-tile"><div class="label">総伝票数</div><div class="value">${fmtNum(kpi.total_orders)}</div><div class="sub">※Central百貨店内は伝票データなし</div></div>
+      <div class="kpi-tile"><div class="label">平均客単価</div><div class="value">${fmtTHB(avgTicket)}</div><div class="sub">総売上 ÷ 総伝票数</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>月次売上推移</h2>
+        <div class="card-sub">全店舗・全チャネル合計</div>
+        <div class="chart-wrap" id="ov-line-amt"></div>
+      </div>
+      <div class="card">
+        <h2>月次足数推移</h2>
+        <div class="card-sub">全店舗・全チャネル合計</div>
+        <div class="chart-wrap" id="ov-line-qty"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>店舗・チャネル別 売上ランキング</h2>
+      <div class="card-sub">上位から表示（実店舗・Central百貨店内・オンライン・イベント・委託を含む）</div>
+      <div class="chart-wrap" id="ov-store-bar"></div>
+    </div>
+
+    <div class="card">
+      <h2>ブランド構成比（全体）</h2>
+      <div class="card-sub">売上金額ベース</div>
+      <div class="chart-wrap" id="ov-brand-stack"></div>
+      <div class="legend" id="ov-brand-legend"></div>
+    </div>
+  `;
+
+  const amtSeries = [{name:'売上金額', color:'var(--series-1)', values: DATA.monthly_overall.map(m=>m.amount)}];
+  document.getElementById('ov-line-amt').innerHTML = lineChart(amtSeries, {fmtAxis: v => (v/1e6).toFixed(1)+'M'});
+  attachLineTooltip(document.getElementById('ov-line-amt'));
+
+  const qtySeries = [{name:'足数', color:'var(--series-2)', values: DATA.monthly_overall.map(m=>m.qty)}];
+  document.getElementById('ov-line-qty').innerHTML = lineChart(qtySeries, {fmtAxis: v => fmtNum(v)});
+  document.getElementById('ov-line-qty').querySelectorAll('.pt').forEach(elx=>{});
+  // custom tooltip for qty (not currency)
+  document.getElementById('ov-line-qty').querySelectorAll('.pt').forEach(el => {
+    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(el.dataset.s)}</b><br>${MONTH_LABEL[el.dataset.m]}: ${fmtNum(+el.dataset.v)}`));
+    el.addEventListener('mouseleave', hideTip);
+  });
+
+  const storeItems = DATA.stores.slice(0, 15).map((s,i) => ({label: s.store, value: s.amount, color: 'var(--series-1)'}));
+  document.getElementById('ov-store-bar').innerHTML = hBarChart(storeItems, {width: 900, labelW: 210, fmt: fmtTHB});
+  attachBarTooltip(document.getElementById('ov-store-bar'), storeItems, fmtTHB);
+
+  const brandItems = DATA.brand_overall.map(b => ({label: b.brand, value: b.amount, color: BRAND_COLOR[b.brand] || 'var(--series-7)'}));
+  const brandTotal = brandItems.reduce((a,d)=>a+d.value,0);
+  document.getElementById('ov-brand-stack').innerHTML = stackedBar(brandItems, {width: 900, height: 44});
+  attachStackTooltip(document.getElementById('ov-brand-stack'), brandItems, brandTotal);
+  document.getElementById('ov-brand-legend').innerHTML = brandItems.map(d =>
+    `<div class="item"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)} ${fmtPct(d.value/brandTotal)}</div>`).join('');
+}
+
+// ================================================================== STORES TAB
+function renderStores(){
+  const el = document.getElementById('tab-stores');
+  const groups = {};
+  DATA.stores.forEach(s => { (groups[s.group] = groups[s.group] || []).push(s); });
+
+  let pickerHtml = '';
+  GROUP_ORDER.forEach(g => {
+    if (!groups[g]) return;
+    pickerHtml += `<span class="grp-label">${esc(DATA.group_label[g])}</span>`;
+    groups[g].forEach(s => {
+      pickerHtml += `<button data-store="${esc(s.store)}">${esc(s.store)}</button>`;
+    });
+  });
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>店舗・チャネルを選択</h2>
+      <div class="store-picker" id="store-picker">${pickerHtml}</div>
+      <div id="store-detail"></div>
+    </div>
+
+    <div class="card">
+      <h2>全店舗・チャネル比較表</h2>
+      <div class="card-sub">上期（1〜6月）累計。伝票数がないカテゴリ（Central百貨店内、委託の一部）は「—」</div>
+      <div style="overflow-x:auto">
+        <table class="data" id="store-table">
+          <thead><tr><th>店舗・チャネル</th><th>区分</th><th>売上金額</th><th>足数</th><th>伝票数</th><th>客単価</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  const tbody = document.querySelector('#store-table tbody');
+  DATA.stores.forEach(s => {
+    tbody.innerHTML += `<tr>
+      <td>${esc(s.store)}</td>
+      <td><span class="badge">${esc(DATA.group_label[s.group] || s.group)}</span></td>
+      <td>${fmtTHB(s.amount)}</td>
+      <td>${fmtNum(s.qty)}</td>
+      <td>${s.orders ? fmtNum(s.orders) : '—'}</td>
+      <td>${s.avg_ticket ? fmtTHB(s.avg_ticket) : '—'}</td>
+    </tr>`;
+  });
+
+  document.querySelectorAll('#store-picker button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#store-picker button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderStoreDetail(btn.dataset.store);
+    });
+  });
+  // default: first store
+  const firstBtn = document.querySelector('#store-picker button');
+  if (firstBtn){ firstBtn.classList.add('active'); renderStoreDetail(firstBtn.dataset.store); }
+}
+
+function renderStoreDetail(storeName){
+  const s = DATA.stores.find(x => x.store === storeName);
+  if (!s) return;
+  const detail = document.getElementById('store-detail');
+  const brandItems = Object.entries(s.brand).map(([b,v]) => ({label:b, value:v.amount, color: BRAND_COLOR[b]||'var(--series-7)'}))
+    .sort((a,b)=>b.value-a.value);
+  const brandTotal = brandItems.reduce((a,d)=>a+d.value,0) || 1;
+
+  let paymentHtml = '';
+  if (s.payment) {
+    const payItems = Object.entries(s.payment).map(([p,v]) => ({label:p, value:v.amount, color: p==='Cash'?'var(--series-3)':(p==='Credit Card'?'var(--series-1)':(p==='QR Code'?'var(--series-4)':'var(--series-8)'))}));
+    const payTotal = payItems.reduce((a,d)=>a+d.value,0) || 1;
+    paymentHtml = `
+      <div style="margin-top:1rem">
+        <div class="card-sub" style="margin-bottom:0.5rem">決済方法別比率（このカテゴリのみ決済データあり）</div>
+        <div id="sd-pay"></div>
+        <div class="legend" id="sd-pay-legend"></div>
+      </div>`;
+    setTimeout(() => {
+      const c = document.getElementById('sd-pay');
+      if (!c) return;
+      c.innerHTML = stackedBar(payItems, {width: 720, height: 40});
+      attachStackTooltip(c, payItems, payTotal);
+      document.getElementById('sd-pay-legend').innerHTML = payItems.map(d =>
+        `<div class="item"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)} ${fmtPct(d.value/payTotal)}</div>`).join('');
+    }, 0);
+  }
+
+  detail.innerHTML = `
+    <div class="kpi-row" style="margin-top:1rem">
+      <div class="kpi-tile"><div class="label">売上金額</div><div class="value">${fmtTHB(s.amount)}</div></div>
+      <div class="kpi-tile"><div class="label">足数</div><div class="value">${fmtNum(s.qty)}</div></div>
+      <div class="kpi-tile"><div class="label">伝票数</div><div class="value">${s.orders ? fmtNum(s.orders) : '—'}</div></div>
+      <div class="kpi-tile"><div class="label">客単価</div><div class="value">${s.avg_ticket ? fmtTHB(s.avg_ticket) : '—'}</div></div>
+    </div>
+    <div class="grid-2" style="margin-top:1rem">
+      <div>
+        <div class="card-sub">月次売上推移</div>
+        <div class="chart-wrap" id="sd-line"></div>
+      </div>
+      <div>
+        <div class="card-sub">ブランド構成比</div>
+        <div class="chart-wrap" id="sd-brand"></div>
+        <div class="legend" id="sd-brand-legend"></div>
+      </div>
+    </div>
+    ${paymentHtml}
+  `;
+
+  const monthVals = MONTHS.map(m => (s.monthly[m] ? s.monthly[m].amount : 0));
+  document.getElementById('sd-line').innerHTML = lineChart(
+    [{name: s.store, color: 'var(--series-1)', values: monthVals}],
+    {width: 500, fmtAxis: v => (v/1000).toFixed(0)+'K'}
+  );
+  attachLineTooltip(document.getElementById('sd-line'));
+
+  document.getElementById('sd-brand').innerHTML = stackedBar(brandItems, {width: 500, height: 40});
+  attachStackTooltip(document.getElementById('sd-brand'), brandItems, brandTotal);
+  document.getElementById('sd-brand-legend').innerHTML = brandItems.map(d =>
+    `<div class="item"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)} ${fmtPct(d.value/brandTotal)}</div>`).join('');
+}
+
+// ================================================================== BRAND TAB
+function renderBrand(){
+  const el = document.getElementById('tab-brand');
+  const brandItems = DATA.brand_overall.map(b => ({label:b.brand, value:b.amount, color: BRAND_COLOR[b.brand]||'var(--series-7)'}));
+  const brandTotal = brandItems.reduce((a,d)=>a+d.value,0);
+
+  const vffItems = DATA.vff_models.slice(0, 12).map(m => ({label:m.model, value:m.amount, color:'var(--series-1)'}));
+  const vffOtherAmt = DATA.vff_models.slice(12).reduce((a,d)=>a+d.amount,0);
+  if (vffOtherAmt > 0) vffItems.push({label:'その他モデル', value: vffOtherAmt, color:'var(--series-1)'});
+  const vffTotal = DATA.vff_models.reduce((a,d)=>a+d.amount,0);
+
+  const othersItems = DATA.others_sub.map((o,i) => ({label:o.brand, value:o.amount, color: PALETTE[i % PALETTE.length]}));
+  const othersTotal = othersItems.reduce((a,d)=>a+d.value,0) || 1;
+
+  const chanItems = DATA.online_channel.map(c => ({label:c.channel, value:c.amount, color:'var(--series-1)'}));
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>ブランド別 売上構成比（全体）</h2>
+      <div class="card-sub">総売上 ${fmtTHB(brandTotal)} ・ CoolcoreはCP+CCコードを統合、OthersはKlean Kanteen/Swans/Knockaround/LUNA/Tubeを統合</div>
+      <div class="chart-wrap" id="br-stack"></div>
+      <div class="legend" id="br-legend"></div>
+      <div style="overflow-x:auto; margin-top:1rem">
+        <table class="data">
+          <thead><tr><th>ブランド</th><th>売上金額</th><th>構成比</th><th>足数</th></tr></thead>
+          <tbody>${DATA.brand_overall.map(b => `<tr><td>${esc(b.brand)}</td><td>${fmtTHB(b.amount)}</td><td>${fmtPct(b.amount/brandTotal)}</td><td>${fmtNum(b.qty)}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>VFF（Vibram FiveFingers）内訳</h2>
+      <div class="card-sub">VFF合計 ${fmtTHB(vffTotal)} のモデル別内訳（上位12モデル＋その他）</div>
+      <div class="chart-wrap" id="br-vff-bar"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>Others 内訳（ブランド別比率）</h2>
+        <div class="card-sub">Klean Kanteen / Swans / Knockaround / LUNA / Tube の構成比</div>
+        <div class="chart-wrap" id="br-others-stack"></div>
+        <div class="legend" id="br-others-legend"></div>
+      </div>
+      <div class="card">
+        <h2>オンライン販売 チャネル別内訳</h2>
+        <div class="card-sub">Shopee / Lazada / LINE / Facebook / Instagram / Website（BFT・EDV統合）</div>
+        <div class="chart-wrap" id="br-chan-bar"></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('br-stack').innerHTML = stackedBar(brandItems, {width: 900, height: 44});
+  attachStackTooltip(document.getElementById('br-stack'), brandItems, brandTotal);
+  document.getElementById('br-legend').innerHTML = brandItems.map(d =>
+    `<div class="item"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)} ${fmtPct(d.value/brandTotal)}</div>`).join('');
+
+  document.getElementById('br-vff-bar').innerHTML = hBarChart(vffItems, {width: 900, labelW: 190, fmt: fmtTHB});
+  attachBarTooltip(document.getElementById('br-vff-bar'), vffItems, fmtTHB);
+
+  document.getElementById('br-others-stack').innerHTML = stackedBar(othersItems, {width: 500, height: 40});
+  attachStackTooltip(document.getElementById('br-others-stack'), othersItems, othersTotal);
+  document.getElementById('br-others-legend').innerHTML = othersItems.map(d =>
+    `<div class="item"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)} ${fmtPct(d.value/othersTotal)}</div>`).join('');
+
+  document.getElementById('br-chan-bar').innerHTML = hBarChart(chanItems, {width: 500, labelW: 110, fmt: fmtTHB});
+  attachBarTooltip(document.getElementById('br-chan-bar'), chanItems, fmtTHB);
+}
+
+// ================================================================== PAYMENT TAB
+function renderPayment(){
+  const el = document.getElementById('tab-payment');
+  const pay = DATA.payment_overall;
+  const items = pay.breakdown.map(p => ({label:p.method, value:p.amount,
+    color: p.method==='Cash'?'var(--series-3)':(p.method==='Credit Card'?'var(--series-1)':(p.method==='QR Code'?'var(--series-4)':'var(--series-8)'))}));
+  const total = items.reduce((a,d)=>a+d.value,0) || 1;
+
+  el.innerHTML = `
+    <div class="note-box">
+      <b>決済方法データについて:</b> 決済方法（Cash / Credit Card / QR Code）が記録されているのは「イベント」カテゴリの一部ファイルのみです。
+      K Village・Thaniya・Paradise Park・Central Ladprao 3F・VFF Cart LP・Siam Discovery・オンライン・Central百貨店内・委託販売には決済方法の列がなく、集計できません。
+      決済別データを追加でいただければ、この画面に店舗別の内訳を追加します。
+    </div>
+
+    <div class="card">
+      <h2>決済方法別比率（イベントカテゴリ）</h2>
+      <div class="card-sub">対象金額 ${fmtTHB(pay.coverage_amount)} ・ KBANK・銀行振込はQRコードに、クレジットカードはCredit Cardに分類</div>
+      <div class="chart-wrap" id="pay-stack"></div>
+      <div class="legend" id="pay-legend"></div>
+      <div style="overflow-x:auto; margin-top:1rem">
+        <table class="data">
+          <thead><tr><th>決済方法</th><th>金額</th><th>構成比</th><th>件数（足数ベース）</th></tr></thead>
+          <tbody>${pay.breakdown.map(p => `<tr><td>${esc(p.method)}</td><td>${fmtTHB(p.amount)}</td><td>${fmtPct(p.amount/total)}</td><td>${fmtNum(p.qty)}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>店舗別 決済カバレッジ</h2>
+      <div class="card-sub">決済データが存在する店舗・カテゴリのみ表示</div>
+      <div style="overflow-x:auto">
+        <table class="data">
+          <thead><tr><th>店舗・カテゴリ</th><th>Cash</th><th>Credit Card</th><th>QR Code</th></tr></thead>
+          <tbody>${DATA.stores.filter(s=>s.payment).map(s => {
+            const total_s = s.payment_total || 1;
+            const c = k => s.payment[k] ? fmtPct(s.payment[k].amount/total_s) : '—';
+            return `<tr><td>${esc(s.store)}</td><td>${c('Cash')}</td><td>${c('Credit Card')}</td><td>${c('QR Code')}</td></tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('pay-stack').innerHTML = stackedBar(items, {width: 720, height: 44});
+  attachStackTooltip(document.getElementById('pay-stack'), items, total);
+  document.getElementById('pay-legend').innerHTML = items.map(d =>
+    `<div class="item"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)} ${fmtPct(d.value/total)}</div>`).join('');
+}
+
+// ================================================================== NOTES TAB
+function renderNotes(){
+  const el = document.getElementById('tab-notes');
+  el.innerHTML = `
+    <div class="note-box critical">
+      <b>訂正履歴:</b> 当初「BFT委託」の合計を 1,316,111.80 THB と報告しましたが、元データ末尾の合計行（รวม）を通常の明細行と誤認して二重計上していたため、正しくは <b>658,055.60 THB</b> です。本ダッシュボードは訂正後の値を使用しています。
+    </div>
+
+    <div class="card">
+      <h2>未対応のデータ</h2>
+      <ul class="filelist">
+        <li><b>前年（2025年1〜6月）データ</b> — 未取得のため、前年比較は本ダッシュボードに含まれていません。届き次第追加します。</li>
+        <li><b>決済方法（Cash/Credit Card/QR）</b> — 「イベント」カテゴリの一部ファイル以外には記録がありません。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>集計ルール</h2>
+      <ul class="filelist">
+        <li>ブランド分類: VFF=Vibram FiveFingers／BFJ=BFJ Socks／Coolcore=CP+CCコード統合／Oleno=OLN／TabiRela=MTB／Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB)を統合</li>
+        <li>値引き行（DCコード）・資産売却等の非商品行（P, CONコード）は売上・足数の集計から除外</li>
+        <li>日付は全ファイルでD/M/YYYY（日始まり）形式であることを確認して解析（ファイルにより表記が混在するため都度検証）</li>
+        <li>オンライン販売はBFT・EDV両エンティティを「オンライン」1カテゴリに統合。チャネル別内訳（Shopee/Lazada/LINE/Facebook/Instagram/Website）は別途表示</li>
+        <li>イベント4ファイル（EDV_EVENT_1、BFT_EVENT_1/2/3）は「イベント」1カテゴリに合算</li>
+        <li>委託販売はBFT委託・EDV委託を別カテゴリとして集計</li>
+        <li>BFT_Shopee_Lazada_Facebook_Paradise_Event（重複ファイル）は、既存5ファイルと伝票番号を照合し、重複しない13伝票のみを追加で取り込み（二重計上を回避）</li>
+        <li>Central Total Department（CHIDLOM等5店舗）は月次集計のみのため、伝票数・客単価は算出不可（「—」表示）</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>読み込んだソースファイル（17件）</h2>
+      <ul class="filelist two-col-list">
+        <li>Sale_VFF_Cart_LP_01062026.csv → VFF Cart LP店</li>
+        <li>BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx → オンライン(BFT)</li>
+        <li>BFT_EVENT_3.xlsx → イベント</li>
+        <li>Sales_Paradies_Park_JanJun_26.xlsx → Paradise Park店</li>
+        <li>Sales_Thaniya_JanJun_26.xlsx → Thaniya店</li>
+        <li>Sales_K_village_JanJun_26.xlsx → K Village店</li>
+        <li>EDV_EVENT_1.xlsx → イベント</li>
+        <li>BFT_EVENT_2.xlsx → イベント</li>
+        <li>BFT_EVENT_1.xlsx → イベント</li>
+        <li>BFT_consignment_JanJun_26.xlsx → BFT委託</li>
+        <li>Sales_Central_LP_3F_JanJun_26.xlsx → Central Ladprao 3F(Coollabo)店</li>
+        <li>EDV_consignment_JanJun_26.xlsx → EDV委託</li>
+        <li>Sales_Siam_Dis_JanJun_26.xlsx → Siam Discovery店</li>
+        <li>BFT_Shopee_Lazada_Facebook_Paradise_Event.xlsx → 重複除去の上、オンライン/Paradise Parkに一部統合</li>
+        <li>EDV_Shopee_Lazada_Facebook_JanJun_26.xlsx → オンライン(EDV)</li>
+        <li>BFT_consignment_JanJun_26_new.xlsx → BFT委託と同一データ（検証用）</li>
+        <li>BFT_Central_Total_Department_JanJun_26.xlsx → Central百貨店内5店舗（CHIDLOM等）</li>
+      </ul>
+    </div>
+  `;
+}
+
+renderOverview();
+renderStores();
+renderBrand();
+renderPayment();
+renderNotes();
+</script>
