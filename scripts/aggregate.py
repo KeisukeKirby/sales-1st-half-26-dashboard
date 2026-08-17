@@ -12,36 +12,29 @@ records = json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7
 
 MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06']
 
+
+# Store -> channel-group mapping, used dashboard-wide (Overall tab, By Store tab,
+# and the VFF Shoes tab's channel-share view all share this single scheme now).
+# 直営実店舗 is ONLY the two company-run standalone shops; Coollabo and the VFF
+# cart are mall corners inside Central properties so they roll into Central百貨店内
+# alongside the department-store locations; Siam Discovery and Thaniya each get
+# their own dedicated category rather than being lumped into a generic "retail"
+# bucket (Thaniya carries no VFF shoe sales at all, but still gets its own
+# category for the general store/brand/payment breakdowns).
 STORE_GROUP = {
-    'K Village': 'retail', 'Thaniya': 'retail', 'Paradise Park': 'retail',
-    'Central Ladprao 3F (Coollabo)': 'retail', 'VFF Cart LP': 'retail', 'Siam Discovery': 'retail',
+    'K Village': 'directly_operated', 'Paradise Park': 'directly_operated',
+    'Central Ladprao 3F (Coollabo)': 'central_dept', 'VFF Cart LP': 'central_dept',
     'Central Chidlom': 'central_dept', 'Central Chidlom Online': 'central_dept',
     'Central World (CDS)': 'central_dept', 'Central Lardprao (Dept.)': 'central_dept',
     'Central Eastville': 'central_dept',
+    'Siam Discovery': 'siam_discovery',
+    'Thaniya': 'thaniya',
     'Online': 'online', 'Event': 'event',
     'BFT Consignment': 'consignment', 'EDV Consignment': 'consignment',
 }
 GROUP_LABEL = {
-    'retail': '実店舗', 'central_dept': 'Central百貨店内', 'online': 'オンライン',
-    'event': 'イベント', 'consignment': '委託販売',
-}
-
-# Channel split requested specifically for the "VFF shoes only" section -- distinct
-# from STORE_GROUP above (which the rest of the dashboard still uses). 直営実店舗 is
-# ONLY the two company-run standalone shops; Coollabo and the VFF cart are mall
-# corners inside Central properties so they roll into Central百貨店; Thaniya and
-# Event each get their own bucket (Thaniya carries no VFF shoe sales at all).
-CHANNEL5 = {
-    'Online': 'オンラインストア',
-    'BFT Consignment': '委託販売(オフライン)', 'EDV Consignment': '委託販売(オフライン)',
-    'K Village': '直営実店舗', 'Paradise Park': '直営実店舗',
-    'Central Ladprao 3F (Coollabo)': 'Central百貨店', 'VFF Cart LP': 'Central百貨店',
-    'Central Chidlom': 'Central百貨店', 'Central Chidlom Online': 'Central百貨店',
-    'Central World (CDS)': 'Central百貨店', 'Central Lardprao (Dept.)': 'Central百貨店',
-    'Central Eastville': 'Central百貨店',
-    'Siam Discovery': 'Siam Discovery',
-    'Thaniya': 'Thaniya',
-    'Event': 'イベント',
+    'directly_operated': '直営実店舗', 'central_dept': 'Central百貨店内', 'online': 'オンライン',
+    'event': 'イベント', 'consignment': '委託販売', 'siam_discovery': 'Siam Discovery', 'thaniya': 'Thaniya',
 }
 GENDER_LABEL = {'Women': '女性', 'Men': '男性', 'Unisex': 'ユニセックス'}
 
@@ -86,8 +79,7 @@ online_channel_month = defaultdict(lambda: defaultdict(new_acc))           # cha
 event_payment_month = defaultdict(lambda: defaultdict(new_acc))            # method -> month (Event store only)
 
 vff_shoe_by_month = defaultdict(new_acc)                                   # month (VFF shoes overall)
-vff_shoe_channel_month = defaultdict(lambda: defaultdict(new_acc))         # channel5 -> month
-vff_shoe_store_month = defaultdict(lambda: defaultdict(new_acc))           # raw store name -> month (individual stores, not channel5-grouped)
+vff_shoe_store_month = defaultdict(lambda: defaultdict(new_acc))           # raw store name -> month (individual stores; the dashboard derives the channel-group rollup client-side via STORE_GROUP, same as everywhere else)
 vff_shoe_model_month = defaultdict(lambda: defaultdict(new_acc))           # model (VFF shoes only) -> month
 vff_shoe_gender_month = defaultdict(lambda: defaultdict(new_acc))          # gender -> month
 
@@ -128,8 +120,6 @@ for r in records:
 
     if brand == 'VFF' and r.get('is_vff_shoe'):
         add(vff_shoe_by_month[month])
-        ch5 = CHANNEL5.get(store, store)
-        add(vff_shoe_channel_month[ch5][month])
         add(vff_shoe_store_month[store][month])
         if model_c:
             add(vff_shoe_model_month[model_c][month])
@@ -202,7 +192,6 @@ out['vff_shoes'] = {
     'note': 'VFFブランドのうちシューズのみ（ソックス・Furoshiki等の非シューズ商品は除く）。'
             'サイズ表記（W=女性/M=男性/U=ユニセックス）から性別区分を推定',
     'monthly': [{'month': m, **ser(vff_shoe_by_month[m])} for m in MONTHS],
-    'channel_monthly': monthly_out(vff_shoe_channel_month),
     'store_monthly': monthly_out(vff_shoe_store_month),
     'model_monthly': monthly_out(vff_shoe_model_month),
     'gender_monthly': {GENDER_LABEL.get(g, g): v for g, v in monthly_out(vff_shoe_gender_month).items()},
