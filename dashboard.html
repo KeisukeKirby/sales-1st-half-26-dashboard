@@ -82,23 +82,46 @@ nav.tabs button:hover{color:var(--ink);}
 .tabpanel{display:none;}
 .tabpanel.active{display:block;}
 
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden;min-height:96px;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:30px;}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px 22px;position:relative;overflow:hidden;min-height:108px;}
 .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);}
 .kpi.g::before{background:var(--accent-2);}
 .kpi.c::before{background:var(--accent-3);}
-.kpi-label{font-size:13px;color:var(--ink-dim);margin-bottom:8px;}
-.kpi-value{font-size:28px;font-weight:700;font-family:var(--mono);letter-spacing:-0.01em;}
-.kpi-sub{font-size:12px;color:var(--ink-dim);margin-top:4px;}
-.kpi-yoy{position:absolute;right:18px;bottom:16px;font-family:var(--mono);font-size:12.5px;font-weight:600;display:flex;align-items:baseline;gap:3px;white-space:nowrap;}
+.kpi-label{font-size:12.5px;color:var(--ink-dim);margin-bottom:10px;letter-spacing:.01em;}
+.kpi-value{font-size:38px;font-weight:700;font-family:var(--mono);letter-spacing:-0.02em;line-height:1;}
+.kpi-sub{font-size:12px;color:var(--ink-dim);margin-top:6px;}
+.kpi-yoy{position:absolute;right:18px;bottom:18px;font-family:var(--mono);font-size:12.5px;font-weight:600;display:flex;align-items:baseline;gap:3px;white-space:nowrap;}
 .kpi-yoy .yoy-cap{color:var(--ink-dim);font-size:10px;font-weight:400;margin-right:1px;}
 .kpi-yoy.up{color:var(--accent-2);}
 .kpi-yoy.down{color:var(--danger);}
-.kpi-pending{position:absolute;right:18px;bottom:16px;font-family:var(--mono);font-size:11px;color:var(--ink-faint);}
-section{margin-bottom:26px;}
-.section-title{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.kpi-pending{position:absolute;right:18px;bottom:18px;font-family:var(--mono);font-size:11px;color:var(--ink-faint);}
+section{margin-bottom:34px;}
+.section-title{font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:9px;margin-bottom:14px;}
 .section-title .n{font-family:var(--mono);color:var(--accent);font-size:13px;font-weight:600;}
 .section-note{font-size:12.5px;color:var(--ink-dim);margin:-8px 0 14px;}
+.metric-toggle{display:flex;gap:4px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:3px;}
+.metric-toggle button{
+  font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.02em;
+  color:var(--ink-dim);background:transparent;border:none;border-radius:6px;
+  padding:6px 13px;cursor:pointer;transition:background .15s ease,color .15s ease;white-space:nowrap;
+}
+.metric-toggle button:hover{color:var(--ink);}
+.metric-toggle button.active{background:var(--accent);color:#16241C;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.panel-head h3{margin:0;}
+.grp-dot{display:inline-block;width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+.hl-row{background:rgba(232,163,61,0.10) !important;}
+.hl-seg{filter:brightness(1.22);}
+th.sortable{cursor:pointer;user-select:none;position:relative;}
+th.sortable:hover{color:var(--ink);}
+th.sortable .arrow{display:inline-block;margin-left:3px;opacity:.55;font-size:10px;}
+th.sortable.active .arrow{opacity:1;color:var(--accent);}
+.show-more-btn{
+  display:block;margin:14px auto 0;font-family:var(--mono);font-size:12.5px;font-weight:600;
+  color:var(--ink-dim);background:var(--panel-2);border:1px solid var(--line);border-radius:7px;
+  padding:8px 18px;cursor:pointer;
+}
+.show-more-btn:hover{color:var(--ink);border-color:var(--ink-faint);}
 .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
 .grid2b{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;}
@@ -130,9 +153,18 @@ select option{background:var(--panel);color:var(--ink);}
 .legend{display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--ink-dim);}
 .legend .item{display:flex;align-items:center;gap:8px;justify-content:space-between;}
 .legend .item .k{display:flex;align-items:center;gap:8px;}
-.legend .swatch{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.legend .swatch,.treemap-legend .swatch{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
 .legend .v{font-family:var(--mono);color:var(--ink);}
 .donut-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.treemap-row{display:flex;align-items:center;gap:12px;margin-bottom:3px;}
+.treemap-rowlabel{width:150px;flex-shrink:0;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.treemap-rowamt{width:88px;flex-shrink:0;text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);}
+.treemap-track{flex:1;display:flex;border-radius:5px;overflow:hidden;height:38px;}
+.treemap-seg{cursor:default;opacity:.92;transition:filter .1s;border-right:2px solid var(--panel);}
+.treemap-seg:last-child{border-right:none;}
+.treemap-seg:hover{filter:brightness(1.18);}
+.treemap-legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:16px;font-size:12px;color:var(--ink-dim);}
+.treemap-legend .item{display:flex;align-items:center;gap:6px;}
 .note-box{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:14px 16px;font-size:13px;color:var(--ink-dim);margin-bottom:16px;line-height:1.7;}
 .note-box.critical{border-left-color:var(--danger);}
 .note-box b{color:var(--ink);}
@@ -186,8 +218,13 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
     <div class="kpi-row" id="kpiRow"></div>
     <div class="section-note" style="margin-top:-16px" data-i18n="overviewQtyNote">「総点数」は靴以外の商品（ソックス・タオル・サングラス等）も含む全商品の合計です。VFFシューズのみの足数・内訳は「VFFシューズ」タブへ</div>
 
-    <div class="section-title"><span class="n">01</span><span data-i18n="ov01Title">月次 売上金額・点数推移</span></div>
+    <div class="section-title"><span class="n">01</span><span data-i18n="ov01Title">月次推移（チャネル別内訳）</span></div>
+    <div class="section-note" data-i18n="ov01Note">実店舗・Central百貨店内・オンライン・イベント・委託販売の5区分を色分けした積み上げ棒グラフ。どのチャネルが伸びているかを月ごとに確認できます</div>
     <div class="panel">
+      <div class="panel-head">
+        <div></div>
+        <div class="metric-toggle" id="stackMetricToggle" role="group"></div>
+      </div>
       <div id="comboChart"></div>
     </div>
 
@@ -197,7 +234,13 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <div class="bar-list" id="storeBarList"></div>
     </div>
 
-    <div class="section-title" style="margin-top:26px"><span class="n">03</span><span data-i18n="ov03Title">ブランド別 売上構成（全体）</span></div>
+    <div class="section-title" style="margin-top:26px"><span class="n">03</span><span data-i18n="ov03Title">全体構成ツリーマップ（チャネル × ブランド）</span></div>
+    <div class="section-note" data-i18n="ov03Note">面積が売上金額の大きさを表します。上段の帯がチャネル、帯の中の区切りがそのチャネル内のブランド構成です</div>
+    <div class="panel">
+      <div id="treemap"></div>
+    </div>
+
+    <div class="section-title" style="margin-top:26px"><span class="n">04</span><span data-i18n="ov04TitleBrand">ブランド別 売上構成（全体）</span></div>
     <div class="grid2">
       <div class="panel">
         <h3 data-i18n="brandShareTitle">ブランド別 金額シェア</h3>
@@ -213,7 +256,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:26px"><span class="n">04</span><span data-i18n="ov04Title">決済方法別比率（全体）</span></div>
+    <div class="section-title" style="margin-top:26px"><span class="n">05</span><span data-i18n="ov04Title">決済方法別比率（全体）</span></div>
     <div class="section-note"><span data-i18n="payTargetPrefix">対象</span> <span id="payCoverageAmt" style="font-family:var(--mono);color:var(--ink-dim)"></span> THB <span data-i18n="payOverviewNote">（現状「イベント」カテゴリのみ決済方法を記録。他店舗の内訳は「店舗別」タブで店舗ごとに確認できます）</span></div>
     <div class="panel">
       <div class="donut-wrap">
@@ -248,10 +291,14 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
     </div>
 
     <div class="section-title" style="margin-top:26px"><span class="n">02</span><span data-i18n="vff02Title">販売チャネルシェア</span></div>
-    <div class="section-note" data-i18n="vff02Note">オンラインストア／直営実店舗（K Village・Paradise Park）／Central百貨店（Coollabo・VFF Cart LP含む）／イベント／Siam Discovery／委託販売(オフライン)の6区分（足数ベース）</div>
+    <div class="section-note" data-i18n="vff02Note">オンラインストア／直営実店舗（K Village・Paradise Park）／Central百貨店（Coollabo・VFF Cart LP含む）／イベント／Siam Discovery／委託販売(オフライン)の6区分</div>
+    <div class="panel-head" style="margin-bottom:2px">
+      <div></div>
+      <div class="metric-toggle" id="vffChannelMetricToggle" role="group"></div>
+    </div>
     <div class="grid2">
       <div class="panel">
-        <h3 data-i18n="channelShareTitle">チャネル別 足数シェア</h3>
+        <h3 data-i18n="channelShareTitle">チャネル別 シェア</h3>
         <div class="donut-wrap">
           <div id="vffChannelDonut"></div>
           <div class="legend" id="vffChannelLegend"></div>
@@ -307,7 +354,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
     <div class="panel">
       <div style="overflow-x:auto">
         <table id="storeTable">
-          <thead><tr><th data-i18n="thStoreChannel">店舗・チャネル</th><th data-i18n="thGroup">区分</th><th style="text-align:right" data-i18n="thAmountPlain2">売上金額</th><th style="text-align:right" data-i18n="thQtyPlain">点数</th><th style="text-align:right" data-i18n="thOrders">伝票数</th><th style="text-align:right" data-i18n="thAvgTicket">客単価</th></tr></thead>
+          <thead><tr id="storeTableHead"></tr></thead>
           <tbody id="storeTableBody"></tbody>
         </table>
       </div>
@@ -341,6 +388,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <thead><tr><th style="width:44px">#</th><th data-i18n="thModel">モデル</th><th style="text-align:right" data-i18n="thQty">数量</th><th style="text-align:right" data-i18n="thAmountTHB">金額(THB)</th><th style="text-align:right" data-i18n="thBrandShare">ブランド内比率</th></tr></thead>
         <tbody id="brandDetailBody"></tbody>
       </table>
+      <button type="button" class="show-more-btn" id="brandShowMoreBtn" style="display:none"></button>
     </div>
 
     <div class="section-title" style="margin-top:26px"><span class="n">03</span><span data-i18n="br03Title">Others 内訳（ブランド別比率）</span></div>
@@ -428,6 +476,15 @@ const CHANNEL5_HEX = {
   'イベント': '#D9C15A', 'Thaniya': '#8E9C8F',
 };
 const GENDER_HEX = {'女性': '#B189C7', '男性': '#7FA0C4', 'ユニセックス': '#D9C15A'};
+// Store-group categorical palette (実店舗/Central百貨店内/オンライン/イベント/委託販売).
+// Validated colorblind-safe as a set against the dashboard's dark surfaces via the
+// dataviz skill's validate_palette.js (lightness band, chroma floor, CVD ΔE>=8,
+// normal-vision floor>=15, contrast>=3:1 -- all PASS). Kept as its own fixed hex
+// set (not reused from BRAND_HEX/CHANNEL5_HEX) since group color and brand color
+// appear side-by-side in the treemap and must stay visually distinct there.
+const GROUP_HEX = {
+  retail: '#3987e5', central_dept: '#d95926', online: '#199e70', event: '#c98500', consignment: '#d55181',
+};
 
 const fmt = n => Math.round(n).toLocaleString('en-US');
 const fmtPct = v => (v*100).toFixed(1) + '%';
@@ -442,10 +499,13 @@ const T = {
     periodBarLabel: '分析期間',
     tabOverview: '概要', tabVffShoes: 'VFFシューズ', tabStores: '店舗別', tabBrand: '商品・ブランド別', tabNotes: 'このデータについて',
     overviewQtyNote: '「総点数」は靴以外の商品（ソックス・タオル・サングラス等）も含む全商品の合計です。VFFシューズのみの足数・内訳は「VFFシューズ」タブへ',
-    ov01Title: '月次 売上金額・点数推移',
+    ov01Title: '月次推移（チャネル別内訳）',
+    ov01Note: '実店舗・Central百貨店内・オンライン・イベント・委託販売の5区分を色分けした積み上げ棒グラフ。どのチャネルが伸びているかを月ごとに確認できます',
     ov02Title: '店舗・チャネル別 売上ランキング',
     ov02Note: '実店舗・Central百貨店内・オンライン・イベント・委託販売を含む全15カテゴリ（詳細は「店舗別」タブへ）',
-    ov03Title: 'ブランド別 売上構成（全体）',
+    ov03Title: '全体構成ツリーマップ（チャネル × ブランド）',
+    ov03Note: '面積が売上金額の大きさを表します。上段の帯がチャネル、帯の中の区切りがそのチャネル内のブランド構成です',
+    ov04TitleBrand: 'ブランド別 売上構成（全体）',
     brandShareTitle: 'ブランド別 金額シェア', brandBreakdownTitle: 'ブランド別 内訳',
     thBrand: 'ブランド', thQty: '数量', thAmountPlain: '金額', thShare: '比率',
     ov04Title: '決済方法別比率（全体）',
@@ -455,8 +515,8 @@ const T = {
     vffQtyLabel: 'VFFシューズ 総足数', unitPairs: '足', vffAmtLabel: 'VFFシューズ 総売上金額',
     vff01Title: '月次 販売足数推移',
     vff02Title: '販売チャネルシェア',
-    vff02Note: 'オンラインストア／直営実店舗（K Village・Paradise Park）／Central百貨店（Coollabo・VFF Cart LP含む）／イベント／Siam Discovery／委託販売(オフライン)の6区分（足数ベース）',
-    channelShareTitle: 'チャネル別 足数シェア', channelBreakdownTitle: 'チャネル別 内訳',
+    vff02Note: 'オンラインストア／直営実店舗（K Village・Paradise Park）／Central百貨店（Coollabo・VFF Cart LP含む）／イベント／Siam Discovery／委託販売(オフライン)の6区分',
+    channelShareTitle: 'チャネル別 シェア', channelBreakdownTitle: 'チャネル別 内訳',
     thChannel: 'チャネル', thPairs: '足数', thAmountPlain2: '売上金額',
     vff03Title: '性別セグメント分布（推定）', vff03Note: 'サイズ表記のW/Mから推定した参考値',
     vff04Title: 'モデル別販売ランキング', vff04Note: '各モデルシリーズ別の販売足数（上位10シリーズ、サイズ/カラー・派生モデルは合算）',
@@ -491,6 +551,10 @@ const T = {
     brandSummary: (n,q,net) => `${n} モデル ・ ${fmt(q)} 点 ・ ${fmt(net)} THB`,
     periodLabels: {'2026-01':'1月','2026-02':'2月','2026-03':'3月','2026-04':'4月','2026-05':'5月','2026-06':'6月','Q1':'Q1','Q2':'Q2','H1':'半期(H1)'},
     periodRange: {'2026-01':'2026年1月','2026-02':'2026年2月','2026-03':'2026年3月','2026-04':'2026年4月','2026-05':'2026年5月','2026-06':'2026年6月','Q1':'2026年1〜3月','Q2':'2026年4〜6月','H1':'2026年1〜6月'},
+    metricAmount: '金額', metricQty: '点数', metricPairs: '足数',
+    stackTooltipShare: '全体の',
+    treemapOfTotal: '（全体構成比）', treemapAmtSuffix: '（チャネル内比率）',
+    showMore: n => `もっと見る（+${fmt(n)}）`, showLess: '折りたたむ',
   },
   en: {
     eyebrow: 'Barefoot Inc. 2026 1st Half Performance Report',
@@ -499,10 +563,13 @@ const T = {
     periodBarLabel: 'Analysis Period',
     tabOverview: 'Overview', tabVffShoes: 'VFF Shoes', tabStores: 'By Store', tabBrand: 'Products & Brands', tabNotes: 'About This Data',
     overviewQtyNote: '"Total Units" covers every product including non-footwear (socks, towels, sunglasses, etc). For VFF footwear pairs and detail, see the "VFF Shoes" tab.',
-    ov01Title: 'Monthly Sales Amount & Units',
+    ov01Title: 'Monthly Trend by Channel',
+    ov01Note: 'Stacked bar chart colored by 5 channel groups (standalone stores, Central dept. stores, online, events, consignment) — see at a glance which channel is growing month to month',
     ov02Title: 'Sales Ranking by Store / Channel',
     ov02Note: 'All 15 categories: standalone stores, Central department stores, online, events, and consignment (see the "By Store" tab for detail)',
-    ov03Title: 'Sales Composition by Brand (Overall)',
+    ov03Title: 'Overall Composition Treemap (Channel × Brand)',
+    ov03Note: 'Area encodes sales amount. The top band is channel; the segments within each band are that channel\'s brand mix.',
+    ov04TitleBrand: 'Sales Composition by Brand (Overall)',
     brandShareTitle: 'Sales Share by Brand', brandBreakdownTitle: 'Brand Breakdown',
     thBrand: 'Brand', thQty: 'Qty', thAmountPlain: 'Amount', thShare: 'Share',
     ov04Title: 'Payment Method Ratio (Overall)',
@@ -512,8 +579,8 @@ const T = {
     vffQtyLabel: 'VFF Shoes — Total Pairs Sold', unitPairs: 'pairs', vffAmtLabel: 'VFF Shoes — Total Sales Amount',
     vff01Title: 'Monthly Pairs Sold',
     vff02Title: 'Sales Channel Share',
-    vff02Note: 'Online Store / Directly-operated Stores (K Village, Paradise Park) / Central Dept. Store (incl. Coollabo, VFF Cart LP) / Events / Siam Discovery / Consignment (Offline) — 6 channels, by pairs sold',
-    channelShareTitle: 'Pairs Sold Share by Channel', channelBreakdownTitle: 'Channel Breakdown',
+    vff02Note: 'Online Store / Directly-operated Stores (K Village, Paradise Park) / Central Dept. Store (incl. Coollabo, VFF Cart LP) / Events / Siam Discovery / Consignment (Offline) — 6 channels',
+    channelShareTitle: 'Channel Share', channelBreakdownTitle: 'Channel Breakdown',
     thChannel: 'Channel', thPairs: 'Pairs', thAmountPlain2: 'Sales Amount',
     vff03Title: 'Gender Segment Split (Estimated)', vff03Note: 'Estimated from the W/M size code',
     vff04Title: 'Model Sales Ranking', vff04Note: 'Pairs sold by model series (top 10, sizes/colors and version variants combined)',
@@ -547,6 +614,10 @@ const T = {
     brandSummary: (n,q,net) => `${n} models · ${fmt(q)} units · ${fmt(net)} THB`,
     periodLabels: {'2026-01':'Jan','2026-02':'Feb','2026-03':'Mar','2026-04':'Apr','2026-05':'May','2026-06':'Jun','Q1':'Q1','Q2':'Q2','H1':'H1 (Full)'},
     periodRange: {'2026-01':'Jan 2026','2026-02':'Feb 2026','2026-03':'Mar 2026','2026-04':'Apr 2026','2026-05':'May 2026','2026-06':'Jun 2026','Q1':'Jan – Mar 2026','Q2':'Apr – Jun 2026','H1':'Jan – Jun 2026'},
+    metricAmount: 'Amount', metricQty: 'Units', metricPairs: 'Pairs',
+    stackTooltipShare: 'share of month:',
+    treemapOfTotal: ' of grand total', treemapAmtSuffix: ' of channel total',
+    showMore: n => `Show more (+${fmt(n)})`, showLess: 'Collapse',
   }
 };
 let LANG = localStorage.getItem('bfd_lang') === 'en' ? 'en' : 'ja';
@@ -702,61 +773,85 @@ function renderKPI(){
   `;
 }
 
-// ============================================================== combo bar+line chart (dual axis, SVG)
-// Always plots all 6 months for trend context; bars/points outside the
-// selected period are dimmed rather than removed, so the period selector
-// reads as a highlight, not a data loss.
+// ============================================================== monthly channel-stacked bar chart (SVG)
+// Replaces the old dual-axis bar+line combo (bars=amount, line=qty on a second
+// axis -- two different scales sharing one plot is the #1 chart anti-pattern).
+// Instead: one metric at a time (toggle button switches amount<->qty), stacked
+// by the 5 store-group channels in a fixed order/color (GROUP_HEX) so the same
+// channel always reads as the same color across the whole dashboard. Always
+// plots all 6 months for trend context; months outside the selected period are
+// dimmed rather than removed, so the period selector reads as a highlight, not
+// a data loss (same convention as every other period-aware chart here).
+let stackMetric = 'amount';
+function groupMonthlyTotals(){
+  const out = {};
+  GROUP_ORDER.forEach(g => { out[g] = {}; MONTHS.forEach(m => out[g][m] = {amount:0, qty:0}); });
+  DATA.stores.forEach(s => {
+    if (!out[s.group]) return;
+    MONTHS.forEach(m => {
+      const v = s.monthly[m];
+      if (v) { out[s.group][m].amount += v.amount; out[s.group][m].qty += v.qty; }
+    });
+  });
+  return out;
+}
+function renderStackMetricToggle(){
+  const el = document.getElementById('stackMetricToggle');
+  el.innerHTML = [['amount','metricAmount'],['qty','metricQty']].map(([k,lbl]) =>
+    `<button type="button" data-metric="${k}" class="${stackMetric===k?'active':''}">${esc(t(lbl))}</button>`).join('');
+  el.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => { stackMetric = b.dataset.metric; renderComboChart(); });
+  });
+}
 function renderComboChart(){
-  const w = 1080, h = 300, padL = 64, padR = 56, padT = 20, padB = 30;
+  renderStackMetricToggle();
+  const w = 1080, h = 300, padL = 64, padR = 20, padT = 20, padB = 30;
   const plotW = w - padL - padR, plotH = h - padT - padB;
   const monthly = DATA.monthly_overall;
-  const maxAmt = Math.max(...monthly.map(m=>m.amount)) * 1.15;
-  const maxQty = Math.max(...monthly.map(m=>m.qty)) * 1.25;
+  const groupMonthly = groupMonthlyTotals();
   const n = monthly.length;
   const bandW = plotW / n;
-  const barW = Math.min(bandW * 0.42, 46);
+  const barW = Math.min(bandW * 0.5, 58);
   const xC = i => padL + bandW * i + bandW/2;
-  const yAmt = v => padT + plotH - (v/maxAmt)*plotH;
-  const yQty = v => padT + plotH - (v/maxQty)*plotH;
   const inPeriod = m => currentMonths.includes(m);
+  const metricKey = stackMetric; // 'amount' | 'qty'
+
+  const monthTotals = monthly.map(m => GROUP_ORDER.reduce((s,g) => s + groupMonthly[g][m.month][metricKey], 0));
+  const {max: maxV, step} = niceAxis(Math.max(...monthTotals, 1), 5);
+  const y = v => padT + plotH - (v/maxV)*plotH;
 
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" preserveAspectRatio="xMinYMin meet">`;
-  const steps = 4;
-  for (let s=0;s<=steps;s++){
-    const v = maxAmt/steps*s;
-    const yy = yAmt(v);
+  for (let s=0; s*step<=maxV; s++){
+    const v = step*s, yy = y(v);
     svg += `<line x1="${padL}" y1="${yy}" x2="${w-padR}" y2="${yy}" class="axis-line"></line>`;
-    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;
-  }
-  for (let s=0;s<=steps;s++){
-    const v = maxQty/steps*s;
-    const yy = yQty(v);
-    svg += `<text x="${w-padR+8}" y="${yy+3}" text-anchor="start">${fmt(v)}</text>`;
+    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${metricKey==='amount' ? (v/1e6).toFixed(1)+'M' : fmt(v)}</text>`;
   }
   monthly.forEach((m,i) => {
     const on = inPeriod(m.month);
     svg += `<text x="${xC(i)}" y="${h-8}" text-anchor="middle" style="${on?'':'opacity:.45'}">${monthLabel(m.month)}</text>`;
-    const bh = plotH - (yAmt(m.amount) - padT);
-    svg += `<rect x="${xC(i)-barW/2}" y="${yAmt(m.amount)}" width="${barW}" height="${bh}" rx="4" fill="var(--accent-4)" opacity="${on?1:0.32}" class="cbar" data-i="${i}"></rect>`;
-  });
-  let linePath = '';
-  monthly.forEach((m,i) => { linePath += (i===0?'M':'L') + xC(i) + ' ' + yQty(m.qty) + ' '; });
-  svg += `<path d="${linePath}" fill="none" stroke="var(--accent-2)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>`;
-  monthly.forEach((m,i) => {
-    const on = inPeriod(m.month);
-    svg += `<circle cx="${xC(i)}" cy="${yQty(m.qty)}" r="4.5" fill="var(--accent-2)" opacity="${on?1:0.4}" stroke="var(--panel)" stroke-width="2" class="cpt" data-i="${i}"></circle>`;
+    let cum = 0;
+    const monthTotal = monthTotals[i] || 1;
+    GROUP_ORDER.forEach(g => {
+      const v = groupMonthly[g][m.month][metricKey];
+      if (v <= 0) return;
+      const y0 = y(cum), y1 = y(cum+v);
+      cum += v;
+      svg += `<rect x="${xC(i)-barW/2}" y="${y1}" width="${barW}" height="${Math.max(y0-y1,0)}" fill="${GROUP_HEX[g]}"
+        opacity="${on?1:0.32}" stroke="var(--panel)" stroke-width="2" class="gseg" data-i="${i}" data-g="${g}"></rect>`;
+    });
   });
   svg += `</svg>`;
   const el = document.getElementById('comboChart');
-  el.innerHTML = svg + `<div class="legend" style="flex-direction:row;gap:20px;margin-top:10px;justify-content:center">
-    <div class="item"><span class="k"><span class="swatch" style="background:var(--accent-4)"></span>${esc(t('comboLegendAmount'))}</span></div>
-    <div class="item"><span class="k"><span class="swatch" style="background:var(--accent-2)"></span>${esc(t('comboLegendQty'))}</span></div>
-  </div>
+  const legendHtml = GROUP_ORDER.map(g => `<div class="item"><span class="k"><span class="swatch" style="background:${GROUP_HEX[g]}"></span>${esc(trLabel(DATA.group_label[g]))}</span></div>`).join('');
+  el.innerHTML = svg + `<div class="legend" style="flex-direction:row;gap:18px;margin-top:10px;justify-content:center;flex-wrap:wrap">${legendHtml}</div>
   <div class="chart-note">${esc(t('comboNote'))}</div>`;
-  el.querySelectorAll('.cbar, .cpt').forEach(node => {
+  el.querySelectorAll('.gseg').forEach(node => {
     node.addEventListener('mousemove', e => {
-      const m = monthly[+node.dataset.i];
-      showTip(e, `<b>${monthLabel(m.month)}</b><br>${esc(t('ttSales'))}: ${fmt(m.amount)} THB<br>${esc(t('ttQty'))}: ${fmt(m.qty)}<br>${esc(t('ttOrders'))}: ${fmt(m.orders)}${esc(t('unitCase'))}`);
+      const i = +node.dataset.i, g = node.dataset.g, m = monthly[i];
+      const v = groupMonthly[g][m.month][metricKey];
+      const shareOfMonth = monthTotals[i] ? (v/monthTotals[i]*100).toFixed(1) : '0.0';
+      const unit = metricKey==='amount' ? 'THB' : t('unitPt');
+      showTip(e, `<b>${esc(trLabel(DATA.group_label[g]))}</b> ・ ${monthLabel(m.month)}<br>${fmt(v)} ${unit} (${t('stackTooltipShare')}${shareOfMonth}%)`);
     });
     node.addEventListener('mouseleave', hideTip);
   });
@@ -780,12 +875,13 @@ function renderStoreBarList(){
   let html = '';
   GROUP_ORDER.forEach(g => {
     if (!groups[g]) return;
-    html += `<div style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.05em;margin:${html?'10px':'0'} 0 2px">${esc(trLabel(DATA.group_label[g]))}</div>`;
+    html += `<div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.05em;margin:${html?'10px':'0'} 0 2px">
+      <span class="grp-dot" style="background:${GROUP_HEX[g]}"></span>${esc(trLabel(DATA.group_label[g]))}</div>`;
     groups[g].forEach(s => {
       const pct = (s.amount/maxAmt*100).toFixed(1);
       html += `<div class="bar-row">
         <div class="lbl">${esc(s.store)}</div>
-        <div class="bar-track"><div class="bar-fill store-fill" style="width:${pct}%" data-amt="${s.amount}" data-qty="${s.qty}" data-name="${esc(s.store)}"></div></div>
+        <div class="bar-track"><div class="bar-fill store-fill" style="width:${pct}%;background:linear-gradient(90deg,${GROUP_HEX[g]}99,${GROUP_HEX[g]})" data-amt="${s.amount}" data-qty="${s.qty}" data-name="${esc(s.store)}"></div></div>
         <div class="bar-val">${fmt(s.amount)}</div>
       </div>`;
     });
@@ -797,14 +893,53 @@ function renderStoreBarList(){
   });
 }
 
-// ============================================================== store comparison table
+// ============================================================== store comparison table (sortable)
+let storeSortKey = 'amount', storeSortDir = 'desc';
+const STORE_SORT_COLS = [
+  {key:'store', i18n:'thStoreChannel', numeric:false},
+  {key:'group', i18n:'thGroup', numeric:false},
+  {key:'amount', i18n:'thAmountPlain2', numeric:true},
+  {key:'qty', i18n:'thQtyPlain', numeric:true},
+  {key:'orders', i18n:'thOrders', numeric:true},
+  {key:'avg_ticket', i18n:'thAvgTicket', numeric:true},
+];
+function renderStoreTableHead(){
+  const tr = document.getElementById('storeTableHead');
+  tr.innerHTML = STORE_SORT_COLS.map(c => {
+    const active = c.key === storeSortKey;
+    const arrow = active ? (storeSortDir === 'desc' ? '▼' : '▲') : (c.numeric ? '▼' : '▲');
+    const alignStyle = c.numeric ? ' style="text-align:right"' : '';
+    return `<th class="sortable${active?' active':''}" data-sort="${c.key}"${alignStyle}>${esc(t(c.i18n))}<span class="arrow">${arrow}</span></th>`;
+  }).join('');
+  tr.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if (key === storeSortKey) { storeSortDir = storeSortDir === 'desc' ? 'asc' : 'desc'; }
+      else { storeSortKey = key; storeSortDir = STORE_SORT_COLS.find(c=>c.key===key).numeric ? 'desc' : 'asc'; }
+      renderStoreTable();
+    });
+  });
+}
 function renderStoreTable(){
-  const stores = periodStores().sort((a,b) => b.amount - a.amount);
+  renderStoreTableHead();
+  const stores = periodStores();
+  const dir = storeSortDir === 'desc' ? -1 : 1;
+  stores.sort((a,b) => {
+    let av, bv;
+    if (storeSortKey === 'store') { av = a.store; bv = b.store; return dir * av.localeCompare(bv); }
+    if (storeSortKey === 'group') { av = GROUP_ORDER.indexOf(a.group); bv = GROUP_ORDER.indexOf(b.group); return dir * (av - bv); }
+    av = a[storeSortKey]; bv = b[storeSortKey];
+    // nulls (categories with no order data, e.g. Central dept. stores) always sort last regardless of direction
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return dir * (av - bv);
+  });
   const tbody = document.getElementById('storeTableBody');
   tbody.innerHTML = stores.map(s => `
     <tr>
       <td>${esc(s.store)}</td>
-      <td><span class="badge">${esc(trLabel(DATA.group_label[s.group] || s.group))}</span></td>
+      <td><span class="badge"><span class="grp-dot" style="background:${GROUP_HEX[s.group]||'#8E9C8F'};margin-right:5px"></span>${esc(trLabel(DATA.group_label[s.group] || s.group))}</span></td>
       <td class="num">${fmt(s.amount)}</td>
       <td class="num">${fmt(s.qty)}</td>
       <td class="num">${s.orders ? fmt(s.orders) : '—'}</td>
@@ -835,7 +970,7 @@ function donutChart(items, opts){
     const gap = circumference - dash;
     svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="${stroke}"
       stroke-dasharray="${Math.max(dash-2,0)} ${gap+2}" stroke-dashoffset="${-offset}"
-      transform="rotate(-90 ${cx} ${cy})" class="donut-seg" data-i="${i}" stroke-linecap="butt"></circle>`;
+      transform="rotate(-90 ${cx} ${cy})" class="donut-seg" data-i="${i}" data-key="${esc(d.key!=null?d.key:d.label)}" stroke-linecap="butt"></circle>`;
     offset += dash;
   });
   const centerLabel = opts.centerLabel || ((total/1e6).toFixed(2) + 'M');
@@ -854,6 +989,29 @@ function attachDonutTip(container, items, total, unit){
   });
 }
 
+// Two-way hover link between a donut's segments and an adjacent table's rows:
+// hovering a segment highlights the row sharing its data-key (and vice versa),
+// so the "whole -> breakdown" relationship reads as one connected picture
+// instead of two separate widgets the reader has to cross-reference by eye.
+function linkDonutTable(donutContainer, tbody){
+  const segs = donutContainer.querySelectorAll('.donut-seg');
+  const rows = tbody.querySelectorAll('tr[data-key]');
+  function clearHL(){ segs.forEach(s => s.classList.remove('hl-seg')); rows.forEach(r => r.classList.remove('hl-row')); }
+  function setHL(key){
+    clearHL();
+    segs.forEach(s => { if (s.dataset.key === key) s.classList.add('hl-seg'); });
+    rows.forEach(r => { if (r.dataset.key === key) r.classList.add('hl-row'); });
+  }
+  segs.forEach(s => {
+    s.addEventListener('mouseenter', () => setHL(s.dataset.key));
+    s.addEventListener('mouseleave', clearHL);
+  });
+  rows.forEach(r => {
+    r.addEventListener('mouseenter', () => setHL(r.dataset.key));
+    r.addEventListener('mouseleave', clearHL);
+  });
+}
+
 function renderBrandSection(){
   const brandSummed = sumKeyed(DATA.brand_monthly);
   const brandList = toSortedList(brandSummed, 'brand');
@@ -864,8 +1022,9 @@ function renderBrandSection(){
   document.getElementById('brandLegend').innerHTML = items.map(d =>
     `<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span><span class="v">${fmtPct(d.value/total)}</span></div>`).join('');
   document.getElementById('brandBody').innerHTML = brandList.map(b => `
-    <tr><td>${esc(b.brand)}</td><td class="num">${fmt(b.qty)}</td><td class="num">${fmt(b.amount)}</td><td class="num">${fmtPct(b.amount/total)}</td></tr>
+    <tr data-key="${esc(b.brand)}"><td>${esc(b.brand)}</td><td class="num">${fmt(b.qty)}</td><td class="num">${fmt(b.amount)}</td><td class="num">${fmtPct(b.amount/total)}</td></tr>
   `).join('');
+  linkDonutTable(document.getElementById('brandDonut'), document.getElementById('brandBody'));
 
   const modelSummed = sumKeyed(DATA.model_monthly);
   const modelList = toSortedList(modelSummed, 'model');
@@ -884,17 +1043,82 @@ function renderOthersSection(){
     `<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span><span class="v">${fmtPct(d.value/total)}</span></div>`).join('');
 }
 
-// ============================================================== brand detail dropdown
+// ============================================================== treemap: overall -> channel -> brand
+// A slice/dice treemap: each channel gets a row whose HEIGHT is proportional to
+// that channel's share of total sales; within a row, brand segments split the
+// full row WIDTH by their share of that channel's sales. Because area = height x
+// width, each brand segment's on-screen area is proportional to
+// channel_share x brand_share_within_channel == that brand's true share of the
+// grand total -- a mathematically correct treemap, built with plain flexbox
+// rows/divs rather than a 2D squarified layout (no extra library needed for a
+// 5-channel x few-brand hierarchy, and it stays perfectly legible).
+function renderTreemap(){
+  const groupData = {};
+  GROUP_ORDER.forEach(g => { groupData[g] = {amount:0, qty:0, brands:{}}; });
+  DATA.stores.forEach(s => {
+    if (!groupData[s.group]) return;
+    const bm = sumKeyed(s.brand_monthly);
+    Object.entries(bm).forEach(([brand, v]) => {
+      groupData[s.group].amount += v.amount;
+      groupData[s.group].qty += v.qty;
+      groupData[s.group].brands[brand] = (groupData[s.group].brands[brand] || 0) + v.amount;
+    });
+  });
+  const rows = GROUP_ORDER.map(g => ({group:g, ...groupData[g]})).filter(r => r.amount > 0).sort((a,b) => b.amount - a.amount);
+  const grandTotal = rows.reduce((s,r) => s+r.amount, 0) || 1;
+
+  const totalH = 300, minH = 30;
+  let heights = rows.map(r => Math.max(r.amount/grandTotal*totalH, minH));
+
+  const brandsSeen = new Set();
+  let html = '';
+  rows.forEach((r,ri) => {
+    const brandEntries = Object.entries(r.brands).sort((a,b) => b[1]-a[1]);
+    brandEntries.forEach(([b]) => brandsSeen.add(b));
+    const segsHtml = brandEntries.map(([brand, amt], i) => {
+      const wPct = (amt/r.amount*100).toFixed(2);
+      const globalShare = fmtPct(amt/grandTotal);
+      const withinShare = fmtPct(amt/r.amount);
+      return `<div class="treemap-seg" style="width:${wPct}%;background:${BRAND_HEX[brand]||'#8E9C8F'}" data-i="${i}" data-row="${ri}"
+        data-tip="<b>${esc(trLabel(DATA.group_label[r.group]))} → ${esc(brand)}</b><br>${fmt(amt)} THB<br>${globalShare}${esc(t('treemapOfTotal'))}<br>${withinShare}${esc(t('treemapAmtSuffix'))}"></div>`;
+    }).join('');
+    html += `<div class="treemap-row">
+      <div class="treemap-rowlabel"><span class="grp-dot" style="background:${GROUP_HEX[r.group]}"></span>${esc(trLabel(DATA.group_label[r.group]))}</div>
+      <div class="treemap-rowamt">${fmt(r.amount)}</div>
+      <div class="treemap-track" style="height:${heights[ri]}px">${segsHtml}</div>
+    </div>`;
+  });
+  const legendHtml = [...brandsSeen].map(b => `<div class="item"><span class="swatch" style="background:${BRAND_HEX[b]||'#8E9C8F'}"></span>${esc(b)}</div>`).join('');
+  const el = document.getElementById('treemap');
+  el.innerHTML = html + `<div class="treemap-legend">${legendHtml}</div>`;
+  el.querySelectorAll('.treemap-seg').forEach(seg => {
+    seg.addEventListener('mousemove', e => showTip(e, seg.dataset.tip));
+    seg.addEventListener('mouseleave', hideTip);
+  });
+}
+
+// ============================================================== brand detail dropdown (top-N + show more)
+const BRAND_DETAIL_LIMIT = 15;
+let brandDetailShowAll = false;
 function renderBrandDetail(brand){
   const modelMonthly = (DATA.brand_model_monthly[brand]) || {};
   const summed = sumKeyed(modelMonthly);
   const rows = toSortedList(summed, 'model');
   const totalNet = rows.reduce((s,r)=>s+r.amount,0);
   const totalQty = rows.reduce((s,r)=>s+r.qty,0);
-  document.getElementById('brandDetailBody').innerHTML = rows.map((r,i) => `
+  const visible = brandDetailShowAll ? rows : rows.slice(0, BRAND_DETAIL_LIMIT);
+  document.getElementById('brandDetailBody').innerHTML = visible.map((r,i) => `
     <tr><td><span class="rank">${i+1}</span></td><td>${esc(r.model)}</td><td class="num">${fmt(r.qty)}</td><td class="num">${fmt(r.amount)}</td>
     <td class="num">${totalNet ? (r.amount/totalNet*100).toFixed(1) : '0.0'}%</td></tr>`).join('');
   document.getElementById('brandSummary').textContent = t('brandSummary')(rows.length, totalQty, totalNet);
+  const moreBtn = document.getElementById('brandShowMoreBtn');
+  if (rows.length > BRAND_DETAIL_LIMIT) {
+    moreBtn.style.display = 'block';
+    moreBtn.textContent = brandDetailShowAll ? t('showLess') : t('showMore')(rows.length - BRAND_DETAIL_LIMIT);
+    moreBtn.onclick = () => { brandDetailShowAll = !brandDetailShowAll; renderBrandDetail(brand); };
+  } else {
+    moreBtn.style.display = 'none';
+  }
 }
 function setupBrandSelect(){
   const sel = document.getElementById('brandSelect');
@@ -911,6 +1135,7 @@ function setupBrandSelect(){
 }
 document.getElementById('brandSelect').addEventListener('change', e => {
   e.target.dataset.selected = e.target.value;
+  brandDetailShowAll = false;
   renderBrandDetail(e.target.value);
 });
 
@@ -1066,7 +1291,17 @@ function hBarChartAxis(items, opts){
   return svg;
 }
 
+let vffChannelMetric = 'qty';
+function renderVffChannelMetricToggle(){
+  const el = document.getElementById('vffChannelMetricToggle');
+  el.innerHTML = [['qty','metricPairs'],['amount','metricAmount']].map(([k,lbl]) =>
+    `<button type="button" data-metric="${k}" class="${vffChannelMetric===k?'active':''}">${esc(t(lbl))}</button>`).join('');
+  el.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => { vffChannelMetric = b.dataset.metric; renderVffShoes(); });
+  });
+}
 function renderVffShoes(){
+  renderVffChannelMetricToggle();
   const vs = DATA.vff_shoes;
   const VFF_MONTH_MAP = Object.fromEntries(vs.monthly.map(m => [m.month, m]));
   const totals = sumMonthly(VFF_MONTH_MAP);
@@ -1099,18 +1334,22 @@ function renderVffShoes(){
     el.addEventListener('mouseleave', hideTip);
   });
 
-  // channel share (qty-based, period-summed)
+  // channel share -- metric toggle switches the donut/sort/% basis between qty and amount;
+  // the breakdown table always shows both columns so nothing is lost when toggling.
   const chSummed = sumKeyed(vs.channel_monthly);
-  const chList = toSortedList(chSummed, 'channel').sort((a,b) => b.qty - a.qty);
-  const chItems = chList.map(c => ({label:trLabel(c.channel), value:c.qty, color: CHANNEL5_HEX[c.channel] || '#8E9C8F'}));
+  const chMetricKey = vffChannelMetric; // 'qty' | 'amount'
+  const chList = toSortedList(chSummed, 'channel').sort((a,b) => b[chMetricKey] - a[chMetricKey]);
+  const chItems = chList.map(c => ({label:trLabel(c.channel), key:c.channel, value:c[chMetricKey], color: CHANNEL5_HEX[c.channel] || '#8E9C8F'}));
   const chTotal = chItems.reduce((a,d)=>a+d.value,0) || 1;
-  document.getElementById('vffChannelDonut').innerHTML = donutChart(chItems, {centerLabel: fmt(chTotal), centerUnit: t('unitPairs')});
-  attachDonutTip(document.getElementById('vffChannelDonut'), chItems, chTotal, t('unitPairs'));
+  const chUnit = chMetricKey==='qty' ? t('unitPairs') : 'THB';
+  document.getElementById('vffChannelDonut').innerHTML = donutChart(chItems, {centerLabel: chMetricKey==='qty' ? fmt(chTotal) : (chTotal/1e6).toFixed(2)+'M', centerUnit: chUnit});
+  attachDonutTip(document.getElementById('vffChannelDonut'), chItems, chTotal, chUnit);
   document.getElementById('vffChannelLegend').innerHTML = chItems.map(d =>
     `<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span><span class="v">${fmtPct(d.value/chTotal)}</span></div>`).join('');
   document.getElementById('vffChannelBody').innerHTML = chList.map(c => `
-    <tr><td>${esc(trLabel(c.channel))}</td><td class="num">${fmt(c.qty)}</td><td class="num">${fmt(c.amount)}</td><td class="num">${fmtPct(c.qty/chTotal)}</td></tr>
+    <tr data-key="${esc(c.channel)}"><td><span class="grp-dot" style="background:${CHANNEL5_HEX[c.channel]||'#8E9C8F'};margin-right:6px"></span>${esc(trLabel(c.channel))}</td><td class="num">${fmt(c.qty)}</td><td class="num">${fmt(c.amount)}</td><td class="num">${fmtPct(c[chMetricKey]/chTotal)}</td></tr>
   `).join('');
+  linkDonutTable(document.getElementById('vffChannelDonut'), document.getElementById('vffChannelBody'));
 
   // gender distribution (qty-based, period-summed)
   const gSummed = sumKeyed(vs.gender_monthly);
@@ -1145,6 +1384,7 @@ function renderAll(){
   renderKPI();
   renderComboChart();
   renderStoreBarList();
+  renderTreemap();
   renderStoreTable();
   renderBrandSection();
   renderOthersSection();
