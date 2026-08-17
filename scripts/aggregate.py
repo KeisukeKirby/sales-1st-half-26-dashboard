@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Aggregate canonical records.json into the JSON payload consumed by the dashboard."""
+"""Aggregate canonical records.json into the JSON payload consumed by the dashboard.
+
+Every dimension is broken down by month (in addition to its H1 total) so the
+dashboard can re-slice any figure into an arbitrary period (a single month,
+Q1, Q2, or the full half) entirely client-side, without re-running this script.
+"""
 import json
 from collections import defaultdict
 
@@ -21,10 +26,11 @@ GROUP_LABEL = {
     'event': 'イベント', 'consignment': '委託販売',
 }
 
-# 5-way channel split requested specifically for the "VFF shoes only" section --
-# distinct from STORE_GROUP above (which the rest of the dashboard still uses).
-# Event is folded into 直営実店舗 since it's company staff selling at a temporary
-# venue, operationally the same as the other directly-run touchpoints.
+# Channel split requested specifically for the "VFF shoes only" section -- distinct
+# from STORE_GROUP above (which the rest of the dashboard still uses). 直営実店舗 is
+# ONLY the two company-run standalone shops; Coollabo and the VFF cart are mall
+# corners inside Central properties so they roll into Central百貨店; Thaniya and
+# Event each get their own bucket (Thaniya carries no VFF shoe sales at all).
 CHANNEL5 = {
     'Online': 'オンラインストア',
     'BFT Consignment': '委託販売(オフライン)', 'EDV Consignment': '委託販売(オフライン)',
@@ -42,6 +48,14 @@ GENDER_LABEL = {'Women': '女性', 'Men': '男性', 'Unisex': 'ユニセック�
 def new_acc():
     return {'amount': 0.0, 'qty': 0.0, 'orders': set()}
 
+def ser(acc):
+    return {'amount': round(acc['amount'], 2), 'qty': round(acc['qty'], 1),
+            'orders': len(acc['orders']) if isinstance(acc['orders'], set) else acc['orders']}
+
+def monthly_out(acc_by_key_month):
+    """{key: {month: acc}} -> {key: {month: {amount,qty,orders}}}, every month present."""
+    return {k: {m: ser(months.get(m, new_acc())) for m in MONTHS} for k, months in acc_by_key_month.items()}
+
 # ---------------------------------------------------------------- model-name casing normalization
 # Different source files render the same model with different casing
 # ("VFF KSO EVO" vs "VFF Kso Evo") -- collapse by uppercase key, keep whichever casing
@@ -57,118 +71,91 @@ MODEL_CANON = {
 def canon_model(m):
     return MODEL_CANON.get(m.upper(), m) if m else m
 
-# ---------------------------------------------------------------- store-level
-store_acc = defaultdict(new_acc)
-store_month = defaultdict(lambda: defaultdict(new_acc))
-store_brand = defaultdict(lambda: defaultdict(new_acc))
-store_payment = defaultdict(lambda: defaultdict(new_acc))
+# ---------------------------------------------------------------- accumulators
+# every "_month" accumulator is {key: {month: acc}}; totals are summed from these.
+store_month = defaultdict(lambda: defaultdict(new_acc))                    # store -> month
+store_brand_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))   # store -> brand -> month
+store_payment_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc))) # store -> method -> month
 
-overall_month = defaultdict(new_acc)
-overall_brand = defaultdict(new_acc)
-vff_model = defaultdict(new_acc)
-others_sub = defaultdict(new_acc)
-online_channel = defaultdict(new_acc)
-online_channel_month = defaultdict(lambda: defaultdict(new_acc))
-event_payment = defaultdict(new_acc)
-brand_month = defaultdict(lambda: defaultdict(new_acc))
-model_overall = defaultdict(new_acc)
-brand_model = defaultdict(lambda: defaultdict(new_acc))
+overall_month = defaultdict(new_acc)                                       # month
+brand_month = defaultdict(lambda: defaultdict(new_acc))                    # brand -> month
+model_month = defaultdict(lambda: defaultdict(new_acc))                    # model (all brands) -> month
+brand_model_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))   # brand -> model -> month
+others_sub_month = defaultdict(lambda: defaultdict(new_acc))               # sub-brand -> month
+online_channel_month = defaultdict(lambda: defaultdict(new_acc))           # channel -> month
+event_payment_month = defaultdict(lambda: defaultdict(new_acc))            # method -> month (Event store only)
 
-# VFF shoes only (excludes VFF socks/furoshiki-without-size etc.)
-vff_shoe_month = defaultdict(new_acc)
-vff_shoe_channel = defaultdict(new_acc)
-vff_shoe_channel_month = defaultdict(lambda: defaultdict(new_acc))
-vff_shoe_model = defaultdict(new_acc)
-vff_shoe_gender = defaultdict(new_acc)
-vff_shoe_total = new_acc()
+vff_shoe_by_month = defaultdict(new_acc)                                   # month (VFF shoes overall)
+vff_shoe_channel_month = defaultdict(lambda: defaultdict(new_acc))         # channel5 -> month
+vff_shoe_model_month = defaultdict(lambda: defaultdict(new_acc))           # model (VFF shoes only) -> month
+vff_shoe_gender_month = defaultdict(lambda: defaultdict(new_acc))          # gender -> month
 
 for r in records:
     store, month, brand = r['store'], r['month'], r['brand']
     amt, qty = r['amount'], r['qty']
-    oid = r['order_id']
+    # order numbering is only unique WITHIN a store's own scheme (two different
+    # stores can independently produce the same order id) -- qualify by store so
+    # every accumulator's order count, not just the store-scoped ones, is correct.
+    oid = (store, r['order_id']) if r['order_id'] else None
 
-    store_acc[store]['amount'] += amt
-    store_acc[store]['qty'] += qty
-    if oid:
-        store_acc[store]['orders'].add(oid)
+    def add(acc, oid=oid):
+        acc['amount'] += amt
+        acc['qty'] += qty
+        if oid:
+            acc['orders'].add(oid)
 
-    store_month[store][month]['amount'] += amt
-    store_month[store][month]['qty'] += qty
-    if oid:
-        store_month[store][month]['orders'].add(oid)
-
-    store_brand[store][brand]['amount'] += amt
-    store_brand[store][brand]['qty'] += qty
-
-    overall_month[month]['amount'] += amt
-    overall_month[month]['qty'] += qty
-    if oid:
-        overall_month[month]['orders'].add((store, oid))
-
-    overall_brand[brand]['amount'] += amt
-    overall_brand[brand]['qty'] += qty
-
-    brand_month[brand][month]['amount'] += amt
-    brand_month[brand][month]['qty'] += qty
+    add(store_month[store][month])
+    add(store_brand_month[store][brand][month])
+    add(overall_month[month])
+    add(brand_month[brand][month])
 
     model_c = canon_model(r['model'])
-    if brand == 'VFF' and model_c:
-        vff_model[model_c]['amount'] += amt
-        vff_model[model_c]['qty'] += qty
-
     if model_c:
-        model_overall[model_c]['amount'] += amt
-        model_overall[model_c]['qty'] += qty
-        brand_model[brand][model_c]['amount'] += amt
-        brand_model[brand][model_c]['qty'] += qty
+        add(model_month[model_c][month])
+        add(brand_model_month[brand][model_c][month])
 
     if brand == 'Others' and r['sub']:
-        others_sub[r['sub']]['amount'] += amt
-        others_sub[r['sub']]['qty'] += qty
+        add(others_sub_month[r['sub']][month])
 
     if store == 'Online' and r['channel']:
-        online_channel[r['channel']]['amount'] += amt
-        online_channel[r['channel']]['qty'] += qty
-        online_channel_month[r['channel']][month]['amount'] += amt
+        add(online_channel_month[r['channel']][month])
 
     if r['payment']:
-        store_payment[store][r['payment']]['amount'] += amt
-        store_payment[store][r['payment']]['qty'] += qty
+        add(store_payment_month[store][r['payment']][month])
         if store == 'Event':
-            event_payment[r['payment']]['amount'] += amt
-            event_payment[r['payment']]['qty'] += qty
+            add(event_payment_month[r['payment']][month])
 
     if brand == 'VFF' and r.get('is_vff_shoe'):
-        vff_shoe_total['amount'] += amt
-        vff_shoe_total['qty'] += qty
-        vff_shoe_month[month]['amount'] += amt
-        vff_shoe_month[month]['qty'] += qty
+        add(vff_shoe_by_month[month])
         ch5 = CHANNEL5.get(store, store)
-        vff_shoe_channel[ch5]['amount'] += amt
-        vff_shoe_channel[ch5]['qty'] += qty
-        vff_shoe_channel_month[ch5][month]['qty'] += qty
+        add(vff_shoe_channel_month[ch5][month])
         if model_c:
-            vff_shoe_model[model_c]['amount'] += amt
-            vff_shoe_model[model_c]['qty'] += qty
+            add(vff_shoe_model_month[model_c][month])
         g = r.get('gender') or 'Unisex'
-        vff_shoe_gender[g]['amount'] += amt
-        vff_shoe_gender[g]['qty'] += qty
+        add(vff_shoe_gender_month[g][month])
 
-def ser(acc):
-    return {'amount': round(acc['amount'], 2), 'qty': round(acc['qty'], 1),
-            'orders': len(acc['orders']) if isinstance(acc['orders'], set) else acc['orders']}
+def sum_months(acc_by_month):
+    total = new_acc()
+    for m in MONTHS:
+        a = acc_by_month.get(m, new_acc())
+        total['amount'] += a['amount']
+        total['qty'] += a['qty']
+        total['orders'] |= a['orders']
+    return total
 
 # ---------------------------------------------------------------- build output
-out = {}
+out = {'months': MONTHS}
 
-_total_amount = round(sum(v['amount'] for v in store_acc.values()), 2)
-_total_qty = round(sum(v['qty'] for v in store_acc.values()), 1)
-_total_orders = sum(len(v['orders']) for v in store_acc.values())
+# ---- KPI: give the client the monthly series; it derives any period's totals by summing.
+out['monthly_overall'] = [
+    {'month': m, **ser(overall_month[m])} for m in MONTHS
+]
+_h1_total = sum_months(overall_month)
 out['kpi'] = {
-    'total_amount': _total_amount,
-    'total_qty': _total_qty,
-    'total_orders': _total_orders,
-    'avg_ticket': round(_total_amount / _total_orders, 2) if _total_orders else None,
+    'total_amount': round(_h1_total['amount'], 2),
+    'total_qty': round(_h1_total['qty'], 1),
+    'total_orders': len(_h1_total['orders']),
+    'avg_ticket': round(_h1_total['amount'] / len(_h1_total['orders']), 2) if _h1_total['orders'] else None,
     'period': '2026-01-01 ~ 2026-06-30',
     # last-year figures are not yet available (2025 H1 data not received) -- kept as an
     # explicit null block so the dashboard's YoY badges stay wired up and light up
@@ -176,87 +163,52 @@ out['kpi'] = {
     'last_year': None,
 }
 
+# ---- stores
 stores_out = []
-for store, acc in store_acc.items():
-    s = ser(acc)
+for store in store_month.keys():
+    h1 = sum_months(store_month[store])
+    s = ser(h1)
     s['store'] = store
     s['group'] = STORE_GROUP.get(store, 'other')
-    s['avg_ticket'] = round(acc['amount'] / len(acc['orders']), 2) if acc['orders'] else None
+    s['avg_ticket'] = round(h1['amount'] / len(h1['orders']), 2) if h1['orders'] else None
     s['monthly'] = {m: ser(store_month[store].get(m, new_acc())) for m in MONTHS}
-    s['brand'] = {b: ser(v) for b, v in store_brand[store].items()}
-    if store_payment[store]:
-        pay = {p: ser(v) for p, v in store_payment[store].items()}
-        pay_total = sum(v['amount'] for v in store_payment[store].values())
-        s['payment'] = pay
-        s['payment_total'] = round(pay_total, 2)
+    s['brand_monthly'] = monthly_out(store_brand_month[store])
+    if store_payment_month[store]:
+        s['payment_monthly'] = monthly_out(store_payment_month[store])
     stores_out.append(s)
 stores_out.sort(key=lambda x: -x['amount'])
 out['stores'] = stores_out
 out['group_label'] = GROUP_LABEL
 
-out['monthly_overall'] = [
-    {'month': m, 'amount': round(overall_month[m]['amount'], 2), 'qty': round(overall_month[m]['qty'], 1),
-     'orders': len(overall_month[m]['orders'])}
-    for m in MONTHS
-]
+# ---- brand
+out['brand_monthly'] = monthly_out(brand_month)
 
-out['brand_overall'] = [
-    {'brand': b, **ser(v)} for b, v in sorted(overall_brand.items(), key=lambda x: -x[1]['amount'])
-]
-out['brand_monthly'] = {
-    b: [{'month': m, 'amount': round(brand_month[b][m]['amount'], 2), 'qty': round(brand_month[b][m]['qty'], 1)}
-        for m in MONTHS]
-    for b in overall_brand.keys()
-}
+# ---- all-brand model ranking (Top10/Worst10 recomputed client-side per period)
+out['model_monthly'] = monthly_out(model_month)
 
-out['vff_models'] = [
-    {'model': m, **ser(v)} for m, v in sorted(vff_model.items(), key=lambda x: -x[1]['amount'])
-]
+# ---- per-brand model detail (dropdown)
+out['brand_model_monthly'] = {b: monthly_out(models) for b, models in brand_model_month.items()}
 
-_models_sorted = sorted(model_overall.items(), key=lambda x: -x[1]['amount'])
-out['model_top10'] = [{'model': m, **ser(v)} for m, v in _models_sorted[:10]]
-out['model_bottom10'] = [{'model': m, **ser(v)} for m, v in _models_sorted[-10:][::-1]]
-out['model_count'] = len(model_overall)
+# ---- Others sub-brand
+out['others_sub_monthly'] = monthly_out(others_sub_month)
 
-out['brand_models'] = {
-    b: [{'model': m, **ser(v)} for m, v in sorted(models.items(), key=lambda x: -x[1]['amount'])]
-    for b, models in brand_model.items()
-}
+# ---- online channel
+out['online_channel_monthly'] = monthly_out(online_channel_month)
 
-out['others_sub'] = [
-    {'brand': b, **ser(v)} for b, v in sorted(others_sub.items(), key=lambda x: -x[1]['amount'])
-]
-
-out['online_channel'] = [
-    {'channel': c, **ser(v), 'monthly': {m: round(online_channel_month[c].get(m, new_acc())['amount'], 2) for m in MONTHS}}
-    for c, v in sorted(online_channel.items(), key=lambda x: -x[1]['amount'])
-]
-
-_shoe_models_sorted = sorted(vff_shoe_model.items(), key=lambda x: -x[1]['qty'])
+# ---- VFF shoes only
 out['vff_shoes'] = {
     'note': 'VFFブランドのうちシューズのみ（ソックス・Furoshiki等の非シューズ商品は除く）。'
             'サイズ表記（W=女性/M=男性/U=ユニセックス）から性別区分を推定',
-    'total_qty': round(vff_shoe_total['qty'], 1),
-    'total_amount': round(vff_shoe_total['amount'], 2),
-    'monthly': [
-        {'month': m, 'qty': round(vff_shoe_month[m]['qty'], 1), 'amount': round(vff_shoe_month[m]['amount'], 2)}
-        for m in MONTHS
-    ],
-    'channel_share': [
-        {'channel': c, **ser(v)} for c, v in sorted(vff_shoe_channel.items(), key=lambda x: -x[1]['qty'])
-    ],
-    'model_ranking_by_qty': [{'model': m, **ser(v)} for m, v in _shoe_models_sorted],
-    'gender': [
-        {'gender': GENDER_LABEL.get(g, g), **ser(v)}
-        for g, v in sorted(vff_shoe_gender.items(), key=lambda x: -x[1]['qty'])
-    ],
+    'monthly': [{'month': m, **ser(vff_shoe_by_month[m])} for m in MONTHS],
+    'channel_monthly': monthly_out(vff_shoe_channel_month),
+    'model_monthly': monthly_out(vff_shoe_model_month),
+    'gender_monthly': {GENDER_LABEL.get(g, g): v for g, v in monthly_out(vff_shoe_gender_month).items()},
 }
 
-event_pay_total = sum(v['amount'] for v in event_payment.values())
+# ---- payment (Event category only, currently the sole source with payment data)
 out['payment_overall'] = {
     'note': '決済方法データがあるのは「イベント」カテゴリのみ（他の店舗・チャネルには決済方法の記録がありません）',
-    'coverage_amount': round(event_pay_total, 2),
-    'breakdown': [{'method': p, **ser(v)} for p, v in sorted(event_payment.items(), key=lambda x: -x[1]['amount'])],
+    'monthly': monthly_out(event_payment_month),
 }
 
 with open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/dashboard_data.json', 'w', encoding='utf-8') as f:
@@ -264,9 +216,9 @@ with open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-51
 
 print("KPI:", out['kpi'])
 print("Stores:", len(out['stores']))
-print("Brand overall:", out['brand_overall'])
-print("VFF models:", len(out['vff_models']))
-print("Online channels:", [c['channel'] for c in out['online_channel']])
-print("Payment coverage amount:", out['payment_overall']['coverage_amount'])
+print("Brands:", list(out['brand_monthly'].keys()))
+print("Models (all brands):", len(out['model_monthly']))
+print("Online channels:", list(out['online_channel_monthly'].keys()))
+print("VFF shoe models:", len(out['vff_shoes']['model_monthly']))
 import os
 print("Output size (KB):", os.path.getsize('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/dashboard_data.json')/1024)
