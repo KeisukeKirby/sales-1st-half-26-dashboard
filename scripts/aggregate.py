@@ -87,6 +87,7 @@ event_payment_month = defaultdict(lambda: defaultdict(new_acc))            # met
 
 vff_shoe_by_month = defaultdict(new_acc)                                   # month (VFF shoes overall)
 vff_shoe_channel_month = defaultdict(lambda: defaultdict(new_acc))         # channel5 -> month
+vff_shoe_store_month = defaultdict(lambda: defaultdict(new_acc))           # raw store name -> month (individual stores, not channel5-grouped)
 vff_shoe_model_month = defaultdict(lambda: defaultdict(new_acc))           # model (VFF shoes only) -> month
 vff_shoe_gender_month = defaultdict(lambda: defaultdict(new_acc))          # gender -> month
 
@@ -129,6 +130,7 @@ for r in records:
         add(vff_shoe_by_month[month])
         ch5 = CHANNEL5.get(store, store)
         add(vff_shoe_channel_month[ch5][month])
+        add(vff_shoe_store_month[store][month])
         if model_c:
             add(vff_shoe_model_month[model_c][month])
         g = r.get('gender') or 'Unisex'
@@ -201,6 +203,7 @@ out['vff_shoes'] = {
             'サイズ表記（W=女性/M=男性/U=ユニセックス）から性別区分を推定',
     'monthly': [{'month': m, **ser(vff_shoe_by_month[m])} for m in MONTHS],
     'channel_monthly': monthly_out(vff_shoe_channel_month),
+    'store_monthly': monthly_out(vff_shoe_store_month),
     'model_monthly': monthly_out(vff_shoe_model_month),
     'gender_monthly': {GENDER_LABEL.get(g, g): v for g, v in monthly_out(vff_shoe_gender_month).items()},
 }
