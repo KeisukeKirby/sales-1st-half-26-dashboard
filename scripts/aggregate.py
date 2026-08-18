@@ -9,8 +9,14 @@ import json
 from collections import defaultdict
 
 records = json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records.json'))
+# 2025 full-year actuals (first prior-year batch) -- merged in for YoY comparison.
+# Only the Jan-Jun subset (PREV_MONTHS) is ever surfaced to the client; the H2 2025
+# records ride along harmlessly (they just populate month keys nothing reads yet).
+records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records_2025.json'))
 
 MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06']
+PREV_MONTHS = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06']  # same 6 calendar months, prior year
+ALL_MONTHS = MONTHS + PREV_MONTHS  # union used only when serializing per-key monthly breakdowns (monthly_out)
 
 
 # Store -> channel-group mapping, used dashboard-wide (Overall tab, By Store tab,
@@ -46,8 +52,10 @@ def ser(acc):
             'orders': len(acc['orders']) if isinstance(acc['orders'], set) else acc['orders']}
 
 def monthly_out(acc_by_key_month):
-    """{key: {month: acc}} -> {key: {month: {amount,qty,orders}}}, every month present."""
-    return {k: {m: ser(months.get(m, new_acc())) for m in MONTHS} for k, months in acc_by_key_month.items()}
+    """{key: {month: acc}} -> {key: {month: {amount,qty,orders}}}, every month present
+    (both the current H1 2026 months AND the prior-year H1 2025 months, so the client
+    can sum either set with the same sumMonthly() helper to compute YoY for any period)."""
+    return {k: {m: ser(months.get(m, new_acc())) for m in ALL_MONTHS} for k, months in acc_by_key_month.items()}
 
 # ---------------------------------------------------------------- model-name casing normalization
 # Different source files render the same model with different casing
@@ -126,9 +134,9 @@ for r in records:
         g = r.get('gender') or 'Unisex'
         add(vff_shoe_gender_month[g][month])
 
-def sum_months(acc_by_month):
+def sum_months(acc_by_month, months=MONTHS):
     total = new_acc()
-    for m in MONTHS:
+    for m in months:
         a = acc_by_month.get(m, new_acc())
         total['amount'] += a['amount']
         total['qty'] += a['qty']
@@ -136,23 +144,31 @@ def sum_months(acc_by_month):
     return total
 
 # ---------------------------------------------------------------- build output
-out = {'months': MONTHS}
+out = {'months': MONTHS, 'prev_months': PREV_MONTHS}
 
 # ---- KPI: give the client the monthly series; it derives any period's totals by summing.
 out['monthly_overall'] = [
     {'month': m, **ser(overall_month[m])} for m in MONTHS
 ]
+# prior-year (H1 2025) equivalent series, for the summary section's YoY badges.
+out['monthly_overall_prev'] = [
+    {'month': m, **ser(overall_month[m])} for m in PREV_MONTHS
+]
 _h1_total = sum_months(overall_month)
+_h1_prev_total = sum_months(overall_month, PREV_MONTHS)
 out['kpi'] = {
     'total_amount': round(_h1_total['amount'], 2),
     'total_qty': round(_h1_total['qty'], 1),
     'total_orders': len(_h1_total['orders']),
     'avg_ticket': round(_h1_total['amount'] / len(_h1_total['orders']), 2) if _h1_total['orders'] else None,
     'period': '2026-01-01 ~ 2026-06-30',
-    # last-year figures are not yet available (2025 H1 data not received) -- kept as an
-    # explicit null block so the dashboard's YoY badges stay wired up and light up
-    # automatically the moment this is filled in, instead of needing new UI code later.
-    'last_year': None,
+    'last_year': {
+        'total_amount': round(_h1_prev_total['amount'], 2),
+        'total_qty': round(_h1_prev_total['qty'], 1),
+        'total_orders': len(_h1_prev_total['orders']),
+        'avg_ticket': round(_h1_prev_total['amount'] / len(_h1_prev_total['orders']), 2) if _h1_prev_total['orders'] else None,
+        'period': '2025-01-01 ~ 2025-06-30',
+    },
 }
 
 # ---- stores
@@ -163,7 +179,7 @@ for store in store_month.keys():
     s['store'] = store
     s['group'] = STORE_GROUP.get(store, 'other')
     s['avg_ticket'] = round(h1['amount'] / len(h1['orders']), 2) if h1['orders'] else None
-    s['monthly'] = {m: ser(store_month[store].get(m, new_acc())) for m in MONTHS}
+    s['monthly'] = {m: ser(store_month[store].get(m, new_acc())) for m in ALL_MONTHS}
     s['brand_monthly'] = monthly_out(store_brand_month[store])
     if store_payment_month[store]:
         s['payment_monthly'] = monthly_out(store_payment_month[store])
