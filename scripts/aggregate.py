@@ -18,10 +18,11 @@ records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/
 
 MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06']
 PREV_MONTHS = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06']  # same 6 calendar months, prior year
-ALL_MONTHS = MONTHS + PREV_MONTHS  # union used only when serializing per-key monthly breakdowns (monthly_out)
-FULL_2024 = [f'2024-{m:02d}' for m in range(1, 13)]
-FULL_2025 = [f'2025-{m:02d}' for m in range(1, 13)]
-H1_2024 = FULL_2024[:6]
+H1_2024 = [f'2024-{m:02d}' for m in range(1, 7)]  # same 6 calendar months, two years prior
+# union used only when serializing per-key monthly breakdowns (monthly_out) -- includes
+# H1 2024 too so every store/model/VFF-shoe breakdown can support a 2-year-back
+# comparison, not just last year's.
+ALL_MONTHS = MONTHS + PREV_MONTHS + H1_2024
 
 
 # Store -> channel-group mapping, used dashboard-wide (Overall tab, By Store tab,
@@ -159,6 +160,11 @@ out['monthly_overall'] = [
 out['monthly_overall_prev'] = [
     {'month': m, **ser(overall_month[m])} for m in PREV_MONTHS
 ]
+# two-years-back (H1 2024) equivalent series, for the Overall tab's detail
+# table (01 全体サマリー) and other 2-year-back comparisons.
+out['monthly_overall_2024h1'] = [
+    {'month': m, **ser(overall_month[m])} for m in H1_2024
+]
 _h1_total = sum_months(overall_month)
 _h1_prev_total = sum_months(overall_month, PREV_MONTHS)
 out['kpi'] = {
@@ -175,30 +181,6 @@ out['kpi'] = {
         'period': '2025-01-01 ~ 2025-06-30',
     },
 }
-
-# ---- yearly summary (Overall tab): 2024 & 2025 full-year actuals alongside the
-# 2026 H1 actuals, each with a same-period-type YoY comparison (full year vs
-# full year, H1 vs H1) so different-length periods are never compared directly.
-# 2024 has no prior-year baseline in this dataset (no 2023 data), so its
-# prev_* fields are left null -- the client renders that as "no prior-year
-# data" rather than treating it as a pending/not-yet-arrived state.
-def _yearly_row(year, period_type, months, prev_months):
-    cur = sum_months(overall_month, months)
-    row = {'year': year, 'period_type': period_type,
-           'amount': round(cur['amount'], 2), 'qty': round(cur['qty'], 1), 'orders': len(cur['orders']),
-           'prev_amount': None, 'prev_qty': None, 'prev_orders': None}
-    if prev_months:
-        prev = sum_months(overall_month, prev_months)
-        row['prev_amount'] = round(prev['amount'], 2)
-        row['prev_qty'] = round(prev['qty'], 1)
-        row['prev_orders'] = len(prev['orders'])
-    return row
-
-out['yearly_summary'] = [
-    _yearly_row(2024, 'full', FULL_2024, None),
-    _yearly_row(2025, 'full', FULL_2025, FULL_2024),
-    _yearly_row(2026, 'h1', MONTHS, PREV_MONTHS),
-]
 
 # ---- stores
 stores_out = []
@@ -237,6 +219,11 @@ out['vff_shoes'] = {
     'note': 'VFFブランドのうちシューズのみ（ソックス・Furoshiki等の非シューズ商品は除く）。'
             'サイズ表記（W=女性/M=男性/U=ユニセックス）から性別区分を推定',
     'monthly': [{'month': m, **ser(vff_shoe_by_month[m])} for m in MONTHS],
+    # H1 2025 / H1 2024 equivalents of the overall total series -- lets the
+    # detail table's 売上金額/合計 summary rows compare against prior years,
+    # same as store_monthly/model_monthly already can via monthly_out().
+    'monthly_prev': [{'month': m, **ser(vff_shoe_by_month[m])} for m in PREV_MONTHS],
+    'monthly_2024h1': [{'month': m, **ser(vff_shoe_by_month[m])} for m in H1_2024],
     'store_monthly': monthly_out(vff_shoe_store_month),
     'model_monthly': monthly_out(vff_shoe_model_month),
     'gender_monthly': {GENDER_LABEL.get(g, g): v for g, v in monthly_out(vff_shoe_gender_month).items()},
@@ -252,7 +239,6 @@ with open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-51
     json.dump(out, f, ensure_ascii=False, indent=None)
 
 print("KPI:", out['kpi'])
-print("Yearly summary:", out['yearly_summary'])
 print("Stores:", len(out['stores']))
 print("Brands:", list(out['brand_monthly'].keys()))
 print("Models (all brands):", len(out['model_monthly']))
