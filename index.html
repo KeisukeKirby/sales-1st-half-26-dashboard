@@ -440,7 +440,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <li>「VFFシューズ」タブはVFFブランドのうちシューズのみ集計（ソックス・Furoshiki等、サイズ表記が S/M/L/XL等の非シューズ商品は除外。シューズのサイズ表記 W37/M43 等の数値有無で判定）</li>
         <li>性別区分（女性/男性/ユニセックス）はシューズのサイズ表記の先頭文字（W=女性/M=男性/未表記orU=ユニセックス）から推定した参考値。実際の購入者属性データではない</li>
         <li>VFFシューズの販売チャネル区分: オンラインストア＝オンライン全体／直営実店舗＝K Village・Paradise Park／Central百貨店＝CHIDLOM等5店舗＋Central Ladprao 3F(Coollabo)＋VFF Cart LP／イベント／Siam Discovery／委託販売(オフライン)＝BFT+EDV委託（Thaniyaは元々VFFシューズを扱っていないためチャネル別内訳には登場しません）</li>
-        <li>VFFシューズ月次販売足数推移（店舗別）は、個別店舗ではなく「全体」タブと同じ7区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery／Thaniya）で色分けしています。ThaniyaはVFFシューズを扱っていないため、区分としては常に表示されますが値は0です</li>
+        <li>VFFシューズ月次販売足数推移（店舗別）は、個別店舗ではなく「全体」タブと同じ区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery）で色分けしています。ThaniyaはVFFシューズを扱っていないため、この区分には表示されません</li>
         <li>分析期間の指定（月別／Q1／Q2／半期）は各セクション見出しのプルダウンから個別に選択できます（事前集計済みの月次データをクライアント側で合算して算出）。選択した期間に応じて前年同期間（2025年）と比較したYoY表示が「全体」タブのサマリーカードに表示されます。あわせて「全体サマリー」「月次推移」「VFFシューズ」タブの各「実績詳細を表示」テーブルでは、2025年・2024年の同期間（H1）実績との比較列も確認できます</li>
       </ul>
     </div>
@@ -520,6 +520,15 @@ const GROUP_HEX = {
 // by-store chart can roll individual stores up into the same 7-category
 // scheme as the Overall tab's summary, instead of its own top-7-store list.
 const STORE_TO_GROUP = Object.fromEntries(DATA.stores.map(s => [s.store, s.group]));
+// Thaniya carries zero VFF footwear sales in the current H1 2026 report (it
+// had a small handful in 2024/2025 H1, but none this year) -- drop any
+// channel-group with zero VFF-shoe volume in H1 2026 from the VFF Shoes
+// tab's by-group chart/table entirely, rather than showing a
+// permanently-(now-)empty row.
+const VFF_ACTIVE_GROUPS = (() => {
+  const gm = vffGroupMonthlyTotals();
+  return GROUP_ORDER.filter(g => MONTHS.some(m => (gm[g][m] || {}).qty > 0));
+})();
 
 const fmt = n => Math.round(n).toLocaleString('en-US');
 const fmtPct = v => (v*100).toFixed(1) + '%';
@@ -544,7 +553,7 @@ const T = {
     payTargetPrefix: '対象', payOverviewNote: '（現状「イベント」カテゴリのみ決済方法を記録。店舗ごとの内訳は下の「店舗ごとの詳細」で確認できます）',
     unitPairs: '足',
     vff01Title: '月次 販売足数推移（店舗別）',
-    vff01Note: '「全体」タブの全体サマリーと同じ7区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery／Thaniya）で色分けした積み上げ棒グラフ',
+    vff01Note: '「全体」タブの全体サマリーと同じ区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery）で色分けした積み上げ棒グラフ。ThaniyaはVFFシューズを扱っていないため表示していません',
     vff02Title: '販売チャネルシェア',
     vff02Note: 'オンラインストア／直営実店舗（K Village・Paradise Park）／Central百貨店内（Coollabo・VFF Cart LP含む）／イベント／Siam Discovery／委託販売の7区分',
     channelShareTitle: 'チャネル別 シェア', channelBreakdownTitle: 'チャネル別 内訳',
@@ -610,7 +619,7 @@ const T = {
     payTargetPrefix: 'Coverage', payOverviewNote: '(Currently only the "Events" category records payment method. See "Per-Store Detail" below for store-level breakdown.)',
     unitPairs: 'pairs',
     vff01Title: 'Monthly Pairs Sold by Store',
-    vff01Note: 'Stacked bar chart colored by the same 7 categories as the Overall tab\'s summary (Directly-operated Stores / Central Dept. Stores / Online / Events / Consignment / Siam Discovery / Thaniya)',
+    vff01Note: 'Stacked bar chart colored by the same categories as the Overall tab\'s summary (Directly-operated Stores / Central Dept. Stores / Online / Events / Consignment / Siam Discovery). Thaniya is omitted since it carries no VFF footwear sales',
     vff02Title: 'Sales Channel Share',
     vff02Note: 'Online Store / Directly-operated Stores (K Village, Paradise Park) / Central Dept. Store (incl. Coollabo, VFF Cart LP) / Events / Siam Discovery / Consignment — 7 channels',
     channelShareTitle: 'Channel Share', channelBreakdownTitle: 'Channel Breakdown',
@@ -633,7 +642,7 @@ const T = {
     pendingDataTitle: 'Data Not Yet Available',
     pendingDataList: '<li><b>Central Total Department (CHIDLOM and 4 other stores)</b> — no 2024 source file has been received, so 2024 is not covered (2025 coverage is also partial: only Sep–Dec was received, Jan–Aug is missing).</li><li><b>Siam Discovery, January 2024</b> — no sheet for that month exists in the source file, so it is treated as a genuine data gap.</li><li><b>Payment method (Cash/Credit Card/QR)</b> — recorded only in some of the "Events" category files.</li>',
     rulesTitle: 'Aggregation Rules',
-    rulesList: '<li>Brand grouping: VFF=Vibram FiveFingers / BFJ=BFJ Socks / Coolcore=CP+CC codes merged / Oleno=OLN / TabiRela=MTB(Marugo) / Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB) merged</li><li>Discount lines (DC code) and non-product entries such as asset-sale income (P, CON codes) are excluded from sales/quantity totals</li><li>Every file\'s dates were verified to use D/M/YYYY (day-first) format before parsing, since formatting is inconsistent across files</li><li>Online sales from both the BFT and EDV entities are merged into one "Online" category; the channel breakdown (Shopee/Lazada/LINE/Facebook/Instagram/Website) is tracked separately</li><li>The 4 event files (EDV_EVENT_1, BFT_EVENT_1/2/3) are combined into one "Events" category</li><li>Consignment sales are tracked as two separate categories, BFT and EDV</li><li>The duplicate file BFT_Shopee_Lazada_Facebook_Paradise_Event was cross-checked against the existing 5 files by order number; only the 13 non-duplicate orders were added, to avoid double-counting</li><li>Central Total Department (CHIDLOM and 4 other stores) reports monthly totals only, so order count and average ticket cannot be computed</li><li>Model-name casing variants (e.g. "VFF KSO EVO" vs "VFF Kso Evo") are unified to whichever spelling carries the most revenue within that brand</li><li>The "VFF Shoes" tab counts VFF footwear only — socks, Furoshiki wraps, and other items sized with letters only (S/M/L/XL) are excluded; footwear is identified by a numeric size code such as W37/M43</li><li>Gender (Women/Men/Unisex) is estimated from the leading letter of the footwear size code (W=Women/M=Men/unmarked or U=Unisex) — an estimate, not recorded customer data</li><li>The 7 store/channel categories (Directly-operated Stores / Central Dept. Store / Online / Events / Consignment / Siam Discovery / Thaniya) are shared across the Overall, By Store, and VFF Shoes tabs. Directly-operated Stores = K Village, Paradise Park / Central Dept. Store = CHIDLOM and 4 others plus Central Ladprao 3F (Coollabo) and the VFF Cart / Consignment = BFT+EDV consignment (Thaniya carries no VFF footwear sales, so it never appears in the VFF Shoes channel breakdown)</li><li>The VFF Shoes tab\'s monthly-by-store chart is colored by the same 7 categories as the Overall tab (Directly-operated Stores / Central Dept. Stores / Online / Events / Consignment / Siam Discovery / Thaniya), not individual stores. Thaniya carries no VFF footwear sales, so it always appears as a category but shows 0</li><li>The Overall tab\'s summary lets you pick month / Q1 / Q2 / half-year from a dropdown in the section heading, showing total sales amount, total units, and customer count together with a channel-group breakdown donut chart in a single block. Each card shows a YoY badge comparing the selected period against the same period in 2025</li><li>The Overall summary\'s "Show detailed figures" table always shows the Jan-Jun monthly breakdown plus the H1 total regardless of the period picker above it, alongside reference columns for the same H1 period in 2025 and 2024 and a YoY column</li><li>The "Monthly Trend (by Channel)" section\'s "Show detailed figures" table has, alongside each channel\'s monthly breakdown and H1 total, reference columns for the same H1 period in 2025 and 2024</li><li>"Total Units" covers every product including non-footwear (socks, towels, sunglasses, etc). For VFF footwear pairs and detail, see the "VFF Shoes" tab</li><li>The Overall tab\'s monthly trend chart and the VFF Shoes tab\'s monthly-by-store chart and model ranking each have a "Show detailed figures" button below the chart that reveals a month-by-month breakdown table</li><li>The VFF Shoes tab\'s total pairs sold and sales amount are available in the monthly-by-store chart\'s "Show detailed figures" table, which adds Q1/Q2/half-year columns after June and a sales-amount row below the total row. That table and the model ranking\'s "Show detailed figures" table both also add reference columns for the same H1 period in 2025 and 2024, after the H1 total</li><li>The period (by month / Q1 / Q2 / half-year) is selected independently from a dropdown in each section\'s heading, summing pre-aggregated monthly data client-side</li>',
+    rulesList: '<li>Brand grouping: VFF=Vibram FiveFingers / BFJ=BFJ Socks / Coolcore=CP+CC codes merged / Oleno=OLN / TabiRela=MTB(Marugo) / Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB) merged</li><li>Discount lines (DC code) and non-product entries such as asset-sale income (P, CON codes) are excluded from sales/quantity totals</li><li>Every file\'s dates were verified to use D/M/YYYY (day-first) format before parsing, since formatting is inconsistent across files</li><li>Online sales from both the BFT and EDV entities are merged into one "Online" category; the channel breakdown (Shopee/Lazada/LINE/Facebook/Instagram/Website) is tracked separately</li><li>The 4 event files (EDV_EVENT_1, BFT_EVENT_1/2/3) are combined into one "Events" category</li><li>Consignment sales are tracked as two separate categories, BFT and EDV</li><li>The duplicate file BFT_Shopee_Lazada_Facebook_Paradise_Event was cross-checked against the existing 5 files by order number; only the 13 non-duplicate orders were added, to avoid double-counting</li><li>Central Total Department (CHIDLOM and 4 other stores) reports monthly totals only, so order count and average ticket cannot be computed</li><li>Model-name casing variants (e.g. "VFF KSO EVO" vs "VFF Kso Evo") are unified to whichever spelling carries the most revenue within that brand</li><li>The "VFF Shoes" tab counts VFF footwear only — socks, Furoshiki wraps, and other items sized with letters only (S/M/L/XL) are excluded; footwear is identified by a numeric size code such as W37/M43</li><li>Gender (Women/Men/Unisex) is estimated from the leading letter of the footwear size code (W=Women/M=Men/unmarked or U=Unisex) — an estimate, not recorded customer data</li><li>The 7 store/channel categories (Directly-operated Stores / Central Dept. Store / Online / Events / Consignment / Siam Discovery / Thaniya) are shared across the Overall, By Store, and VFF Shoes tabs. Directly-operated Stores = K Village, Paradise Park / Central Dept. Store = CHIDLOM and 4 others plus Central Ladprao 3F (Coollabo) and the VFF Cart / Consignment = BFT+EDV consignment (Thaniya carries no VFF footwear sales, so it never appears in the VFF Shoes channel breakdown)</li><li>The VFF Shoes tab\'s monthly-by-store chart is colored by the same categories as the Overall tab (Directly-operated Stores / Central Dept. Stores / Online / Events / Consignment / Siam Discovery), not individual stores. Thaniya is omitted from this breakdown since it carries no VFF footwear sales</li><li>The Overall tab\'s summary lets you pick month / Q1 / Q2 / half-year from a dropdown in the section heading, showing total sales amount, total units, and customer count together with a channel-group breakdown donut chart in a single block. Each card shows a YoY badge comparing the selected period against the same period in 2025</li><li>The Overall summary\'s "Show detailed figures" table always shows the Jan-Jun monthly breakdown plus the H1 total regardless of the period picker above it, alongside reference columns for the same H1 period in 2025 and 2024 and a YoY column</li><li>The "Monthly Trend (by Channel)" section\'s "Show detailed figures" table has, alongside each channel\'s monthly breakdown and H1 total, reference columns for the same H1 period in 2025 and 2024</li><li>"Total Units" covers every product including non-footwear (socks, towels, sunglasses, etc). For VFF footwear pairs and detail, see the "VFF Shoes" tab</li><li>The Overall tab\'s monthly trend chart and the VFF Shoes tab\'s monthly-by-store chart and model ranking each have a "Show detailed figures" button below the chart that reveals a month-by-month breakdown table</li><li>The VFF Shoes tab\'s total pairs sold and sales amount are available in the monthly-by-store chart\'s "Show detailed figures" table, which adds Q1/Q2/half-year columns after June and a sales-amount row below the total row. That table and the model ranking\'s "Show detailed figures" table both also add reference columns for the same H1 period in 2025 and 2024, after the H1 total</li><li>The period (by month / Q1 / Q2 / half-year) is selected independently from a dropdown in each section\'s heading, summing pre-aggregated monthly data client-side</li>',
     sourceFilesTitle: 'Source Files Loaded (17)',
     sourceFilesList: '<li>Sale_VFF_Cart_LP_01062026.csv → VFF Cart LP store</li><li>BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx → Online (BFT)</li><li>BFT_EVENT_3.xlsx → Events</li><li>Sales_Paradies_Park_JanJun_26.xlsx → Paradise Park store</li><li>Sales_Thaniya_JanJun_26.xlsx → Thaniya store</li><li>Sales_K_village_JanJun_26.xlsx → K Village store</li><li>EDV_EVENT_1.xlsx → Events</li><li>BFT_EVENT_2.xlsx → Events</li><li>BFT_EVENT_1.xlsx → Events</li><li>BFT_consignment_JanJun_26.xlsx → BFT Consignment</li><li>Sales_Central_LP_3F_JanJun_26.xlsx → Central Ladprao 3F (Coollabo) store</li><li>EDV_consignment_JanJun_26.xlsx → EDV Consignment</li><li>Sales_Siam_Dis_JanJun_26.xlsx → Siam Discovery store</li><li>BFT_Shopee_Lazada_Facebook_Paradise_Event.xlsx → merged into Online / Paradise Park after de-duplication</li><li>EDV_Shopee_Lazada_Facebook_JanJun_26.xlsx → Online (EDV)</li><li>BFT_consignment_JanJun_26_new.xlsx → identical data to BFT Consignment (used for verification)</li><li>BFT_Central_Total_Department_JanJun_26.xlsx → Central Dept. Store, 5 locations (CHIDLOM etc.)</li>',
     yoySourceFilesTitle: 'Source Files for YoY Comparison (2025 & 2024 Actuals)',
@@ -1483,7 +1492,7 @@ function renderVffStoreStackChart(){
   const xC = i => padL + bandW*i + bandW/2;
 
   const gm = vffGroupMonthlyTotals();
-  const monthTotals = MONTHS.map(m => GROUP_ORDER.reduce((s,g) => s + (gm[g][m] ? gm[g][m].qty : 0), 0));
+  const monthTotals = MONTHS.map(m => VFF_ACTIVE_GROUPS.reduce((s,g) => s + (gm[g][m] ? gm[g][m].qty : 0), 0));
   const {max: maxV, step} = niceAxis(Math.max(...monthTotals, 1), 5);
   const y = v => padT + plotH - (v/maxV)*plotH;
 
@@ -1496,7 +1505,7 @@ function renderVffStoreStackChart(){
   MONTHS.forEach((m,i) => {
     svg += `<text x="${xC(i)}" y="${h-8}" text-anchor="middle">${monthLabel(m)}</text>`;
     let cum = 0;
-    GROUP_ORDER.forEach(g => {
+    VFF_ACTIVE_GROUPS.forEach(g => {
       const v = gm[g][m] ? gm[g][m].qty : 0;
       if (v <= 0) return;
       const y0 = y(cum), y1 = y(cum+v); cum += v;
@@ -1505,7 +1514,7 @@ function renderVffStoreStackChart(){
     });
   });
   svg += `</svg>`;
-  const legendHtml = GROUP_ORDER.map(g => `<div class="item"><span class="k"><span class="swatch" style="background:${GROUP_HEX[g]}"></span>${esc(trLabel(DATA.group_label[g]))}</span></div>`).join('');
+  const legendHtml = VFF_ACTIVE_GROUPS.map(g => `<div class="item"><span class="k"><span class="swatch" style="background:${GROUP_HEX[g]}"></span>${esc(trLabel(DATA.group_label[g]))}</span></div>`).join('');
   const el = document.getElementById('vffShoeLineChart');
   el.innerHTML = svg + `<div class="legend" style="flex-direction:row;gap:16px;margin-top:10px;justify-content:center;flex-wrap:wrap">${legendHtml}</div>
     <div class="chart-note">${esc(t('vffChartNote'))}</div>`;
@@ -1546,7 +1555,7 @@ function buildVffStoreDetailTable(){
   const qtyRow = g => VFF_DETAIL_COLS.map(key => sumMonthly(gm[g] || {}, vffDetailColMonths(key)).qty);
 
   let colTotals = VFF_DETAIL_COLS.map(() => 0);
-  const rows = GROUP_ORDER.map(g => {
+  const rows = VFF_ACTIVE_GROUPS.map(g => {
     const vals = qtyRow(g);
     vals.forEach((v,i) => colTotals[i] += v);
     const cells = vals.map((v,i) => `<td class="num"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('');
