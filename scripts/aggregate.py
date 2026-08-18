@@ -9,14 +9,19 @@ import json
 from collections import defaultdict
 
 records = json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records.json'))
-# 2025 full-year actuals (first prior-year batch) -- merged in for YoY comparison.
-# Only the Jan-Jun subset (PREV_MONTHS) is ever surfaced to the client; the H2 2025
-# records ride along harmlessly (they just populate month keys nothing reads yet).
+# 2025 and 2024 full-year actuals -- merged in for YoY comparison and the
+# Overall tab's yearly-summary panel. Only the Jan-Jun 2025 subset (PREV_MONTHS)
+# is used for per-key monthly breakdowns (monthly_out); the rest of both years
+# rides along harmlessly and is summed separately below for full-year totals.
 records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records_2025.json'))
+records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records_2024.json'))
 
 MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06']
 PREV_MONTHS = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06']  # same 6 calendar months, prior year
 ALL_MONTHS = MONTHS + PREV_MONTHS  # union used only when serializing per-key monthly breakdowns (monthly_out)
+FULL_2024 = [f'2024-{m:02d}' for m in range(1, 13)]
+FULL_2025 = [f'2025-{m:02d}' for m in range(1, 13)]
+H1_2024 = FULL_2024[:6]
 
 
 # Store -> channel-group mapping, used dashboard-wide (Overall tab, By Store tab,
@@ -171,6 +176,30 @@ out['kpi'] = {
     },
 }
 
+# ---- yearly summary (Overall tab): 2024 & 2025 full-year actuals alongside the
+# 2026 H1 actuals, each with a same-period-type YoY comparison (full year vs
+# full year, H1 vs H1) so different-length periods are never compared directly.
+# 2024 has no prior-year baseline in this dataset (no 2023 data), so its
+# prev_* fields are left null -- the client renders that as "no prior-year
+# data" rather than treating it as a pending/not-yet-arrived state.
+def _yearly_row(year, period_type, months, prev_months):
+    cur = sum_months(overall_month, months)
+    row = {'year': year, 'period_type': period_type,
+           'amount': round(cur['amount'], 2), 'qty': round(cur['qty'], 1), 'orders': len(cur['orders']),
+           'prev_amount': None, 'prev_qty': None, 'prev_orders': None}
+    if prev_months:
+        prev = sum_months(overall_month, prev_months)
+        row['prev_amount'] = round(prev['amount'], 2)
+        row['prev_qty'] = round(prev['qty'], 1)
+        row['prev_orders'] = len(prev['orders'])
+    return row
+
+out['yearly_summary'] = [
+    _yearly_row(2024, 'full', FULL_2024, None),
+    _yearly_row(2025, 'full', FULL_2025, FULL_2024),
+    _yearly_row(2026, 'h1', MONTHS, PREV_MONTHS),
+]
+
 # ---- stores
 stores_out = []
 for store in store_month.keys():
@@ -223,6 +252,7 @@ with open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-51
     json.dump(out, f, ensure_ascii=False, indent=None)
 
 print("KPI:", out['kpi'])
+print("Yearly summary:", out['yearly_summary'])
 print("Stores:", len(out['stores']))
 print("Brands:", list(out['brand_monthly'].keys()))
 print("Models (all brands):", len(out['model_monthly']))
