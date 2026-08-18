@@ -153,6 +153,12 @@ select.compact-select{font-size:13px;min-width:0;padding:7px 11px;}
 .summary-block-value{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:-0.01em;line-height:1;}
 .summary-block-unit{font-size:13px;color:var(--ink-dim);margin-left:7px;font-weight:500;}
 .summary-block-extra{font-size:12px;color:var(--ink-dim);margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--mono);}
+.chan-bar-list{display:flex;flex-direction:column;gap:5px;margin-top:12px;}
+.chan-bar-row{display:grid;grid-template-columns:76px 1fr 36px;align-items:center;gap:7px;font-size:10.5px;cursor:default;}
+.chan-bar-row .chan-bar-label{color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chan-bar-track{height:7px;background:var(--panel-2);border-radius:4px;overflow:hidden;}
+.chan-bar-fill{height:100%;border-radius:4px;}
+.chan-bar-val{font-family:var(--mono);text-align:right;color:var(--ink-dim);}
 .treemap-legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:16px;font-size:12px;color:var(--ink-dim);}
 .treemap-legend .item{display:flex;align-items:center;gap:6px;}
 .note-box{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:14px 16px;font-size:13px;color:var(--ink-dim);margin-bottom:16px;line-height:1.7;}
@@ -202,10 +208,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <span class="n">01</span><span data-i18n="allSummaryTitle">全体サマリー</span>
     </div>
     <div id="summaryH1Block"></div>
-    <div style="margin-top:22px" id="summaryQ1Block"></div>
-    <div style="margin-top:22px" id="summaryQ2Block"></div>
-    <div style="margin-top:22px">
-      <div class="panel-head" style="margin-bottom:10px">
+    <div style="margin-top:14px" id="summaryQ1Block"></div>
+    <div style="margin-top:14px" id="summaryQ2Block"></div>
+    <div style="margin-top:14px">
+      <div class="panel-head" style="margin-bottom:8px">
         <div class="summary-period-heading" data-i18n="monthlyBlockLabel">月次</div>
         <select id="summaryMonthSelect" class="compact-select"></select>
       </div>
@@ -240,14 +246,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <!-- ============================================================ VFFシューズ -->
   <section class="tabpanel" id="tab-vffshoes">
-    <div class="section-title"><span class="n">00</span><span data-i18n="vffKpiTitle">総足数・総売上金額</span></div>
-    <div class="panel">
-      <div style="overflow-x:auto">
-        <table id="vffKpiTable"></table>
-      </div>
-    </div>
-
-    <div class="section-title" style="margin-top:26px"><span class="n">01</span><span data-i18n="vff01Title">月次 販売足数推移（店舗別）</span></div>
+    <div class="section-title"><span class="n">01</span><span data-i18n="vff01Title">月次 販売足数推移（店舗別）</span></div>
     <div class="section-note" data-i18n="vff01Note">主要7店舗を個別に色分けし、それ以外の店舗は「その他」にまとめた積み上げ棒グラフ</div>
     <div class="panel">
       <div id="vffShoeLineChart"></div>
@@ -549,9 +548,7 @@ const T = {
     thBrand: 'ブランド', thQty: '数量', thAmountPlain: '金額', thShare: '比率',
     ov04Title: '決済方法別比率（全体）',
     payTargetPrefix: '対象', payOverviewNote: '（現状「イベント」カテゴリのみ決済方法を記録。店舗ごとの内訳は下の「店舗ごとの詳細」で確認できます）',
-    vffKpiTitle: '総足数・総売上金額',
-    vffQtyLabel: 'VFFシューズ 総足数', unitPairs: '足', vffAmtLabel: 'VFFシューズ 総売上金額',
-    thPeriod: '期間', thPairsShort: '足数',
+    unitPairs: '足',
     vff01Title: '月次 販売足数推移（店舗別）',
     vff01Note: '主要7店舗を個別に色分けし、それ以外の店舗は「その他」にまとめた積み上げ棒グラフ',
     storeOther: 'その他',
@@ -577,7 +574,7 @@ const T = {
     pendingDataTitle: '未対応のデータ',
     pendingDataList: '<li><b>前年（2025年1〜6月）データ</b> — 未取得のため前年比（KPI右下のYoY表示）は準備中です。届き次第、自動的に表示されます。</li><li><b>決済方法（Cash/Credit Card/QR）</b> — 「イベント」カテゴリの一部ファイル以外には記録がありません。</li>',
     rulesTitle: '集計ルール',
-    rulesList: '<li>ブランド分類: VFF=Vibram FiveFingers／BFJ=BFJ Socks／Coolcore=CP+CCコード統合／Oleno=OLN／TabiRela=MTB(Marugo)／Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB)を統合</li><li>値引き行（DCコード）・資産売却等の非商品行（P, CONコード）は売上・点数の集計から除外</li><li>日付は全ファイルでD/M/YYYY（日始まり）形式であることを確認して解析（ファイルにより表記が混在するため都度検証）</li><li>オンライン販売はBFT・EDV両エンティティを「オンライン」1カテゴリに統合。チャネル別内訳（Shopee/Lazada/LINE/Facebook/Instagram/Website）は別集計</li><li>イベント4ファイル（EDV_EVENT_1、BFT_EVENT_1/2/3）は「イベント」1カテゴリに合算</li><li>委託販売はBFT委託・EDV委託を別カテゴリとして集計</li><li>BFT_Shopee_Lazada_Facebook_Paradise_Event（重複ファイル）は既存5ファイルと伝票番号を照合し、重複しない13伝票のみ追加取り込み（二重計上を回避）</li><li>Central Total Department（CHIDLOM等5店舗）は月次集計のみのため、伝票数・客単価は算出不可</li><li>モデル名の表記ゆれ（例: "VFF KSO EVO" と "VFF Kso Evo"）はブランド内で最も売上の大きい表記に統一</li><li>「VFFシューズ」タブはVFFブランドのうちシューズのみ集計（ソックス・Furoshiki等、サイズ表記が S/M/L/XL等の非シューズ商品は除外。シューズのサイズ表記 W37/M43 等の数値有無で判定）</li><li>性別区分（女性/男性/ユニセックス）はシューズのサイズ表記の先頭文字（W=女性/M=男性/未表記orU=ユニセックス）から推定した参考値。実際の購入者属性データではない</li><li>店舗・チャネルの7区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery／Thaniya）は「全体」「店舗別」「VFFシューズ」の全タブで共通の分類です。直営実店舗＝K Village・Paradise Park／Central百貨店内＝CHIDLOM等5店舗＋Central Ladprao 3F(Coollabo)＋VFF Cart LP／委託販売＝BFT+EDV委託（ThaniyaはVFFシューズを扱っていないため、VFFシューズタブのチャネル別内訳には登場しません）</li><li>VFFシューズ月次店舗別グラフの「その他」は、H1合計の販売足数が上位7店舗に入らない店舗（Paradise Park・Central World・Central Lardprao・Central Chidlom Online・VFF Cart LP・Central Eastville）をまとめたものです</li><li>「全体」タブの全体サマリーは、総売上金額・総点数・客数をチャネル区分別の内訳円グラフとあわせて、半期・Q1・Q2（常時表示）と月次（プルダウン選択）の4通りの期間で表示します。前年（2025年1〜6月）データが未取得のため、各カードの前年比は準備中のまま表示されます</li><li>「総点数」は靴以外の商品（ソックス・タオル・サングラス等）も含む全商品の合計です。VFFシューズのみの足数・内訳は「VFFシューズ」タブで確認できます</li><li>「全体」タブの月次推移グラフ、「VFFシューズ」タブの月次店舗別グラフ・モデル別販売ランキングには、グラフ下の「実績詳細を表示」ボタンから月別の詳細数値を表形式で確認できます</li><li>「VFFシューズ」タブの総足数・総売上金額は、月次（1〜6月）とQ1・Q2・半期の数値を常時、表形式で確認できます</li><li>分析期間の指定（月別／Q1／Q2／半期）は各セクション見出しのプルダウンから個別に選択できます（事前集計済みの月次データをクライアント側で合算して算出）</li>',
+    rulesList: '<li>ブランド分類: VFF=Vibram FiveFingers／BFJ=BFJ Socks／Coolcore=CP+CCコード統合／Oleno=OLN／TabiRela=MTB(Marugo)／Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB)を統合</li><li>値引き行（DCコード）・資産売却等の非商品行（P, CONコード）は売上・点数の集計から除外</li><li>日付は全ファイルでD/M/YYYY（日始まり）形式であることを確認して解析（ファイルにより表記が混在するため都度検証）</li><li>オンライン販売はBFT・EDV両エンティティを「オンライン」1カテゴリに統合。チャネル別内訳（Shopee/Lazada/LINE/Facebook/Instagram/Website）は別集計</li><li>イベント4ファイル（EDV_EVENT_1、BFT_EVENT_1/2/3）は「イベント」1カテゴリに合算</li><li>委託販売はBFT委託・EDV委託を別カテゴリとして集計</li><li>BFT_Shopee_Lazada_Facebook_Paradise_Event（重複ファイル）は既存5ファイルと伝票番号を照合し、重複しない13伝票のみ追加取り込み（二重計上を回避）</li><li>Central Total Department（CHIDLOM等5店舗）は月次集計のみのため、伝票数・客単価は算出不可</li><li>モデル名の表記ゆれ（例: "VFF KSO EVO" と "VFF Kso Evo"）はブランド内で最も売上の大きい表記に統一</li><li>「VFFシューズ」タブはVFFブランドのうちシューズのみ集計（ソックス・Furoshiki等、サイズ表記が S/M/L/XL等の非シューズ商品は除外。シューズのサイズ表記 W37/M43 等の数値有無で判定）</li><li>性別区分（女性/男性/ユニセックス）はシューズのサイズ表記の先頭文字（W=女性/M=男性/未表記orU=ユニセックス）から推定した参考値。実際の購入者属性データではない</li><li>店舗・チャネルの7区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery／Thaniya）は「全体」「店舗別」「VFFシューズ」の全タブで共通の分類です。直営実店舗＝K Village・Paradise Park／Central百貨店内＝CHIDLOM等5店舗＋Central Ladprao 3F(Coollabo)＋VFF Cart LP／委託販売＝BFT+EDV委託（ThaniyaはVFFシューズを扱っていないため、VFFシューズタブのチャネル別内訳には登場しません）</li><li>VFFシューズ月次店舗別グラフの「その他」は、H1合計の販売足数が上位7店舗に入らない店舗（Paradise Park・Central World・Central Lardprao・Central Chidlom Online・VFF Cart LP・Central Eastville）をまとめたものです</li><li>「全体」タブの全体サマリーは、総売上金額・総点数・客数をチャネル区分別の内訳横棒グラフとあわせて、半期・Q1・Q2（常時表示）と月次（プルダウン選択）の4通りの期間で表示します。前年（2025年1〜6月）データが未取得のため、各カードの前年比は準備中のまま表示されます</li><li>「総点数」は靴以外の商品（ソックス・タオル・サングラス等）も含む全商品の合計です。VFFシューズのみの足数・内訳は「VFFシューズ」タブで確認できます</li><li>「全体」タブの月次推移グラフ、「VFFシューズ」タブの月次店舗別グラフ・モデル別販売ランキングには、グラフ下の「実績詳細を表示」ボタンから月別の詳細数値を表形式で確認できます</li><li>「VFFシューズ」タブの総足数・総売上金額は、月次販売足数推移（店舗別）の「実績詳細を表示」テーブルで、1〜6月に続けてQ1・Q2・半期の列、合計行の下に売上金額の行として確認できます</li><li>分析期間の指定（月別／Q1／Q2／半期）は各セクション見出しのプルダウンから個別に選択できます（事前集計済みの月次データをクライアント側で合算して算出）</li>',
     sourceFilesTitle: '読み込んだソースファイル（17件）',
     sourceFilesList: '<li>Sale_VFF_Cart_LP_01062026.csv → VFF Cart LP店</li><li>BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx → オンライン(BFT)</li><li>BFT_EVENT_3.xlsx → イベント</li><li>Sales_Paradies_Park_JanJun_26.xlsx → Paradise Park店</li><li>Sales_Thaniya_JanJun_26.xlsx → Thaniya店</li><li>Sales_K_village_JanJun_26.xlsx → K Village店</li><li>EDV_EVENT_1.xlsx → イベント</li><li>BFT_EVENT_2.xlsx → イベント</li><li>BFT_EVENT_1.xlsx → イベント</li><li>BFT_consignment_JanJun_26.xlsx → BFT委託</li><li>Sales_Central_LP_3F_JanJun_26.xlsx → Central Ladprao 3F(Coollabo)店</li><li>EDV_consignment_JanJun_26.xlsx → EDV委託</li><li>Sales_Siam_Dis_JanJun_26.xlsx → Siam Discovery店</li><li>BFT_Shopee_Lazada_Facebook_Paradise_Event.xlsx → 重複除去の上、オンライン/Paradise Parkに一部統合</li><li>EDV_Shopee_Lazada_Facebook_JanJun_26.xlsx → オンライン(EDV)</li><li>BFT_consignment_JanJun_26_new.xlsx → BFT委託と同一データ（検証用）</li><li>BFT_Central_Total_Department_JanJun_26.xlsx → Central百貨店内5店舗（CHIDLOM等）</li>',
     footerText: '対象期間 2026/01/01 – 06/30 ｜ 集計対象ブランド: VFF / BFJ / Coolcore / Oleno / TabiRela / Others',
@@ -616,9 +613,7 @@ const T = {
     thBrand: 'Brand', thQty: 'Qty', thAmountPlain: 'Amount', thShare: 'Share',
     ov04Title: 'Payment Method Ratio (Overall)',
     payTargetPrefix: 'Coverage', payOverviewNote: '(Currently only the "Events" category records payment method. See "Per-Store Detail" below for store-level breakdown.)',
-    vffKpiTitle: 'Total Pairs Sold & Sales Amount',
-    vffQtyLabel: 'VFF Shoes — Total Pairs Sold', unitPairs: 'pairs', vffAmtLabel: 'VFF Shoes — Total Sales Amount',
-    thPeriod: 'Period', thPairsShort: 'Pairs',
+    unitPairs: 'pairs',
     vff01Title: 'Monthly Pairs Sold by Store',
     vff01Note: 'Stacked bar chart: top 7 stores individually colored, remaining stores grouped as "Other"',
     storeOther: 'Other',
@@ -644,7 +639,7 @@ const T = {
     pendingDataTitle: 'Data Not Yet Available',
     pendingDataList: '<li><b>Prior-year data (Jan–Jun 2025)</b> — not yet received, so the YoY badges under each KPI are pending. They will populate automatically once the data arrives.</li><li><b>Payment method (Cash/Credit Card/QR)</b> — recorded only in some of the "Events" category files.</li>',
     rulesTitle: 'Aggregation Rules',
-    rulesList: '<li>Brand grouping: VFF=Vibram FiveFingers / BFJ=BFJ Socks / Coolcore=CP+CC codes merged / Oleno=OLN / TabiRela=MTB(Marugo) / Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB) merged</li><li>Discount lines (DC code) and non-product entries such as asset-sale income (P, CON codes) are excluded from sales/quantity totals</li><li>Every file\'s dates were verified to use D/M/YYYY (day-first) format before parsing, since formatting is inconsistent across files</li><li>Online sales from both the BFT and EDV entities are merged into one "Online" category; the channel breakdown (Shopee/Lazada/LINE/Facebook/Instagram/Website) is tracked separately</li><li>The 4 event files (EDV_EVENT_1, BFT_EVENT_1/2/3) are combined into one "Events" category</li><li>Consignment sales are tracked as two separate categories, BFT and EDV</li><li>The duplicate file BFT_Shopee_Lazada_Facebook_Paradise_Event was cross-checked against the existing 5 files by order number; only the 13 non-duplicate orders were added, to avoid double-counting</li><li>Central Total Department (CHIDLOM and 4 other stores) reports monthly totals only, so order count and average ticket cannot be computed</li><li>Model-name casing variants (e.g. "VFF KSO EVO" vs "VFF Kso Evo") are unified to whichever spelling carries the most revenue within that brand</li><li>The "VFF Shoes" tab counts VFF footwear only — socks, Furoshiki wraps, and other items sized with letters only (S/M/L/XL) are excluded; footwear is identified by a numeric size code such as W37/M43</li><li>Gender (Women/Men/Unisex) is estimated from the leading letter of the footwear size code (W=Women/M=Men/unmarked or U=Unisex) — an estimate, not recorded customer data</li><li>The 7 store/channel categories (Directly-operated Stores / Central Dept. Store / Online / Events / Consignment / Siam Discovery / Thaniya) are shared across the Overall, By Store, and VFF Shoes tabs. Directly-operated Stores = K Village, Paradise Park / Central Dept. Store = CHIDLOM and 4 others plus Central Ladprao 3F (Coollabo) and the VFF Cart / Consignment = BFT+EDV consignment (Thaniya carries no VFF footwear sales, so it never appears in the VFF Shoes channel breakdown)</li><li>The "Other" bucket in the VFF Shoes monthly-by-store chart groups every store outside the top 7 by full-H1 pairs sold (Paradise Park, Central World, Central Lardprao, Central Chidlom Online, VFF Cart LP, Central Eastville)</li><li>The Overall tab\'s summary shows total sales amount, total units, and customer count with a channel-group breakdown donut for each, across 4 periods: half-year, Q1, and Q2 (always shown) plus a monthly view (dropdown). Since prior-year (Jan–Jun 2025) data isn\'t available yet, each card\'s YoY badge stays pending</li><li>"Total Units" covers every product including non-footwear (socks, towels, sunglasses, etc). For VFF footwear pairs and detail, see the "VFF Shoes" tab</li><li>The Overall tab\'s monthly trend chart and the VFF Shoes tab\'s monthly-by-store chart and model ranking each have a "Show detailed figures" button below the chart that reveals a month-by-month breakdown table</li><li>The VFF Shoes tab\'s total pairs sold and sales amount are shown as an always-visible table covering every month (Jan–Jun) plus Q1, Q2, and the half-year</li><li>The period (by month / Q1 / Q2 / half-year) is selected independently from a dropdown in each section\'s heading, summing pre-aggregated monthly data client-side</li>',
+    rulesList: '<li>Brand grouping: VFF=Vibram FiveFingers / BFJ=BFJ Socks / Coolcore=CP+CC codes merged / Oleno=OLN / TabiRela=MTB(Marugo) / Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB) merged</li><li>Discount lines (DC code) and non-product entries such as asset-sale income (P, CON codes) are excluded from sales/quantity totals</li><li>Every file\'s dates were verified to use D/M/YYYY (day-first) format before parsing, since formatting is inconsistent across files</li><li>Online sales from both the BFT and EDV entities are merged into one "Online" category; the channel breakdown (Shopee/Lazada/LINE/Facebook/Instagram/Website) is tracked separately</li><li>The 4 event files (EDV_EVENT_1, BFT_EVENT_1/2/3) are combined into one "Events" category</li><li>Consignment sales are tracked as two separate categories, BFT and EDV</li><li>The duplicate file BFT_Shopee_Lazada_Facebook_Paradise_Event was cross-checked against the existing 5 files by order number; only the 13 non-duplicate orders were added, to avoid double-counting</li><li>Central Total Department (CHIDLOM and 4 other stores) reports monthly totals only, so order count and average ticket cannot be computed</li><li>Model-name casing variants (e.g. "VFF KSO EVO" vs "VFF Kso Evo") are unified to whichever spelling carries the most revenue within that brand</li><li>The "VFF Shoes" tab counts VFF footwear only — socks, Furoshiki wraps, and other items sized with letters only (S/M/L/XL) are excluded; footwear is identified by a numeric size code such as W37/M43</li><li>Gender (Women/Men/Unisex) is estimated from the leading letter of the footwear size code (W=Women/M=Men/unmarked or U=Unisex) — an estimate, not recorded customer data</li><li>The 7 store/channel categories (Directly-operated Stores / Central Dept. Store / Online / Events / Consignment / Siam Discovery / Thaniya) are shared across the Overall, By Store, and VFF Shoes tabs. Directly-operated Stores = K Village, Paradise Park / Central Dept. Store = CHIDLOM and 4 others plus Central Ladprao 3F (Coollabo) and the VFF Cart / Consignment = BFT+EDV consignment (Thaniya carries no VFF footwear sales, so it never appears in the VFF Shoes channel breakdown)</li><li>The "Other" bucket in the VFF Shoes monthly-by-store chart groups every store outside the top 7 by full-H1 pairs sold (Paradise Park, Central World, Central Lardprao, Central Chidlom Online, VFF Cart LP, Central Eastville)</li><li>The Overall tab\'s summary shows total sales amount, total units, and customer count with a channel-group breakdown bar chart for each, across 4 periods: half-year, Q1, and Q2 (always shown) plus a monthly view (dropdown). Since prior-year (Jan–Jun 2025) data isn\'t available yet, each card\'s YoY badge stays pending</li><li>"Total Units" covers every product including non-footwear (socks, towels, sunglasses, etc). For VFF footwear pairs and detail, see the "VFF Shoes" tab</li><li>The Overall tab\'s monthly trend chart and the VFF Shoes tab\'s monthly-by-store chart and model ranking each have a "Show detailed figures" button below the chart that reveals a month-by-month breakdown table</li><li>The VFF Shoes tab\'s total pairs sold and sales amount are available in the monthly-by-store chart\'s "Show detailed figures" table, which adds Q1/Q2/half-year columns after June and a sales-amount row below the total row</li><li>The period (by month / Q1 / Q2 / half-year) is selected independently from a dropdown in each section\'s heading, summing pre-aggregated monthly data client-side</li>',
     sourceFilesTitle: 'Source Files Loaded (17)',
     sourceFilesList: '<li>Sale_VFF_Cart_LP_01062026.csv → VFF Cart LP store</li><li>BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx → Online (BFT)</li><li>BFT_EVENT_3.xlsx → Events</li><li>Sales_Paradies_Park_JanJun_26.xlsx → Paradise Park store</li><li>Sales_Thaniya_JanJun_26.xlsx → Thaniya store</li><li>Sales_K_village_JanJun_26.xlsx → K Village store</li><li>EDV_EVENT_1.xlsx → Events</li><li>BFT_EVENT_2.xlsx → Events</li><li>BFT_EVENT_1.xlsx → Events</li><li>BFT_consignment_JanJun_26.xlsx → BFT Consignment</li><li>Sales_Central_LP_3F_JanJun_26.xlsx → Central Ladprao 3F (Coollabo) store</li><li>EDV_consignment_JanJun_26.xlsx → EDV Consignment</li><li>Sales_Siam_Dis_JanJun_26.xlsx → Siam Discovery store</li><li>BFT_Shopee_Lazada_Facebook_Paradise_Event.xlsx → merged into Online / Paradise Park after de-duplication</li><li>EDV_Shopee_Lazada_Facebook_JanJun_26.xlsx → Online (EDV)</li><li>BFT_consignment_JanJun_26_new.xlsx → identical data to BFT Consignment (used for verification)</li><li>BFT_Central_Total_Department_JanJun_26.xlsx → Central Dept. Store, 5 locations (CHIDLOM etc.)</li>',
     footerText: 'Period 2026/01/01 – 06/30  |  Brands covered: VFF / BFJ / Coolcore / Oleno / TabiRela / Others',
@@ -870,6 +865,32 @@ function yoyBadge(prevVal){
   if (prevVal == null) return `<span class="summary-yoy">${esc(t('yoyCap'))}: ${esc(t('yoyPending'))}</span>`;
   return '';
 }
+// Compact horizontal bar list for the summary blocks -- replaces the donut+legend
+// combo so H1/Q1/Q2/monthly can stack without each metric card needing a full
+// donut's worth of vertical space. Channel order follows GROUP_ORDER (not
+// resorted by value) so the same channel always lands in the same row position
+// across every block on the page, matching the fixed legend order used elsewhere.
+function channelBarList(items){
+  const total = items.reduce((a,d)=>a+d.value,0) || 1;
+  const maxV = Math.max(...items.map(d=>d.value), 1);
+  return `<div class="chan-bar-list">` + items.map(d => {
+    const widthPct = (d.value/maxV*100).toFixed(1);
+    return `<div class="chan-bar-row" data-key="${esc(d.key)}">
+      <div class="chan-bar-label">${esc(d.label)}</div>
+      <div class="chan-bar-track"><div class="chan-bar-fill" style="width:${widthPct}%;background:${d.color}"></div></div>
+      <div class="chan-bar-val">${fmtPct(d.value/total)}</div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+function attachBarTip(container, items, unit){
+  const total = items.reduce((a,d)=>a+d.value,0) || 1;
+  container.querySelectorAll('.chan-bar-row').forEach(row => {
+    const d = items.find(x => x.key === row.dataset.key);
+    if (!d) return;
+    row.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmt(d.value)} ${unit} (${fmtPct(d.value/total)})`));
+    row.addEventListener('mouseleave', hideTip);
+  });
+}
 function buildSummaryBlock(blockId, periodKey, months, rangeText){
   const OVERALL_MAP = Object.fromEntries(DATA.monthly_overall.map(m => [m.month, m]));
   const totals = sumMonthly(OVERALL_MAP, months);
@@ -880,23 +901,16 @@ function buildSummaryBlock(blockId, periodKey, months, rangeText){
     {mkey:'orders', labelKey:'kpiTotalOrders', unit: t('unitCase'), total: totals.orders,
       extra: avgTicket != null ? `${esc(t('kpiAvgTicket'))}: ${fmt(avgTicket)} THB` : null},
   ];
-  let html = `<div class="summary-period-heading" style="margin-bottom:12px">${esc(t('periodLabels')[periodKey] || periodKey)}<span class="summary-period-range">${esc(rangeText)}</span></div><div class="grid3">`;
+  let html = `<div class="summary-period-heading" style="margin-bottom:8px">${esc(t('periodLabels')[periodKey] || periodKey)}<span class="summary-period-range">${esc(rangeText)}</span></div><div class="grid3">`;
   html += metrics.map((m,mi) => {
     const items = channelBreakdown(m.mkey, months);
-    const total = items.reduce((a,d)=>a+d.value,0) || 1;
-    const donutSvg = donutChart(items, {size:148, r:54, stroke:18,
-      centerLabel: m.mkey==='amount' ? (total/1e6).toFixed(2)+'M' : fmt(total),
-      centerUnit: m.mkey==='amount' ? 'THB' : m.unit});
     return `<div class="panel summary-block">
       <div class="summary-block-head">
         <div class="summary-block-label">${esc(t(m.labelKey))}</div>
         ${yoyBadge(null)}
       </div>
       <div><span class="summary-block-value">${fmt(m.total)}</span><span class="summary-block-unit">${esc(m.unit)}</span></div>
-      <div class="donut-wrap" style="margin-top:14px;gap:14px">
-        <div class="sb-donut" data-block="${blockId}" data-mi="${mi}">${donutSvg}</div>
-        <div class="legend">${items.map(d=>`<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span><span class="v">${fmtPct(d.value/total)}</span></div>`).join('')}</div>
-      </div>
+      <div class="chan-bar-wrap" data-block="${blockId}" data-mi="${mi}">${channelBarList(items)}</div>
       ${m.extra ? `<div class="summary-block-extra">${m.extra}</div>` : ''}
     </div>`;
   }).join('');
@@ -909,9 +923,8 @@ function mountSummaryBlock(containerId, blockId, periodKey, months, rangeText){
   container.innerHTML = html;
   metrics.forEach((m,mi) => {
     const items = channelBreakdown(m.mkey, months);
-    const total = items.reduce((a,d)=>a+d.value,0) || 1;
     const unit = m.mkey==='amount' ? 'THB' : m.unit;
-    attachDonutTip(container.querySelector(`.sb-donut[data-block="${blockId}"][data-mi="${mi}"]`), items, total, unit);
+    attachBarTip(container.querySelector(`.chan-bar-wrap[data-block="${blockId}"][data-mi="${mi}"]`), items, unit);
   });
 }
 function renderSummaryMonthBlock(){
@@ -1376,21 +1389,6 @@ function hBarChartAxis(items, opts){
   return svg;
 }
 
-// Always-visible table (no dropdown): every month plus Q1/Q2/H1, so pairs sold
-// and sales amount can be read at any granularity side by side.
-function renderVffKpiTable(){
-  const VFF_MONTH_MAP = Object.fromEntries(DATA.vff_shoes.monthly.map(m => [m.month, m]));
-  const rowKeys = MONTHS.concat(['Q1','Q2','H1']);
-  const rowsHtml = rowKeys.map(key => {
-    const isAgg = key === 'Q1' || key === 'Q2' || key === 'H1';
-    const p = sumMonthly(VFF_MONTH_MAP, monthsFor(key));
-    const label = key === 'H1' ? t('periodLabels').H1 : (isAgg ? key : monthLabel(key));
-    return `<tr${isAgg ? ' style="font-weight:700"' : ''}><td>${esc(label)}</td><td class="num">${fmt(p.qty)}</td><td class="num">${fmt(p.amount)}</td></tr>`;
-  }).join('');
-  document.getElementById('vffKpiTable').innerHTML =
-    `<tr><th>${esc(t('thPeriod'))}</th><th style="text-align:right">${esc(t('thPairsShort'))} (${esc(t('unitPairs'))})</th><th style="text-align:right">${esc(t('thAmountPlain2'))} (THB)</th></tr>${rowsHtml}`;
-}
-
 // 01: monthly pairs sold, stacked by individual store (top 7 + Other) -- a
 // trend chart spanning the full half, so it has no period selector of its own.
 function renderVffStoreStackChart(){
@@ -1455,32 +1453,46 @@ function renderVffStoreStackChart(){
   vffStoreDetailHandle.refresh();
 }
 // Detail table behind "実績詳細を表示": same top-7 + Other buckets as the chart,
-// by month (足数/pairs only -- this chart has no amount/qty toggle).
+// by month PLUS Q1/Q2/半期(H1) next to June (folding in what used to be the
+// standalone "総足数・総売上金額" section), and a 売上金額 summary row under
+// the 合計 row so the amount figure removed from that section is still
+// available here.
+const VFF_DETAIL_COLS = MONTHS.concat(['Q1','Q2','H1']);
+function vffDetailColLabel(key){ return key === 'H1' ? t('periodLabels').H1 : (key === 'Q1' || key === 'Q2') ? key : monthLabel(key); }
+function vffDetailAggClass(key){ return (key === 'Q1' || key === 'Q2' || key === 'H1') ? ' style="border-left:2px solid var(--line)"' : ''; }
 function buildVffStoreDetailTable(){
   const sm = DATA.vff_shoes.store_monthly;
   const otherStores = Object.keys(sm).filter(s => !VFF_STORE_TOP.includes(s));
-  let colTotals = MONTHS.map(() => 0), grand = 0;
+  const qtyRow = monthlyMap => VFF_DETAIL_COLS.map(key =>
+    (key === 'Q1' || key === 'Q2' || key === 'H1') ? sumMonthly(monthlyMap, monthsFor(key)).qty : (monthlyMap[key] ? monthlyMap[key].qty : 0));
+
+  let colTotals = VFF_DETAIL_COLS.map(() => 0);
   const topRows = VFF_STORE_TOP.map(store => {
-    let rowTotal = 0;
-    const cells = MONTHS.map((m,i) => {
-      const v = (sm[store] && sm[store][m]) ? sm[store][m].qty : 0;
-      rowTotal += v; colTotals[i] += v;
-      return `<td class="num">${fmt(v)}</td>`;
-    }).join('');
-    grand += rowTotal;
-    return `<tr><td><span class="grp-dot" style="background:${VFF_STORE_HEX[store]};margin-right:6px"></span>${esc(store)}</td>${cells}<td class="num" style="font-weight:700">${fmt(rowTotal)}</td></tr>`;
+    const vals = qtyRow(sm[store] || {});
+    vals.forEach((v,i) => colTotals[i] += v);
+    const cells = vals.map((v,i) => `<td class="num"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('');
+    return `<tr><td><span class="grp-dot" style="background:${VFF_STORE_HEX[store]};margin-right:6px"></span>${esc(store)}</td>${cells}</tr>`;
   }).join('');
-  let otherRowTotal = 0;
-  const otherCells = MONTHS.map((m,i) => {
-    let v = 0; otherStores.forEach(s2 => { v += (sm[s2][m] ? sm[s2][m].qty : 0); });
-    otherRowTotal += v; colTotals[i] += v;
-    return `<td class="num">${fmt(v)}</td>`;
-  }).join('');
-  grand += otherRowTotal;
-  const otherRow = `<tr><td><span class="grp-dot" style="background:${VFF_STORE_OTHER_HEX};margin-right:6px"></span>${esc(t('storeOther'))}</td>${otherCells}<td class="num" style="font-weight:700">${fmt(otherRowTotal)}</td></tr>`;
-  const head = `<th>${esc(t('thStoreChannel'))}</th>` + MONTHS.map(m => `<th style="text-align:right">${esc(monthLabel(m))}</th>`).join('') + `<th style="text-align:right">${esc(t('thTotal'))}</th>`;
-  const footer = `<tr><td style="font-weight:700">${esc(t('thTotal'))}</td>` + colTotals.map(v => `<td class="num" style="font-weight:700">${fmt(v)}</td>`).join('') + `<td class="num" style="font-weight:700">${fmt(grand)}</td></tr>`;
-  return `<table><tr>${head}</tr>${topRows}${otherRow}${footer}</table>`;
+
+  const otherMonthly = {};
+  MONTHS.forEach(m => {
+    otherMonthly[m] = {amount:0, qty:0, orders:0};
+    otherStores.forEach(s2 => { const v = sm[s2][m]; if (v) { otherMonthly[m].amount += v.amount; otherMonthly[m].qty += v.qty; } });
+  });
+  const otherVals = qtyRow(otherMonthly);
+  otherVals.forEach((v,i) => colTotals[i] += v);
+  const otherRow = `<tr><td><span class="grp-dot" style="background:${VFF_STORE_OTHER_HEX};margin-right:6px"></span>${esc(t('storeOther'))}</td>${otherVals.map((v,i) => `<td class="num"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')}</tr>`;
+
+  const totalRow = `<tr><td style="font-weight:700">${esc(t('thTotal'))}</td>${colTotals.map((v,i) => `<td class="num" style="font-weight:700"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')}</tr>`;
+
+  // 売上金額 summary row -- overall total (not per-store), from vff_shoes.monthly.
+  const VFF_MONTH_MAP = Object.fromEntries(DATA.vff_shoes.monthly.map(m => [m.month, m]));
+  const amountVals = VFF_DETAIL_COLS.map(key =>
+    (key === 'Q1' || key === 'Q2' || key === 'H1') ? sumMonthly(VFF_MONTH_MAP, monthsFor(key)).amount : (VFF_MONTH_MAP[key] ? VFF_MONTH_MAP[key].amount : 0));
+  const amountRow = `<tr><td style="font-weight:700">${esc(t('thAmountPlain2'))}</td>${amountVals.map((v,i) => `<td class="num" style="font-weight:700"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')}</tr>`;
+
+  const head = `<th>${esc(t('thStoreChannel'))}</th>` + VFF_DETAIL_COLS.map(key => `<th style="text-align:right"${vffDetailAggClass(key)}>${esc(vffDetailColLabel(key))}</th>`).join('');
+  return `<table><tr>${head}</tr>${topRows}${otherRow}${totalRow}${amountRow}</table>`;
 }
 const vffStoreDetailHandle = makeDetailToggle('vffStoreDetailBtn', 'vffStoreDetailWrap', buildVffStoreDetailTable);
 
@@ -1596,7 +1608,6 @@ function renderAll(){
   renderSummarySection();
   renderComboChart();
   renderChannelBrandDonut();
-  renderVffKpiTable();
   renderVffStoreStackChart();
   renderVffChannelShare();
   renderVffGender();
