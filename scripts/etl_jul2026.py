@@ -1,0 +1,443 @@
+#!/usr/bin/env python3
+"""
+ETL for July 2026 actuals (first month beyond the original H1 2026 batch).
+These 4 source files use the SAME "new" consolidated export format as the
+2025/2024 historical batches (English headers, Warehouse/Branch-based flat
+files, prorated invoice-level Grand Total) rather than the OLD per-file Thai
+schema etl.py was built against -- confirming Barefoot's systems switched
+export formats starting around this data. Kept as a separate script (based on
+etl_2025.py) so the working H1 2026 pipeline is never at risk.
+
+Reuses the exact same helper conventions (add_record shape, brand/model
+classification, date parsing) as etl.py/etl_2025.py so records.json can be
+concatenated with zero schema drift.
+"""
+import openpyxl, re, json
+from collections import defaultdict, Counter
+from datetime import datetime, date
+
+SRC = "/root/.claude/uploads/7c7fe66c-960c-5108-be91-c1dc0972813f/"
+
+records = []
+issues = []
+def note(msg):
+    issues.append(msg)
+    print("NOTE:", msg)
+
+# ---------------------------------------------------------------- helpers (mirrors etl.py)
+def parse_dmy(s):
+    if not s:
+        return None
+    s = str(s).strip()
+    m = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', s)
+    if not m:
+        return None
+    d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    try:
+        return date(y, mo, d)
+    except ValueError:
+        return None
+
+def to_date(v):
+    if isinstance(v, (date, datetime)):
+        return v.date() if isinstance(v, datetime) else v
+    return parse_dmy(v)
+
+def num(v):
+    if v is None or v == '':
+        return 0.0
+    if isinstance(v, (int, float)):
+        return float(v)
+    try:
+        return float(str(v).replace(',', '').strip())
+    except ValueError:
+        return 0.0
+
+BRAND_PREFIX = {
+    'VFF': 'VFF', 'BFJ': 'BFJ', 'CP': 'Coolcore', 'CC': 'Coolcore',
+    'OLN': 'Oleno', 'MTB': 'TabiRela',
+    'KK': 'Others', 'SW': 'Others', 'KA': 'Others', 'LN': 'Others', 'TUB': 'Others',
+    # new-in-2025 codes confirmed by user as "Others": KEEN (3rd-party brand),
+    # Pet House (ST), TBE (TM); IS spans several small accessory lines (Pet Cool
+    # Tank, Blanket, Mesh Cloth, Stole, generic Socks) disambiguated by name below.
+    'KE': 'Others', 'ST': 'Others', 'TM': 'Others', 'IS': 'Others',
+    # new-in-July-2026: Tabio (3rd-party Japanese sock brand) -- confirmed by
+    # user as its OWN top-level brand (not folded into Others), unlike KEEN etc.
+    'KC': 'Tabio', 'TBO': 'Tabio',
+}
+OTHERS_SUBBRAND_PREFIX = {'KK': 'Klean Kanteen', 'SW': 'Swans', 'KA': 'Knockaround', 'LN': 'LUNA', 'TUB': 'Tube',
+                           'KE': 'KEEN', 'ST': 'Pet House', 'TM': 'TBE'}
+NON_PRODUCT_PREFIX = {'DC', 'CON', 'P'}
+
+def normalize_channel(v):
+    if not v:
+        return None
+    s = str(v).strip()
+    if not s:
+        return None
+    if s.startswith('Shopee'):
+        return 'Shopee'
+    return s
+
+def classify_by_code(code, name=None):
+    if not code:
+        return None, None
+    m = re.match(r'^[A-Za-z]+', str(code))
+    prefix = m.group(0) if m else str(code)
+    if prefix in NON_PRODUCT_PREFIX:
+        return 'EXCLUDE', None
+    brand = BRAND_PREFIX.get(prefix)
+    sub = OTHERS_SUBBRAND_PREFIX.get(prefix)
+    if brand == 'Others' and sub is None and name and 'PET' in str(name).upper():
+        # "IS" spans multiple small-accessory lines -- Pet Cool Tank shares the
+        # Pet House sub-brand grouping, disambiguated by product name.
+        sub = 'Pet House'
+    return brand, sub
+
+def model_from_name(name):
+    if not name:
+        return 'Other'
+    return str(name).split('(')[0].strip()
+
+NAME_VFF_KEYWORDS = ['V-SOUL','V-RUN','V-TREK','V-ALPHA','V-TRAIN','V-AQUA','V-TRAIL','KSO','BREEZANDAL',
+                      'SPIDRWALK','SCRAMKEY','TRAILOPE','GROUNDSPLAY','GRASPIFIER','SOCKS MINI CREW',
+                      'SOCKS CREW','SOCKS HIGH CREW','HIGH CREW','CVT HEMP','KMD','VFF','FURO','ALITZA',
+                      'SPYRIDON']
+# name-based non-VFF items confirmed by user (2025 batch review) -- rolled into
+# Others with a descriptive sub-brand rather than left as Unknown.
+NAME_OTHERS_SUBBRAND = {
+    'KEEN': 'KEEN', 'PET HOUSE': 'Pet House', 'PET COOL TANK': 'Pet House',
+}
+# small residual accessory items confirmed as non-VFF "Others" with no
+# meaningful sub-brand grouping (matched by exact base name only).
+NAME_OTHERS_EXACT = {'TBE', 'MESH CLOTH', 'BLANKET', 'SOCKS', 'STOLE'}
+def classify_by_name(name):
+    if not name:
+        return None, None, 'Other'
+    n = str(name).upper()
+    # hyphens vs spaces vary across source files for the same model (e.g.
+    # "CVT-HEMP" here vs "CVT HEMP" elsewhere) -- normalize only for keyword
+    # MATCHING, not for the display name, so "V-Trail" doesn't fragment into
+    # a separate "V Trail" model from the hyphenated spelling used elsewhere.
+    n_match = n.replace('-', ' ')
+    base = n.split('(')[0].strip().title()
+    if 'BFJ' in n:
+        return 'BFJ', None, base
+    if n.startswith('OLENO') or n.startswith('OLN'):
+        return 'Oleno', None, base
+    if n.startswith('TABI'):
+        return 'TabiRela', None, ('Marugo ' + base if not base.upper().startswith('MARUGO') else base)
+    # El-X Knit / Classic are confirmed VFF footwear lines despite non-standard
+    # naming (no "V-" prefix) -- matched by exact base name, not substring, to
+    # avoid over-matching unrelated future items that happen to contain "Classic".
+    # "El-X Knit" also appears misspelled several ways across years/sheets
+    # ("El X-Knit", "Elx-Knit", "Exl-Knit") -- canonicalize all of them to one
+    # display name so they roll up as a single model, not fragment into three.
+    base_match = base.upper().replace('-', ' ')
+    if base_match in ('EL X KNIT', 'ELX KNIT', 'EXL KNIT'):
+        return 'VFF', None, 'VFF El-X Knit'
+    if base_match == 'CLASSIC':
+        return 'VFF', None, ('VFF ' + base if not base.upper().startswith('VFF') else base)
+    for kw in NAME_VFF_KEYWORDS:
+        # keywords themselves may contain hyphens (e.g. "V-SOUL") -- normalize
+        # the same way as n_match so hyphenated keywords still match.
+        if kw.replace('-', ' ') in n_match:
+            return 'VFF', None, ('VFF ' + base if not base.upper().startswith('VFF') else base)
+    for kw, sub in NAME_OTHERS_SUBBRAND.items():
+        if kw in base_match:
+            return 'Others', sub, base
+    if base_match in NAME_OTHERS_EXACT:
+        return 'Others', None, base
+    return 'Unknown', None, base
+
+VFF_SIZE_TOKEN_RE = re.compile(r'^([MWUmwu]?)(\d+)$')
+def vff_shoe_gender(text):
+    if not text:
+        return False, None
+    s = str(text)
+    m = re.search(r'\(([^()]*)\)', s)
+    if m:
+        for token in (p.strip() for p in m.group(1).split(',')):
+            gm = VFF_SIZE_TOKEN_RE.match(token)
+            if gm:
+                g = gm.group(1).upper()
+                return True, ('Women' if g == 'W' else 'Men' if g == 'M' else 'Unisex')
+    fm = re.search(r'([MWUmwu])(\d{2,3})\)?\s*$', s)
+    if fm:
+        g = fm.group(1).upper()
+        return True, ('Women' if g == 'W' else 'Men' if g == 'M' else 'Unisex')
+    return False, None
+
+def add_record(store, category, date_, brand, model, sub, qty, amount, order_id,
+                channel=None, payment=None, entity=None, vff_source_text=None):
+    if date_ is None:
+        return
+    if brand == 'EXCLUDE':
+        return
+    is_shoe, gender = (False, None)
+    if brand == 'VFF':
+        is_shoe, gender = vff_shoe_gender(vff_source_text)
+    records.append(dict(
+        store=store, category=category, date=date_.isoformat(),
+        month=date_.strftime('%Y-%m'), brand=brand or 'Unknown', model=model,
+        is_vff_shoe=is_shoe, gender=gender,
+        sub=sub, qty=qty, amount=amount, order_id=order_id,
+        channel=channel, payment=payment, entity=entity,
+    ))
+
+# CODE_TO_MODEL for short-code files (Central Total Department) -- rebuilt from
+# the same well-labeled 2026 files used in etl.py (product names don't change
+# year to year for the same SKU, so this lookup is shared across both years).
+CODE_TO_MODEL = {}
+def _scan_codes(fn, sheet, header_row_idx, code_key, name_key):
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb[sheet]
+    rows = list(ws.iter_rows(values_only=True))
+    header = rows[header_row_idx]
+    idx = {h: i for i, h in enumerate(header) if h}
+    for r in rows[header_row_idx + 1:]:
+        if not any(r):
+            continue
+        code = r[idx.get(code_key)] if code_key in idx else None
+        name = r[idx.get(name_key)] if name_key in idx else None
+        if not code:
+            continue
+        m = re.match(r'^([A-Za-z]+)0*(\d+)', str(code).upper())
+        if not m:
+            continue
+        prefix, num_code = m.group(1), int(m.group(2))
+        model = model_from_name(name)
+        key = (prefix, num_code)
+        if model and model not in ('Other',) and key not in CODE_TO_MODEL:
+            CODE_TO_MODEL[key] = model
+
+_scan_codes(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_codes(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_codes(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_codes(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+print(f"Built brand code->model lookup with {len(CODE_TO_MODEL)} entries")
+
+
+# ================================================================== 1. BFT consignment July 2026 (same schema/proration as the 2025/2024 files)
+def load_bft_consignment_jul2026():
+    fn = SRC + '82f10655-BFT_Consignment_072026.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Invoice Report']
+    rows = list(ws.iter_rows(values_only=True))
+    data = rows[1:]
+
+    inv_pretax = defaultdict(float)
+    inv_grand = {}
+    for r in data:
+        if not any(r):
+            continue
+        doc, pc = r[0], r[3]
+        if not doc or not pc:
+            continue
+        prevat, vat = num(r[8]), num(r[9])
+        inv_pretax[doc] += prevat + vat
+        gt = r[13]
+        if gt not in (None, ''):
+            inv_grand[doc] = num(gt)
+
+    n = 0
+    for r in data:
+        if not any(r):
+            continue
+        doc, pc = r[0], r[3]
+        if not doc or not pc:
+            continue
+        d = parse_dmy(r[1])
+        if d is None:
+            continue
+        qty = num(r[5])
+        prevat, vat = num(r[8]), num(r[9])
+        line_pretax = prevat + vat
+        total_pretax = inv_pretax.get(doc, 0.0)
+        grand = inv_grand.get(doc, total_pretax)
+        amt = (line_pretax / total_pretax * grand) if total_pretax else 0.0
+        pname = r[4]
+        brand, sub = classify_by_code(pc, pname)
+        model = model_from_name(pname)
+        add_record('BFT Consignment', 'consignment', d, brand, model, sub, qty, amt, doc, vff_source_text=pc)
+        n += 1
+    print(f"loaded {n} rows -> BFT Consignment July 2026")
+load_bft_consignment_jul2026()
+
+
+# ================================================================== 2/3. BFT & EDV Online/Event/Store/Consignment July 2026
+# Same flat schema as the 2025 batch. Two new-this-month branch values not
+# seen in the 2025 map: EDV's "CART Central LP" (the VFF Cart corner at
+# Central Ladprao -- distinct from "Coollabo Cen LP 3F"/"Central LP 3F",
+# which are the SAME location's Coollabo corner; both appear as separate
+# branches in the same file) and BFT's "Paradise Park" (its own directly-
+# operated store, previously loaded from a dedicated file in the old H1
+# 2026 pipeline).
+def load_flat_branch_file(fn, sheet, branch_map, label):
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb[sheet]
+    rows = list(ws.iter_rows(values_only=True))
+    header = rows[1]  # row 0 is a merged "Product data" title band
+    idx = {h: i for i, h in enumerate(header) if h}
+    data = rows[2:]
+    n, skipped_unmapped = 0, 0
+    for r in data:
+        if not any(r):
+            continue
+        pc = r[idx.get('Product code')]
+        if not pc:
+            continue
+        branch = r[idx.get('Warehouse/Branch')]
+        mapping = branch_map.get(branch)
+        if mapping is None:
+            skipped_unmapped += 1
+            note(f"{label}: unmapped Warehouse/Branch value {branch!r} (1 row skipped)")
+            continue
+        store, cat = mapping
+        d = to_date(r[idx.get('Date')])
+        if d is None:
+            continue
+        qty = num(r[idx.get('Quantity')])
+        amt = num(r[idx.get('Total amount')])
+        order_id = r[idx.get('Sales order No.')]
+        channel = normalize_channel(r[idx.get('Sales channel')])
+        pname = r[idx.get('Product name')]
+        brand, sub = classify_by_code(pc, pname)
+        model = model_from_name(pname)
+        add_record(store, cat, d, brand, model, sub, qty, amt, order_id, channel=channel, vff_source_text=pc)
+        n += 1
+    print(f"loaded {n} rows -> {label} ({skipped_unmapped} unmapped)")
+
+BFT_BRANCH_MAP_JUL2026 = {
+    'Online': ('Online', 'online'),
+    'Event 1': ('Event', 'event'),
+    'Event 2': ('Event', 'event'),
+    'Event': ('Event', 'event'),
+    'Pre-Order Free Bag': ('Online', 'online'),
+    'Pre-Order V-Soul Ivory': ('Online', 'online'),
+    'Pre-Order': ('Online', 'online'),
+    'คลังสินค้าหลัก': ('Online', 'online'),
+    # new this month: BFT's own directly-operated store
+    'Paradise Park': ('Paradise Park', 'store'),
+}
+load_flat_branch_file(SRC + '6f88dd25-BFT_Shopee_Lazada_Event_Paradise_072026.xlsx', 'Orders',
+                       BFT_BRANCH_MAP_JUL2026, 'BFT Online/Event/Paradise July 2026')
+
+EDV_BRANCH_MAP_JUL2026 = {
+    'Thaniya': ('Thaniya', 'store'),
+    'Coollabo Cen LP 3F': ('Central Ladprao 3F (Coollabo)', 'store'),
+    'Central LP 3F': ('Central Ladprao 3F (Coollabo)', 'store'),
+    'Kvillage': ('K Village', 'store'),
+    'K village': ('K Village', 'store'),
+    'Event 1': ('Event', 'event'),
+    'Event 2': ('Event', 'event'),
+    'Event': ('Event', 'event'),
+    'Banana Run': ('EDV Consignment', 'consignment'),
+    'Avarin': ('EDV Consignment', 'consignment'),
+    'Mega Bangna': ('EDV Consignment', 'consignment'),
+    'Runnercart': ('EDV Consignment', 'consignment'),
+    'Caveman': ('EDV Consignment', 'consignment'),
+    'Anvil Camp': ('EDV Consignment', 'consignment'),
+    'Highlandner': ('EDV Consignment', 'consignment'),
+    'Pathwild': ('EDV Consignment', 'consignment'),
+    'Art of Golf': ('EDV Consignment', 'consignment'),
+    'Consignment': ('EDV Consignment', 'consignment'),
+    'คลังสินค้าหลัก': ('Online', 'online'),
+    # new this month: the VFF Cart corner at Central Ladprao -- a distinct
+    # entity from the Coollabo corner at the same mall (both appear in this
+    # file), rolls up to the existing "VFF Cart LP" store per etl.py.
+    'CART Central LP': ('VFF Cart LP', 'store'),
+}
+load_flat_branch_file(SRC + '9b9ca070-EDV_Sales_Online_Shopee_Lazada_Kvillage_Central_LP_Cart_Central_LP_Thaniya_Consignment_Event__072026.xlsx',
+                       'Orders', EDV_BRANCH_MAP_JUL2026, 'EDV Multi-store July 2026')
+
+
+
+
+# ================================================================== 4. BFT_Central_Total_Department July 2026
+def load_central_total_department_jul2026():
+    fn = SRC + '00bc0756-BFT_Central_Total_Department_072026.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Export']
+    rows = list(ws.iter_rows(values_only=True))
+    header = rows[0]
+    idx = {h: i for i, h in enumerate(header) if h}
+    data = rows[1:]
+    MONTHS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,
+              'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}
+    STORE_NAME_MAP = {
+        'CHIDLOM': 'Central Chidlom',
+        'CHIDLOM ONLINE': 'Central Chidlom Online',
+        'CENTRAL WORLD-CDS': 'Central World (CDS)',
+        'LARDPRAO': 'Central Lardprao (Dept.)',
+        'EASTVILLE': 'Central Eastville',
+    }
+    n = 0
+    for r in data:
+        if not any(r):
+            continue
+        store = r[idx['Store Name']]
+        cat = r[idx['Catalogue No.']]
+        msd = r[idx['Month Sales Date']]
+        if not store or not cat or not msd:
+            continue
+        mo, yr = str(msd).split('-')
+        d = date(int(yr), MONTHS[mo], 1)
+        qty = num(r[idx['Sales Quantity']])
+        amt = num(r[idx['Total Net Sales (Sales Amount)']])
+        brand, sub = classify_by_code(cat)
+        model = None
+        mcode = re.match(r'^([A-Za-z]+)0*(\d+)', str(cat).upper())
+        if mcode:
+            model = CODE_TO_MODEL.get((mcode.group(1), int(mcode.group(2))), 'Other')
+        store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
+        add_record(store_label, 'central_dept', d, brand, model, sub, qty, amt,
+                   order_id=None, vff_source_text=cat)
+        n += 1
+    stores_seen = len(set(r[idx['Store Name']] for r in data if r[idx['Store Name']]))
+    print(f"loaded {n} rows -> Central Total Department July 2026 ({stores_seen} of 5 stores; no Eastville data this month)")
+load_central_total_department_jul2026()
+
+
+# ================================================================== summary / sanity checks
+print()
+print("="*80)
+print(f"TOTAL JUL 2026 RECORDS: {len(records)}")
+total_amt = sum(r['amount'] for r in records)
+total_qty = sum(r['qty'] for r in records)
+print(f"TOTAL AMOUNT: {total_amt:,.2f}")
+print(f"TOTAL QTY: {total_qty:,.0f}")
+
+by_store = defaultdict(lambda: {'amount':0.0,'qty':0.0,'orders':set()})
+for r in records:
+    by_store[r['store']]['amount'] += r['amount']
+    by_store[r['store']]['qty'] += r['qty']
+    if r['order_id']:
+        by_store[r['store']]['orders'].add(r['order_id'])
+print()
+print(f"{'Store':40s} {'Amount':>15s} {'Qty':>8s} {'Orders':>8s}")
+for store, v in sorted(by_store.items(), key=lambda x: -x[1]['amount']):
+    print(f"{store:40s} {v['amount']:>15,.2f} {v['qty']:>8,.0f} {len(v['orders']):>8d}")
+
+by_month = defaultdict(lambda: {'amount':0.0,'qty':0.0})
+for r in records:
+    by_month[r['month']]['amount'] += r['amount']
+    by_month[r['month']]['qty'] += r['qty']
+print()
+print("Monthly totals:")
+for m, v in sorted(by_month.items()):
+    print(f"  {m}: amount={v['amount']:>14,.2f}  qty={v['qty']:>8,.0f}")
+
+by_brand = defaultdict(lambda: {'amount':0.0,'qty':0.0})
+for r in records:
+    by_brand[r['brand']]['amount'] += r['amount']
+    by_brand[r['brand']]['qty'] += r['qty']
+print()
+print("Brand totals:")
+for b, v in sorted(by_brand.items(), key=lambda x: -x[1]['amount']):
+    print(f"  {b:15s} amount={v['amount']:>14,.2f}  qty={v['qty']:>8,.0f}")
+
+with open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records_jul2026.json', 'w', encoding='utf-8') as f:
+    json.dump(records, f, ensure_ascii=False)
+print()
+print("Saved", len(records), "records to records_jul2026.json")

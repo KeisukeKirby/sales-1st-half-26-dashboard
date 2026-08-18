@@ -10,15 +10,21 @@ from collections import defaultdict
 
 records = json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records.json'))
 # 2025 and 2024 full-year actuals -- merged in for YoY comparison and the
-# Overall tab's yearly-summary panel. Only the Jan-Jun 2025 subset (PREV_MONTHS)
+# Overall tab's yearly-summary panel. Only the Jan-Jul 2025 subset (PREV_MONTHS)
 # is used for per-key monthly breakdowns (monthly_out); the rest of both years
 # rides along harmlessly and is summed separately below for full-year totals.
 records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records_2025.json'))
 records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records_2024.json'))
+# July 2026 actuals -- extends the current period from H1 (Jan-Jun) to Jan-Jul.
+# The H1 period itself stays a fixed Jan-Jun concept everywhere it's labeled as
+# such (Q1+Q2, and the "(H1)" YoY reference columns); MONTHS below is now "all
+# months loaded for the current year" rather than strictly "H1", so this and
+# future monthly batches extend cleanly without redefining what H1 means.
+records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records_jul2026.json'))
 
-MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06']
-PREV_MONTHS = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06']  # same 6 calendar months, prior year
-H1_2024 = [f'2024-{m:02d}' for m in range(1, 7)]  # same 6 calendar months, two years prior
+MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07']
+PREV_MONTHS = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07']  # same calendar months, prior year
+H1_2024 = [f'2024-{m:02d}' for m in range(1, 8)]  # same calendar months, two years prior
 # union used only when serializing per-key monthly breakdowns (monthly_out) -- includes
 # H1 2024 too so every store/model/VFF-shoe breakdown can support a 2-year-back
 # comparison, not just last year's.
@@ -172,13 +178,13 @@ out['kpi'] = {
     'total_qty': round(_h1_total['qty'], 1),
     'total_orders': len(_h1_total['orders']),
     'avg_ticket': round(_h1_total['amount'] / len(_h1_total['orders']), 2) if _h1_total['orders'] else None,
-    'period': '2026-01-01 ~ 2026-06-30',
+    'period': '2026-01-01 ~ 2026-07-31',
     'last_year': {
         'total_amount': round(_h1_prev_total['amount'], 2),
         'total_qty': round(_h1_prev_total['qty'], 1),
         'total_orders': len(_h1_prev_total['orders']),
         'avg_ticket': round(_h1_prev_total['amount'] / len(_h1_prev_total['orders']), 2) if _h1_prev_total['orders'] else None,
-        'period': '2025-01-01 ~ 2025-06-30',
+        'period': '2025-01-01 ~ 2025-07-31',
     },
 }
 
