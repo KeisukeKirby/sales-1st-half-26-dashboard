@@ -216,22 +216,15 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
     <button type="button" class="show-more-btn" id="summaryDetailBtn" style="margin-top:16px"></button>
     <div id="summaryDetailWrap" style="display:none;margin-top:16px;overflow-x:auto"></div>
 
-    <div class="section-title" style="margin-top:26px">
-      <span class="n">02</span><span data-i18n="ov01Title">月次推移（チャネル別内訳）</span>
-      <div class="metric-toggle" id="stackMetricToggle" role="group" style="margin-left:auto"></div>
+    <div class="panel" style="margin-top:20px">
+      <h3 data-i18n="summaryMonthlyChartTitle">月別売上金額</h3>
+      <div id="summaryMonthlyChart"></div>
     </div>
-    <div class="panel">
-      <div id="comboChart"></div>
-      <button type="button" class="show-more-btn" id="comboDetailBtn" style="margin-top:16px"></button>
-      <div id="comboDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
-    </div>
-
   </section>
 
   <!-- ============================================================ VFFシューズ -->
   <section class="tabpanel" id="tab-vffshoes">
     <div class="section-title"><span class="n">01</span><span data-i18n="vff01Title">月次 販売足数推移（店舗別）</span></div>
-    <div class="section-note" data-i18n="vff01Note">主要7店舗を個別に色分けし、それ以外の店舗は「その他」にまとめた積み上げ棒グラフ</div>
     <div class="panel">
       <div id="vffShoeLineChart"></div>
       <button type="button" class="show-more-btn" id="vffStoreDetailBtn" style="margin-top:16px"></button>
@@ -289,10 +282,21 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
   <section class="tabpanel" id="tab-stores">
     <div class="section-title">
       <span class="n">01</span><span data-i18n="st01TitleTable">店舗・チャネル別 売上テーブル</span>
-      <div id="storeTablePeriodSel" style="margin-left:auto"></div>
     </div>
-    <div class="section-note" data-i18n="st02Note">伝票数がないカテゴリ（Central百貨店内は月次集計のみ）は「—」表示。列見出しクリックでソートできます</div>
     <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <h3 style="margin:0" data-i18n="ov01Title">月次推移（チャネル別内訳）</h3>
+        <div class="metric-toggle" id="stackMetricToggle" role="group"></div>
+      </div>
+      <div id="comboChart" style="margin-top:14px"></div>
+      <button type="button" class="show-more-btn" id="comboDetailBtn" style="margin-top:16px"></button>
+      <div id="comboDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
+    </div>
+    <div class="panel" style="margin-top:20px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <div id="storeTablePeriodSel"></div>
+      </div>
+      <div class="section-note" data-i18n="st02Note" style="margin-bottom:14px">伝票数がないカテゴリ（Central百貨店内は月次集計のみ）は「—」表示。列見出しクリックでソートできます</div>
       <div style="overflow-x:auto">
         <table id="storeTable">
           <thead><tr id="storeTableHead"></tr></thead>
@@ -323,6 +327,8 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
           </div>
         </div>
       </div>
+      <button type="button" class="show-more-btn" id="paymentDetailBtn" style="margin-top:16px"></button>
+      <div id="paymentDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
     </div>
 
     <div class="section-title" style="margin-top:26px">
@@ -402,7 +408,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <h3 data-i18n="bottom10Title">売上ワースト10</h3>
         <table><tr><th data-i18n="thModel">モデル</th><th style="text-align:right" data-i18n="thQty">数量</th><th style="text-align:right" data-i18n="thAmountTHB">金額(THB)</th></tr>
         <tbody id="bottom10body"></tbody></table>
-        <button type="button" class="zero-qty-link" id="zeroQtyLink" style="display:none"></button>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <button type="button" class="zero-qty-link" id="zeroQtyLink" style="display:none"></button>
+          <button type="button" class="zero-qty-link" id="zeroAmountLink" style="display:none"></button>
+        </div>
       </div>
     </div>
 
@@ -528,7 +537,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 <div class="tooltip" id="tooltip"></div>
 <div class="modal-backdrop" id="zeroQtyModal">
   <div class="modal-box">
-    <h3 data-i18n="zeroQtyModalTitle">販売数量0のモデル</h3>
+    <h3 id="zeroModalTitleEl">販売数量0のモデル</h3>
     <div class="modal-list" id="zeroQtyModalList"></div>
     <button type="button" class="modal-close" id="zeroQtyModalClose" data-i18n="modalCloseBtn">閉じる</button>
   </div>
@@ -602,7 +611,7 @@ const T = {
     title: '販売実績ダッシュボード',
     periodInfo: '対象期間: <b>2026年1月1日〜7月31日</b><br>前年同期間比較: <b>反映済み</b>',
     tabOverview: '全体', tabVffShoes: 'VFFシューズ', tabStores: '店舗別', tabBrand: '商品・ブランド別', tabNotes: 'このデータについて',
-    allSummaryTitle: '全体サマリー',
+    allSummaryTitle: '全体サマリー', summaryMonthlyChartTitle: '月別売上金額',
     ov01Title: '月次推移（チャネル別内訳）',
     ov03TitleDonut: 'チャネル別 ブランド構成',
     ov03NoteDonut: 'プルダウンでチャネルを選択すると、そのチャネル内でのブランド別売上構成比（金額ベース）を表示します',
@@ -613,9 +622,9 @@ const T = {
     ov04Title: '決済方法別比率（全体）',
     payTargetPrefix: '対象', payOverviewNote: '（現状Central Ladprao 3F・Thaniya・K Village・Paradise Parkの店舗別台帳のみ決済方法を記録。店舗ごとの内訳は下の「店舗ごとの詳細」で確認できます）',
     payCurYearTitle: '2026年', payPrevYearTitle: '2025年（同期間）',
+    payDetailNote: '各店舗の行（太字）は月次の決済合計額（THB）、Cash/Credit Card/QR Codeの行はその店舗・月における構成比（%）です。',
     unitPairs: '足',
     vff01Title: '月次 販売足数推移（店舗別）',
-    vff01Note: '「全体」タブの全体サマリーと同じ区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery）で色分けした積み上げ棒グラフ。ThaniyaはVFFシューズを扱っていないため表示していません',
     vff02Title: '販売チャネルシェア',
     vff02Note: 'オンラインストア／直営実店舗（K Village・Paradise Park）／Central百貨店内（Coollabo・VFF Cart LP含む）／イベント／Siam Discovery／委託販売の7区分',
     channelShareTitle: 'チャネル別 シェア', channelBreakdownTitle: 'チャネル別 内訳',
@@ -631,6 +640,7 @@ const T = {
     br01Title: 'モデル別ランキング（全ブランド合算・サイズ/カラー合算）',
     top10Title: '売上トップ10', bottom10Title: '売上ワースト10',
     zeroQtyLinkText: '販売数量0のモデルを見る（{n}件）', zeroQtyModalTitle: '販売数量0のモデル', modalCloseBtn: '閉じる',
+    zeroAmountLinkText: '売上金額0のモデルを見る（{n}件）', zeroAmountModalTitle: '売上金額0のモデル',
     thModel: 'モデル', thAmountTHB: '金額(THB)',
     br02Title: 'ブランド別 売上詳細', selectBrandLabel: 'ブランドを選択', thBrandShare: 'ブランド内比率',
     br03Title: 'Others 内訳（ブランド別比率）', br03Note: 'Klean Kanteen / Swans / Knockaround / LUNA / Tube の構成比',
@@ -673,7 +683,7 @@ const T = {
     title: 'Sales Performance Dashboard',
     periodInfo: 'Period: <b>Jan 1 – Jul 31, 2026</b><br>Same-period YoY comparison: <b>available</b>',
     tabOverview: 'Overall', tabVffShoes: 'VFF Shoes', tabStores: 'By Store', tabBrand: 'Products & Brands', tabNotes: 'About This Data',
-    allSummaryTitle: 'Overall Summary',
+    allSummaryTitle: 'Overall Summary', summaryMonthlyChartTitle: 'Monthly Sales Amount',
     ov01Title: 'Monthly Trend by Channel',
     ov03TitleDonut: 'Brand Composition by Channel',
     ov03NoteDonut: 'Select a channel from the dropdown to see that channel\'s brand mix, by sales amount',
@@ -684,9 +694,9 @@ const T = {
     ov04Title: 'Payment Method Ratio (Overall)',
     payTargetPrefix: 'Coverage', payOverviewNote: '(Currently only the Central Ladprao 3F, Thaniya, K Village, and Paradise Park store-level ledgers record payment method. See "Per-Store Detail" below for store-level breakdown.)',
     payCurYearTitle: '2026', payPrevYearTitle: '2025 (Same Period)',
+    payDetailNote: 'Each store\'s row (bold) is its monthly payment total (THB); the Cash/Credit Card/QR Code rows below it are that store-month\'s share (%).',
     unitPairs: 'pairs',
     vff01Title: 'Monthly Pairs Sold by Store',
-    vff01Note: 'Stacked bar chart colored by the same categories as the Overall tab\'s summary (Directly-operated Stores / Central Dept. Stores / Online / Events / Consignment / Siam Discovery). Thaniya is omitted since it carries no VFF footwear sales',
     vff02Title: 'Sales Channel Share',
     vff02Note: 'Online Store / Directly-operated Stores (K Village, Paradise Park) / Central Dept. Store (incl. Coollabo, VFF Cart LP) / Events / Siam Discovery / Consignment — 7 channels',
     channelShareTitle: 'Channel Share', channelBreakdownTitle: 'Channel Breakdown',
@@ -702,6 +712,7 @@ const T = {
     br01Title: 'Model Ranking (All Brands, Sizes/Colors Combined)',
     top10Title: 'Top 10 by Sales', bottom10Title: 'Bottom 10 by Sales',
     zeroQtyLinkText: 'View models with 0 units sold ({n})', zeroQtyModalTitle: 'Models with 0 Units Sold', modalCloseBtn: 'Close',
+    zeroAmountLinkText: 'View models with 0 revenue ({n})', zeroAmountModalTitle: 'Models with 0 Revenue',
     thModel: 'Model', thAmountTHB: 'Amount (THB)',
     br02Title: 'Brand Sales Detail', selectBrandLabel: 'Select Brand', thBrandShare: 'Share within Brand',
     br03Title: 'Others Breakdown (by Brand)', br03Note: 'Composition of Klean Kanteen / Swans / Knockaround / LUNA / Tube',
@@ -1044,6 +1055,67 @@ function renderSummarySection(){
   mountPeriodSelect('summaryPeriodSel', summaryPeriod, renderSummarySection);
   mountSummaryBlock(summaryPeriod.key, monthsFor(summaryPeriod.key));
   summaryDetailHandle.refresh();
+  renderSummaryMonthlyChart();
+}
+// Grouped bar chart: one cluster per month (Jan-Jul), with a bar per year
+// (2024/2025/2026) so year-over-year monthly movement is visible at a
+// glance, independent of the period picker above (this always shows the
+// full Jan-Jul range). 2024/2025 bars are muted so the current year reads
+// as the primary series.
+function renderSummaryMonthlyChart(){
+  const w = 1080, h = 300, padL = 64, padR = 20, padT = 20, padB = 30;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const YEAR_SERIES = [
+    {label: '2024', months: DATA.monthly_overall_2024h1 || [], color: '#3A5147'},
+    {label: '2025', months: DATA.monthly_overall_prev || [], color: '#5FA88A'},
+    {label: '2026', months: DATA.monthly_overall, color: '#E8A33D'},
+  ].map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}))
+   .filter(ys => ys.monthKeys.length > 0);
+
+  const n = MONTHS.length;
+  const bandW = plotW / n;
+  const groupW = Math.min(bandW * 0.72, 130);
+  const barGap = 3;
+  const barW = (groupW - barGap * (YEAR_SERIES.length - 1)) / YEAR_SERIES.length;
+  const xC = i => padL + bandW * i + bandW / 2;
+
+  let maxV = 1;
+  MONTHS.forEach((m, i) => {
+    YEAR_SERIES.forEach(ys => { const v = ys.map[ys.monthKeys[i]] ? ys.map[ys.monthKeys[i]].amount : 0; if (v > maxV) maxV = v; });
+  });
+  const {max: axisMax, step} = niceAxis(maxV, 5);
+  const y = v => padT + plotH - (v / axisMax) * plotH;
+  const baseY = y(0);
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" preserveAspectRatio="xMinYMin meet">`;
+  for (let s = 0; s * step <= axisMax; s++) {
+    const v = step * s, yy = y(v);
+    svg += `<line x1="${padL}" y1="${yy}" x2="${w-padR}" y2="${yy}" class="axis-line"></line>`;
+    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;
+  }
+  MONTHS.forEach((m, i) => {
+    svg += `<text x="${xC(i)}" y="${h-8}" text-anchor="middle">${monthLabel(m)}</text>`;
+    const groupX0 = xC(i) - groupW / 2;
+    YEAR_SERIES.forEach((ys, yi) => {
+      const rec = ys.map[ys.monthKeys[i]];
+      const v = rec ? rec.amount : 0;
+      const bx = groupX0 + yi * (barW + barGap);
+      const yTop = y(v);
+      svg += `<rect x="${bx}" y="${yTop}" width="${barW}" height="${Math.max(baseY-yTop,0)}" fill="${ys.color}" class="ybar" data-i="${i}" data-yi="${yi}"></rect>`;
+    });
+  });
+  svg += `</svg>`;
+  const el = document.getElementById('summaryMonthlyChart');
+  const legendHtml = YEAR_SERIES.map(ys => `<div class="item"><span class="k"><span class="swatch" style="background:${ys.color}"></span>${esc(ys.label)}</span></div>`).join('');
+  el.innerHTML = svg + `<div class="legend" style="flex-direction:row;gap:18px;margin-top:10px;justify-content:center;flex-wrap:wrap">${legendHtml}</div>`;
+  el.querySelectorAll('.ybar').forEach(node => {
+    node.addEventListener('mousemove', e => {
+      const i = +node.dataset.i, yi = +node.dataset.yi, ys = YEAR_SERIES[yi];
+      const rec = ys.map[ys.monthKeys[i]];
+      showTip(e, `<b>${esc(ys.label)}</b> ・ ${monthLabel(MONTHS[i])}<br>${fmt(rec ? rec.amount : 0)} THB`);
+    });
+    node.addEventListener('mouseleave', hideTip);
+  });
 }
 // Detail table behind 01's own "実績詳細を表示": always the Jan-Jun monthly
 // breakdown (independent of the period picker above, which only controls the
@@ -1366,12 +1438,38 @@ function renderPaymentDonut(donutId, legendId, months){
     `<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span><span class="v">${fmtPct(d.value/total)}</span></div>`).join('');
   return total;
 }
+// Detail table behind "実績詳細を表示": per store (bold row, THB reference
+// total) x per payment method (indented sub-rows, % of that store's own
+// monthly total) x month -- the store-and-month ratio breakdown the donuts
+// above can't show at once.
+function buildPaymentDetailTable(){
+  const storesWithPay = DATA.stores.filter(s => s.payment_monthly);
+  const methods = ['Cash', 'Credit Card', 'QR Code'];
+  const rows = storesWithPay.map(s => {
+    const monthTotals = MONTHS.map(m => methods.reduce((sum,me) =>
+      sum + ((s.payment_monthly[me] && s.payment_monthly[me][m]) ? s.payment_monthly[me][m].amount : 0), 0));
+    const grandTotal = monthTotals.reduce((a,b) => a+b, 0);
+    const storeRow = `<tr><td style="font-weight:700">${esc(storeDisplay(s.store))}</td>${monthTotals.map(v => `<td class="num" style="font-weight:700">${fmt(v)}</td>`).join('')}<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(grandTotal)}</td></tr>`;
+    const methodRows = methods.map(me => {
+      const monthVals = MONTHS.map(m => (s.payment_monthly[me] && s.payment_monthly[me][m]) ? s.payment_monthly[me][m].amount : 0);
+      const cells = monthVals.map((v,i) => `<td class="num">${monthTotals[i] ? fmtPct(v/monthTotals[i]) : '—'}</td>`).join('');
+      const rowTotal = monthVals.reduce((a,b) => a+b, 0);
+      return `<tr><td style="padding-left:26px;color:var(--ink-dim)">${esc(me)}</td>${cells}<td class="num" style="border-left:2px solid var(--line)">${grandTotal ? fmtPct(rowTotal/grandTotal) : '—'}</td></tr>`;
+    }).join('');
+    return storeRow + methodRows;
+  }).join('');
+  const head = `<th>${esc(t('thStoreChannel'))}</th>` + MONTHS.map(m => `<th style="text-align:right">${esc(monthLabel(m))}</th>`).join('')
+    + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(t('thTotal'))}</th>`;
+  return `<div class="chart-note" style="text-align:left;margin-bottom:10px">${esc(t('payDetailNote'))}</div><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+const paymentDetailHandle = makeDetailToggle('paymentDetailBtn', 'paymentDetailWrap', buildPaymentDetailTable);
 function renderPaymentOverall(){
   mountPeriodSelect('paymentOverallPeriodSel', paymentOverallPeriod, renderPaymentOverall);
   const months = monthsFor(paymentOverallPeriod.key);
   const coverage = renderPaymentDonut('paymentDonut', 'paymentLegend', months);
   document.getElementById('payCoverageAmt').textContent = fmt(coverage);
   renderPaymentDonut('paymentDonutPrev', 'paymentLegendPrev', prevMonthsFor(paymentOverallPeriod.key));
+  paymentDetailHandle.refresh();
 }
 
 // ============================================================== 店舗別: 店舗ごとの詳細（プルダウン選択、own period）
@@ -1451,7 +1549,9 @@ function renderStoreDetail(storeName, months){
       document.getElementById('sdPayLegendPrev').innerHTML = `<div class="section-note" style="margin:0">${esc(t('noPaymentData'))}</div>`;
     }
   } else {
-    payBlock.innerHTML = `<h3 style="margin-bottom:6px">${esc(t('paymentRatioTitle'))}</h3><div class="section-note" style="margin:0">${esc(t('noPaymentData'))}</div>`;
+    // No payment-method data at all for this store/category (most stores) --
+    // leave the block empty rather than showing a "no data" placeholder.
+    payBlock.innerHTML = '';
   }
 }
 function setupStoreSelect(){
@@ -1517,31 +1617,39 @@ function fillModelTable(id, rows, cls){
     <tr class="${cls}"><td><span class="rank">${i+1}</span>${esc(r.model)}</td><td class="num">${fmt(r.qty)}</td><td class="num">${fmt(r.amount)}</td></tr>
   `).join('');
 }
-// Models with 0 (or negative, e.g. a period with only a return) net quantity
-// carry no meaningful ranking signal and used to clutter the Worst-10 list --
-// they're collected behind a single link/popup instead, so Worst-10 always
-// shows 10 models that actually sold at least 1 unit.
+// Models with 0 (or negative, e.g. a period with only a return) net quantity,
+// or 0/negative net revenue despite having sold units (e.g. a fully
+// discounted giveaway item), carry no meaningful ranking signal and used to
+// clutter the Worst-10 list -- both are collected behind their own
+// link/popup instead, so Worst-10 always shows 10 models that actually both
+// sold >=1 unit and generated >0 revenue.
 function renderModelRanking(){
   mountPeriodSelect('modelRankPeriodSel', modelRankPeriod, renderModelRanking);
   const months = monthsFor(modelRankPeriod.key);
   const modelSummed = sumKeyed(DATA.model_monthly, months);
   const modelList = toSortedList(modelSummed, 'model');
-  const withSales = modelList.filter(r => r.qty > 0);
   const zeroQty = modelList.filter(r => r.qty <= 0);
+  const zeroAmount = modelList.filter(r => r.qty > 0 && r.amount <= 0);
+  const withSales = modelList.filter(r => r.qty > 0 && r.amount > 0);
   fillModelTable('top10body', withSales.slice(0,10), 'top');
   fillModelTable('bottom10body', withSales.slice(-10).reverse(), 'bottom');
-  const link = document.getElementById('zeroQtyLink');
-  if (zeroQty.length){
+  setupZeroLink('zeroQtyLink', zeroQty, 'zeroQtyLinkText', 'zeroQtyModalTitle');
+  setupZeroLink('zeroAmountLink', zeroAmount, 'zeroAmountLinkText', 'zeroAmountModalTitle');
+}
+function setupZeroLink(linkId, list, textKey, titleKey){
+  const link = document.getElementById(linkId);
+  if (list.length){
     link.style.display = '';
-    link.textContent = t('zeroQtyLinkText').replace('{n}', zeroQty.length);
-    link.onclick = () => openZeroQtyModal(zeroQty);
+    link.textContent = t(textKey).replace('{n}', list.length);
+    link.onclick = () => openZeroModal(list, t(titleKey));
   } else {
     link.style.display = 'none';
   }
 }
-function openZeroQtyModal(zeroQty){
+function openZeroModal(list, title){
+  document.getElementById('zeroModalTitleEl').textContent = title;
   document.getElementById('zeroQtyModalList').innerHTML =
-    zeroQty.map(r => esc(r.model)).join('<br>');
+    list.map(r => esc(r.model)).join('<br>');
   document.getElementById('zeroQtyModal').classList.add('open');
 }
 document.getElementById('zeroQtyModalClose').addEventListener('click', () => {
@@ -1810,7 +1918,10 @@ function renderVffChannelShare(){
   mountPeriodSelect('vffChannelPeriodSel', vffChannelPeriod, renderVffChannelShare);
   const months = monthsFor(vffChannelPeriod.key);
   const chMetricKey = vffChannelMetric; // 'qty' | 'amount'
-  const chList = vffChannelBreakdown(chMetricKey, months).sort((a,b) => b[chMetricKey] - a[chMetricKey]);
+  // Fixed GROUP_ORDER sequence (not sorted by value) so a category's position
+  // stays put across period/metric changes -- makes period-to-period shifts
+  // easier to read at a glance than a list that keeps reordering itself.
+  const chList = vffChannelBreakdown(chMetricKey, months);
   const chItems = chList.map(c => ({label:trLabel(DATA.group_label[c.group]), key:c.group, value:c[chMetricKey], color: GROUP_HEX[c.group]}));
   const chTotal = chItems.reduce((a,d)=>a+d.value,0) || 1;
   const chUnit = chMetricKey==='qty' ? t('unitPairs') : 'THB';
