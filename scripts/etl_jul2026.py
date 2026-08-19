@@ -273,6 +273,14 @@ load_bft_consignment_jul2026()
 # branches in the same file) and BFT's "Paradise Park" (its own directly-
 # operated store, previously loaded from a dedicated file in the old H1
 # 2026 pipeline).
+# 'Total amount' is each line's PRE-discount total; the order's actual
+# collected revenue is 'Payment amount', which (like the Central LP 3F Thai
+# export) only appears once, on the order's first product line. Confirmed
+# 2026-08 against store-level payment-method ledgers: summing 'Total amount'
+# directly overstates revenue by the order-level discount, so each line is
+# prorated to its share of the order's actual amount paid. Orders with no
+# 'Payment amount' anywhere (a handful per file) fall back to their own
+# line-total sum unprorated.
 def load_flat_branch_file(fn, sheet, branch_map, label):
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
     ws = wb[sheet]
@@ -280,13 +288,19 @@ def load_flat_branch_file(fn, sheet, branch_map, label):
     header = rows[1]  # row 0 is a merged "Product data" title band
     idx = {h: i for i, h in enumerate(header) if h}
     data = rows[2:]
+    data = [r for r in data if any(r) and r[idx.get('Product code')]]
+
+    order_line_total = defaultdict(float)  # order_id -> sum('Total amount') across its lines
+    order_paid = {}                        # order_id -> 'Payment amount' (first line only)
+    for r in data:
+        order_id = r[idx.get('Sales order No.')]
+        order_line_total[order_id] += num(r[idx.get('Total amount')])
+        pay = r[idx.get('Payment amount')]
+        if pay not in (None, ''):
+            order_paid[order_id] = num(pay)
+
     n, skipped_unmapped = 0, 0
     for r in data:
-        if not any(r):
-            continue
-        pc = r[idx.get('Product code')]
-        if not pc:
-            continue
         branch = r[idx.get('Warehouse/Branch')]
         mapping = branch_map.get(branch)
         if mapping is None:
@@ -297,16 +311,21 @@ def load_flat_branch_file(fn, sheet, branch_map, label):
         d = to_date(r[idx.get('Date')])
         if d is None:
             continue
-        qty = num(r[idx.get('Quantity')])
-        amt = num(r[idx.get('Total amount')])
+        pc = r[idx.get('Product code')]
         order_id = r[idx.get('Sales order No.')]
+        qty = num(r[idx.get('Quantity')])
+        line_amt = num(r[idx.get('Total amount')])
+        order_total = order_line_total[order_id]
+        paid = order_paid.get(order_id, order_total)
+        amt = (line_amt / order_total * paid) if order_total else 0.0
         channel = normalize_channel(r[idx.get('Sales channel')])
         pname = r[idx.get('Product name')]
         brand, sub = classify_by_code(pc, pname)
         model = model_from_name(pname)
         add_record(store, cat, d, brand, model, sub, qty, amt, order_id, channel=channel, vff_source_text=pc)
         n += 1
-    print(f"loaded {n} rows -> {label} ({skipped_unmapped} unmapped)")
+    print(f"loaded {n} rows -> {label} ({skipped_unmapped} unmapped, "
+          f"{len(order_paid)}/{len(order_line_total)} orders prorated to actual amount paid)")
 
 BFT_BRANCH_MAP_JUL2026 = {
     'Online': ('Online', 'online'),
