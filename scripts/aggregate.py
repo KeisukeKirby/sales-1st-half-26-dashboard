@@ -206,6 +206,14 @@ PAYMENT_LEDGER = {
         '2025-06': {'Cash': 102038.00, 'Credit Card': 610635.50, 'QR Code': 145564.60},
         '2025-07': {'Cash': 157878.20, 'Credit Card': 1341525.80, 'QR Code': 601278.00},
     },
+    'Paradise Park': {
+        # No Jan-Mar entry: Paradise Park didn't open until April 2026 (0 sales
+        # those months already); no 2025 ledger received (store didn't exist yet).
+        '2026-04': {'Cash': 21927.00, 'Credit Card': 282642.20, 'QR Code': 103316.60},
+        '2026-05': {'Cash': 4800.00, 'Credit Card': 149635.80, 'QR Code': 100055.20},
+        '2026-06': {'Cash': 0.0, 'Credit Card': 105061.00, 'QR Code': 79681.40},
+        '2026-07': {'Cash': 2300.00, 'Credit Card': 190489.40, 'QR Code': 51818.40},
+    },
 }
 for _store, _months in PAYMENT_LEDGER.items():
     for _month, _methods in _months.items():
