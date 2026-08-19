@@ -293,6 +293,14 @@ load_orders_style(SRC + '0165b670-BFT_EVENT_1.xlsx', 'Orders', 'Event', 'event',
                    has_channel=True, has_payment_channel=True)
 
 # ================================================================== Central LP 3F (Thai headers)
+# 'ราคารวม' (line total) is the PRE-discount list price of each line; the
+# order's actual collected revenue is 'จำนวนเงินที่ชำระ' (amount paid), which
+# only appears once, on the first product line of each order ('รายการ'/order
+# ID repeats across an order's lines). Confirmed 2026-08 against the store's
+# own payment-method ledger (Cash/Credit Card/QR by day): summing 'ราคารวม'
+# directly overstates revenue by the order-level discount ('ส่วนลด'), so each
+# line is prorated to its share of the order's actual amount paid -- same
+# prorate-by-share pattern as the 2025 BFT consignment loader.
 def load_central_lp3f():
     fn = SRC + '4106a54d-Sales_Central_LP_3F_JanJun_26.xlsx'
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
@@ -301,25 +309,36 @@ def load_central_lp3f():
     header = rows[1]
     idx = {h: i for i, h in enumerate(header) if h}
     data = rows[2:]
+    data = [r for r in data if any(r) and r[idx['รหัสสินค้า']]]
+
+    order_line_total = defaultdict(float)  # order_id -> sum('ราคารวม') across its lines
+    order_paid = {}                        # order_id -> 'จำนวนเงินที่ชำระ' (first line only)
+    for r in data:
+        order_id = r[idx['รายการ']]
+        order_line_total[order_id] += num(r[idx['ราคารวม']])
+        paid = r[idx['จำนวนเงินที่ชำระ']]
+        if paid not in (None, ''):
+            order_paid[order_id] = num(paid)
+
     n = 0
     for r in data:
-        if not any(r):
-            continue
-        pc = r[idx['รหัสสินค้า']]
-        if not pc:
-            continue
         d = to_date(r[idx['วันที่ทำรายการ']])
         if d is None:
             continue
-        qty = num(r[idx['จำนวน']])
-        amt = num(r[idx['ราคารวม']])
+        pc = r[idx['รหัสสินค้า']]
         order_id = r[idx['รายการ']]
+        line_amt = num(r[idx['ราคารวม']])
+        order_total = order_line_total[order_id]
+        paid = order_paid.get(order_id, order_total)
+        amt = (line_amt / order_total * paid) if order_total else 0.0
+        qty = num(r[idx['จำนวน']])
         brand, sub = classify_by_code(pc)
         pname = r[idx['ชื่อสินค้า']]
         model = model_from_name(pname)
         add_record('Central Ladprao 3F (Coollabo)', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc)
         n += 1
-    print(f"loaded {n} rows -> Central Ladprao 3F")
+    print(f"loaded {n} rows -> Central Ladprao 3F "
+          f"(prorated {len(order_paid)}/{len(order_line_total)} orders to actual amount paid)")
 load_central_lp3f()
 
 # ================================================================== BFT consignment (with trap-row guard)
