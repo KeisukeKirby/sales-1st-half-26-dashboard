@@ -96,7 +96,6 @@ model_month = defaultdict(lambda: defaultdict(new_acc))                    # mod
 brand_model_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))   # brand -> model -> month
 others_sub_month = defaultdict(lambda: defaultdict(new_acc))               # sub-brand -> month
 online_channel_month = defaultdict(lambda: defaultdict(new_acc))           # channel -> month
-event_payment_month = defaultdict(lambda: defaultdict(new_acc))            # method -> month (Event store only)
 
 vff_shoe_by_month = defaultdict(new_acc)                                   # month (VFF shoes overall)
 vff_shoe_store_month = defaultdict(lambda: defaultdict(new_acc))           # raw store name -> month (individual stores; the dashboard derives the channel-group rollup client-side via STORE_GROUP, same as everywhere else)
@@ -133,10 +132,12 @@ for r in records:
     if store == 'Online' and r['channel']:
         add(online_channel_month[r['channel']][month])
 
-    if r['payment']:
+    # Per-record payment method is only ever populated for the "Event"
+    # category (from its own source files); per user confirmation 2026-08,
+    # Event's payment-method breakdown is out of scope for this feature --
+    # only the explicitly seeded store ledgers below (PAYMENT_LEDGER) count.
+    if r['payment'] and store != 'Event':
         add(store_payment_month[store][r['payment']][month])
-        if store == 'Event':
-            add(event_payment_month[r['payment']][month])
 
     if brand == 'VFF' and r.get('is_vff_shoe'):
         add(vff_shoe_by_month[month])
@@ -300,19 +301,15 @@ out['vff_shoes'] = {
     'gender_monthly': {GENDER_LABEL.get(g, g): v for g, v in monthly_out(vff_shoe_gender_month).items()},
 }
 
-# ---- payment (Event category + the store-level ledgers seeded above; no other store/channel has this data)
+# ---- payment (the store-level ledgers seeded above only; per user confirmation
+# 2026-08, Event's own payment-method data is excluded from this feature)
 payment_overall_month = defaultdict(lambda: defaultdict(new_acc))  # method -> month
-for _method, _months in event_payment_month.items():
-    for _month, _acc in _months.items():
-        payment_overall_month[_method][_month]['amount'] += _acc['amount']
-        payment_overall_month[_method][_month]['qty'] += _acc['qty']
-        payment_overall_month[_method][_month]['orders'] |= _acc['orders']
 for _store in PAYMENT_LEDGER:
     for _method, _months in store_payment_month[_store].items():
         for _month, _acc in _months.items():
             payment_overall_month[_method][_month]['amount'] += _acc['amount']
 out['payment_overall'] = {
-    'note': '決済方法データがあるのは「イベント」カテゴリと、Central Ladprao 3F・Thaniya・K Villageの店舗別台帳のみ（他の店舗・チャネルには決済方法の記録がありません）',
+    'note': '決済方法データがあるのはCentral Ladprao 3F・Thaniya・K Villageの店舗別台帳のみ（他の店舗・チャネルには決済方法の記録がありません）',
     'monthly': monthly_out(payment_overall_month),
 }
 
