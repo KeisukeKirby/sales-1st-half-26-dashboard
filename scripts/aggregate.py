@@ -146,6 +146,71 @@ for r in records:
         g = r.get('gender') or 'Unisex'
         add(vff_shoe_gender_month[g][month])
 
+# ---------------------------------------------------------------- payment-method ledgers (store-supplied, not derivable from any order-level source)
+# Central Ladprao 3F, Thaniya, and K Village each keep their own daily
+# Cash/Credit Card/QR Scan (EDC) payment ledger, independent of the POS
+# product-line exports used everywhere else in this pipeline -- there is no
+# per-order 'Payment amount' column to derive this split from (unlike the
+# Event category, which does carry one). Confirmed against the user's own
+# ledger screenshots 2026-08 and cross-checked: each store-month's ledger
+# Total matches (or is within a few hundred THB of, after the Payment-
+# amount-vs-Total-amount fixes above) that store's dashboard sales amount
+# for the same month, so these are seeded directly rather than derived.
+PAYMENT_LEDGER = {
+    'Central Ladprao 3F (Coollabo)': {
+        '2026-01': {'Cash': 62771.00, 'Credit Card': 339313.10, 'QR Code': 200108.60},
+        '2026-02': {'Cash': 9166.00, 'Credit Card': 253289.92, 'QR Code': 120657.50},
+        '2026-03': {'Cash': 10816.00, 'Credit Card': 303286.12, 'QR Code': 147854.80},
+        '2026-04': {'Cash': 36858.40, 'Credit Card': 223405.58, 'QR Code': 112938.32},
+        '2026-05': {'Cash': 59301.20, 'Credit Card': 265843.98, 'QR Code': 132280.30},
+        '2026-06': {'Cash': 19784.60, 'Credit Card': 305293.72, 'QR Code': 74893.80},
+        '2026-07': {'Cash': 32576.20, 'Credit Card': 310811.48, 'QR Code': 201267.12},
+        '2025-01': {'Cash': 32841.00, 'Credit Card': 137456.96, 'QR Code': 72855.60},
+        '2025-02': {'Cash': 28580.00, 'Credit Card': 117310.52, 'QR Code': 37284.00},
+        '2025-03': {'Cash': 17502.00, 'Credit Card': 179189.20, 'QR Code': 85910.10},
+        '2025-04': {'Cash': 23250.00, 'Credit Card': 191677.28, 'QR Code': 71358.00},
+        '2025-05': {'Cash': 20308.00, 'Credit Card': 217458.06, 'QR Code': 113519.40},
+        '2025-06': {'Cash': 48448.60, 'Credit Card': 276505.80, 'QR Code': 152832.20},
+        '2025-07': {'Cash': 47980.60, 'Credit Card': 649082.09, 'QR Code': 235732.60},
+    },
+    'Thaniya': {
+        '2026-01': {'Cash': 88756.00, 'Credit Card': 147471.38, 'QR Code': 73481.70},
+        '2026-02': {'Cash': 96167.30, 'Credit Card': 147206.75, 'QR Code': 88465.00},
+        '2026-03': {'Cash': 92911.00, 'Credit Card': 147472.63, 'QR Code': 95125.00},
+        '2026-04': {'Cash': 111184.05, 'Credit Card': 141416.10, 'QR Code': 85275.00},
+        '2026-05': {'Cash': 66200.00, 'Credit Card': 141151.60, 'QR Code': 101699.05},
+        '2026-06': {'Cash': 48406.00, 'Credit Card': 136660.05, 'QR Code': 63934.05},
+        '2026-07': {'Cash': 77676.00, 'Credit Card': 158543.05, 'QR Code': 83172.00},
+        '2025-01': {'Cash': 100378.00, 'Credit Card': 139012.28, 'QR Code': 91701.30},
+        '2025-02': {'Cash': 82199.00, 'Credit Card': 139979.90, 'QR Code': 65648.90},
+        '2025-03': {'Cash': 97329.00, 'Credit Card': 205025.21, 'QR Code': 68410.00},
+        '2025-04': {'Cash': 54211.00, 'Credit Card': 132766.95, 'QR Code': 78653.80},
+        '2025-05': {'Cash': 106503.55, 'Credit Card': 140405.45, 'QR Code': 78066.10},
+        '2025-06': {'Cash': 52326.05, 'Credit Card': 135257.60, 'QR Code': 66538.84},
+        '2025-07': {'Cash': 77954.00, 'Credit Card': 172701.27, 'QR Code': 56971.70},
+    },
+    'K Village': {
+        '2026-01': {'Cash': 79279.20, 'Credit Card': 618389.40, 'QR Code': 148813.00},
+        '2026-02': {'Cash': 68520.00, 'Credit Card': 453594.80, 'QR Code': 83771.70},
+        '2026-03': {'Cash': 39741.10, 'Credit Card': 413599.10, 'QR Code': 138573.60},
+        '2026-04': {'Cash': 28915.00, 'Credit Card': 572663.40, 'QR Code': 127309.00},
+        '2026-05': {'Cash': 95919.35, 'Credit Card': 551635.05, 'QR Code': 201693.80},
+        '2026-06': {'Cash': 50998.80, 'Credit Card': 638002.80, 'QR Code': 174911.30},
+        '2026-07': {'Cash': 97841.40, 'Credit Card': 791674.04, 'QR Code': 95389.60},
+        '2025-01': {'Cash': 82572.00, 'Credit Card': 613520.60, 'QR Code': 188186.00},
+        '2025-02': {'Cash': 76930.60, 'Credit Card': 384301.40, 'QR Code': 111707.20},
+        '2025-03': {'Cash': 76766.74, 'Credit Card': 408407.50, 'QR Code': 140554.20},
+        '2025-04': {'Cash': 60935.00, 'Credit Card': 330776.20, 'QR Code': 91180.50},
+        '2025-05': {'Cash': 60463.00, 'Credit Card': 415299.30, 'QR Code': 161219.20},
+        '2025-06': {'Cash': 102038.00, 'Credit Card': 610635.50, 'QR Code': 145564.60},
+        '2025-07': {'Cash': 157878.20, 'Credit Card': 1341525.80, 'QR Code': 601278.00},
+    },
+}
+for _store, _months in PAYMENT_LEDGER.items():
+    for _month, _methods in _months.items():
+        for _method, _amount in _methods.items():
+            store_payment_month[_store][_method][_month]['amount'] += _amount
+
 def sum_months(acc_by_month, months=MONTHS):
     total = new_acc()
     for m in months:
@@ -235,10 +300,20 @@ out['vff_shoes'] = {
     'gender_monthly': {GENDER_LABEL.get(g, g): v for g, v in monthly_out(vff_shoe_gender_month).items()},
 }
 
-# ---- payment (Event category only, currently the sole source with payment data)
+# ---- payment (Event category + the store-level ledgers seeded above; no other store/channel has this data)
+payment_overall_month = defaultdict(lambda: defaultdict(new_acc))  # method -> month
+for _method, _months in event_payment_month.items():
+    for _month, _acc in _months.items():
+        payment_overall_month[_method][_month]['amount'] += _acc['amount']
+        payment_overall_month[_method][_month]['qty'] += _acc['qty']
+        payment_overall_month[_method][_month]['orders'] |= _acc['orders']
+for _store in PAYMENT_LEDGER:
+    for _method, _months in store_payment_month[_store].items():
+        for _month, _acc in _months.items():
+            payment_overall_month[_method][_month]['amount'] += _acc['amount']
 out['payment_overall'] = {
-    'note': '決済方法データがあるのは「イベント」カテゴリのみ（他の店舗・チャネルには決済方法の記録がありません）',
-    'monthly': monthly_out(event_payment_month),
+    'note': '決済方法データがあるのは「イベント」カテゴリと、Central Ladprao 3F・Thaniya・K Villageの店舗別台帳のみ（他の店舗・チャネルには決済方法の記録がありません）',
+    'monthly': monthly_out(payment_overall_month),
 }
 
 with open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/dashboard_data.json', 'w', encoding='utf-8') as f:
