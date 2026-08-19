@@ -582,7 +582,14 @@ def load_bft_merged_new_only():
         brand, sub = classify_by_code(sku)
         item = r[idx['Item']]
         model = model_from_name(item)
-        if warehouse == 'Paradise Park':
+        # warehouse=='Paradise Park' is the physical fulfillment location, but a
+        # handful of orders tagged that way were actually placed through an
+        # online channel (LINE etc., not an in-store POS sale) -- confirmed by
+        # user 2026-08 for RB-202606003 (LINE, corporate customer, most likely
+        # paid by bank transfer rather than at the Paradise Park register, which
+        # is why it doesn't appear in that store's Cash/Credit/QR ledger). Only
+        # a genuine walk-in (channel blank or 'POS') counts as the store itself.
+        if warehouse == 'Paradise Park' and channel in (None, 'POS'):
             add_record('Paradise Park', 'store', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku)
         else:
             add_record('Online', 'online', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku)
