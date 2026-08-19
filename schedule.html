@@ -444,19 +444,45 @@ function fmtMd(s){ const d = parseYmd(s); return `${d.getMonth()+1}/${d.getDate(
    ============================================================ */
 const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
 
+/* 初期登録の種目。migrate() からも参照するのでIDなしの雛形として持つ。
+   単位・目標・色はすべて「記録」タブから編集できる。 */
+const SEED_ACTIVITIES = [
+  {name:"ランニング", unit:"km",     kind:"number",   colorIdx:0, target:{period:"week", value:20}},
+  {name:"筋トレ",     unit:"分",     kind:"duration", colorIdx:1, target:{period:"week", value:150}},
+  {name:"語学学習",   unit:"分",     kind:"duration", colorIdx:2, target:{period:"day",  value:30}},
+  {name:"読書",       unit:"ページ", kind:"number",   colorIdx:3, target:{period:"week", value:100}},
+  {name:"食事",       unit:"回",     kind:"number",   colorIdx:4, target:{period:"day",  value:3}},
+  {name:"睡眠",       unit:"時間",   kind:"duration", colorIdx:5, target:{period:"day",  value:7}}
+];
+/* 雛形から実体を作る。targetは複製しないと編集が雛形に波及する。 */
+const newActivity = seed => Object.assign({}, seed,
+  {id:uid(), archived:false, target: seed.target ? Object.assign({}, seed.target) : null});
+
 function defaultState(){
   return {
-    version: 1,
+    version: 2,
     events: [],
     tasks: [],
-    activities: [
-      {id:uid(), name:"ランニング",   unit:"km", kind:"number",   colorIdx:0, target:{period:"week", value:20},  archived:false},
-      {id:uid(), name:"筋トレ",       unit:"分", kind:"duration", colorIdx:1, target:{period:"week", value:150}, archived:false},
-      {id:uid(), name:"語学学習",     unit:"分", kind:"duration", colorIdx:2, target:{period:"day",  value:30},  archived:false}
-    ],
+    activities: SEED_ACTIVITIES.map(newActivity),
     logs: [],
     settings: {weekStart:1}
   };
+}
+
+/* 既存データへ後から増えた種目を反映する。バージョンごとに一度だけ走り、
+   同名の種目が既にある場合と、利用者が消した後の再追加は行わない。 */
+function migrate(s){
+  if((s.version || 1) < 2){
+    const used = new Set(s.activities.map(a => a.colorIdx));
+    for(const seed of SEED_ACTIVITIES){
+      if(s.activities.some(a => a.name === seed.name)) continue;
+      const idx = [seed.colorIdx, 0, 1, 2, 3, 4, 5].find(i => !used.has(i));
+      used.add(idx == null ? seed.colorIdx : idx);
+      s.activities.push(Object.assign(newActivity(seed), {colorIdx: idx == null ? seed.colorIdx : idx}));
+    }
+    s.version = 2;
+  }
+  return s;
 }
 
 let S;
@@ -468,6 +494,8 @@ function load(){
     S = Object.assign(defaultState(), p);
     S.settings = Object.assign({weekStart:1}, p.settings || {});
     for(const k of ["events","tasks","activities","logs"]) if(!Array.isArray(S[k])) S[k] = [];
+    migrate(S);
+    save();
   }catch(e){
     console.error("データの読み込みに失敗しました", e);
     S = defaultState();
@@ -1157,6 +1185,7 @@ function renderStats(){
   const weekV  = a ? sumRange(a.id, ws, t) : [...days].filter(x => x >= ws && x <= t).length;
   const monthV = a ? sumRange(a.id, ms, t) : [...days].filter(x => x >= ms && x <= t).length;
   const total  = a ? S.logs.filter(l => l.activityId === a.id).reduce((s,l) => s + (Number(l.value) || 0), 0) : days.size;
+  const wDays = diffDays(ws, t) + 1, mDays = diffDays(ms, t) + 1;   /* 経過日数（1日平均の分母） */
 
   document.getElementById("statTiles").innerHTML = `
     <div class="tile"><div class="tile-label">現在の連続日数</div>
@@ -1164,10 +1193,10 @@ function renderStats(){
       <div class="tile-sub">最長 ${longestStreak(days)} 日</div></div>
     <div class="tile b"><div class="tile-label">今週${a ? "の合計" : "の記録日数"}</div>
       <div class="tile-value">${nf(weekV)}<span class="u">${esc(unit)}</span></div>
-      <div class="tile-sub">${fmtMd(ws)} 〜 ${fmtMd(t)}</div></div>
+      <div class="tile-sub">${fmtMd(ws)} 〜 ${fmtMd(t)}${a ? ` ・ 1日平均 ${nf(weekV / wDays)}` : ""}</div></div>
     <div class="tile o"><div class="tile-label">今月${a ? "の合計" : "の記録日数"}</div>
       <div class="tile-value">${nf(monthV)}<span class="u">${esc(unit)}</span></div>
-      <div class="tile-sub">${d.getMonth() + 1}月 1日 〜 ${fmtMd(t)}</div></div>
+      <div class="tile-sub">${d.getMonth() + 1}月 1日 〜 ${fmtMd(t)}${a ? ` ・ 1日平均 ${nf(monthV / mDays)}` : ""}</div></div>
     <div class="tile g"><div class="tile-label">${a ? "通算の合計" : "通算の記録日数"}</div>
       <div class="tile-value">${nf(total)}<span class="u">${esc(unit)}</span></div>
       <div class="tile-sub">${a ? `記録 ${S.logs.filter(l => l.activityId === a.id).length} 件` : `記録 ${S.logs.length} 件`}</div></div>`;
@@ -1175,7 +1204,7 @@ function renderStats(){
   document.getElementById("hmScope").textContent = a ? `　— ${a.name}` : "　— すべての種目";
   document.getElementById("hmNote").textContent = a
     ? `1マスが1日。色が濃いほど ${a.name} の記録値が大きい日です（直近53週）。`
-    : `1マスが1日。色が濃いほど、その日に記録した種目の数が多い日です（直近53週）。`;
+    : `1マスが1日。色が濃いほど、その日に記録した種目の数が多い日です（1・2・3・4種目以上の4段階、直近53週）。`;
   renderHeatmap(a);
   renderWeekly(a);
   renderCumulative(a);
@@ -1207,7 +1236,7 @@ function renderHeatmap(a){
       m.get(l.date).add(l.activityId);
     }
     valOf = ds => (m.get(ds) ? m.get(ds).size : 0);
-    levels = [1, 2, 3];
+    levels = [2, 3, 4];   /* 1 / 2 / 3 / 4種目以上 の4段階 */
     unit = "種目";
   }
   const levelOf = v => v <= 0 ? -1 : v < levels[0] ? 0 : v < levels[1] ? 1 : v < levels[2] ? 2 : 3;
@@ -1454,6 +1483,7 @@ document.getElementById("fileImport").addEventListener("change", ev => {
       S = Object.assign(defaultState(), p);
       S.settings = Object.assign({weekStart:1}, p.settings || {});
       for(const k of ["events","tasks","activities","logs"]) if(!Array.isArray(S[k])) S[k] = [];
+      migrate(S);
       statAct = null; logAct = null;
       save(); render();
       alert("読み込みました。");
@@ -1479,10 +1509,12 @@ document.getElementById("btnSample").onclick = () => {
   const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   for(let i = 89; i >= 0; i--){
     const ds = addDays(t, -i);
-    acts.forEach((a, ai) => {
-      if(rnd() < (ai === 0 ? 0.45 : ai === 1 ? 0.35 : 0.6)) return;   /* 休む日 */
+    acts.forEach(a => {
+      /* 睡眠・食事のような「1日あたり」目標の種目はほぼ毎日、週次目標の種目は週に数回だけ記録する */
+      const daily = !!(a.target && a.target.period === "day");
+      if(rnd() < (daily ? 0.08 : 0.45)) return;   /* 休む日 */
       const base = a.target ? (a.target.period === "week" ? a.target.value / 4 : a.target.period === "month" ? a.target.value / 20 : a.target.value) : 10;
-      const v = Math.round(base * (0.6 + rnd() * 0.9) * 10) / 10;
+      const v = Math.round(base * (daily ? 0.8 + rnd() * 0.4 : 0.6 + rnd() * 0.9) * 10) / 10;
       S.logs.push({id:uid(), activityId:a.id, date:ds, value:v, memo:""});
     });
     if(rnd() < 0.25){
