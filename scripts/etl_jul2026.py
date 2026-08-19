@@ -459,6 +459,63 @@ def load_central_total_department_jul2026():
     print(f"loaded {n} rows -> Central Total Department July 2026 ({stores_seen} of 5 stores; no Eastville data this month)")
 load_central_total_department_jul2026()
 
+# ================================================================== Siam Discovery July 2026
+# Same multi-year workbook as the 2025/2024 Siam Discovery loaders (identical
+# file, re-uploaded 2026-08 with '07-26'/'08-26' sheets now present). Column
+# layout is Date, <blank>, Product name, Qty, Cost, Sell price, Net amount --
+# consistently name_idx=2 for this sheet (unlike some 2025 sheets, which
+# occasionally used name_idx=1). Detecting name_idx via "first row with a
+# string in column 1" naively misfires here: a handful of rows are "NO BILL"
+# placeholders (no sale that day) with 'NO BILL' sitting in column 1, which
+# would be mistaken for a December-2025-style layout signal -- excluded
+# explicitly. Subtotal rows (no date) and the trailing blank rows are
+# filtered out by requiring a parseable date. Verified: sum of extracted net
+# amounts (276,046.00) matches the sheet's own 3 running subtotal rows
+# exactly (154,788.40 + 109,112.80 + 12,144.80).
+def load_siam_discovery_jul2026():
+    fn = SRC + '4d28ed98-Sales_Record_Siam_discovery.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['07-26']
+    rows = list(ws.iter_rows(values_only=True))
+    junk = {'NO BILL', 'NOBILL', 'NO SALE', 'CN'}
+    name_idx = None
+    for r in rows:
+        if not r or to_date(r[0]) is None:
+            continue
+        v1 = r[1].strip() if isinstance(r[1], str) else None
+        if v1 and v1.upper() not in junk:
+            name_idx = 1  # December-2025-style: no ID column
+            break
+        if len(r) > 2 and isinstance(r[2], str) and r[2].strip():
+            name_idx = 2  # normal style: Date, <blank/ID>, Name, ...
+            break
+    if name_idx is None:
+        note("Siam Discovery July 2026: could not detect column layout, skipped entirely")
+        return
+    qty_idx, net_idx = name_idx + 1, name_idx + 4
+    n = 0
+    for i, r in enumerate(rows):
+        if not r:
+            continue
+        d = to_date(r[0])
+        if d is None:
+            continue  # filters trailing subtotal/reference rows (no date)
+        item = r[name_idx] if len(r) > name_idx else None
+        if not item or not isinstance(item, str):
+            continue  # filters 'NO BILL' rows (name column is blank)
+        # 'TRAILPOE' is a one-off misspelling of 'TRAILOPE' (the model's
+        # established spelling elsewhere in this dataset) -- normalize so it
+        # doesn't fall through to Unknown brand or fork into a second model.
+        item = item.replace('TRAILPOE', 'TRAILOPE').replace('Trailpoe', 'Trailope')
+        qty = num(r[qty_idx]) if len(r) > qty_idx else 0.0
+        net = num(r[net_idx]) if len(r) > net_idx else 0.0
+        brand, sub, model = classify_by_name(item)
+        add_record('Siam Discovery', 'store', d, brand, model, sub,
+                    qty, net, f'SIAMDIS2607-{i}', vff_source_text=item)
+        n += 1
+    print(f"loaded {n} rows -> Siam Discovery July 2026 (name_idx={name_idx})")
+load_siam_discovery_jul2026()
+
 
 # ================================================================== summary / sanity checks
 print()
