@@ -237,20 +237,63 @@ _scan_codes(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders'
 _scan_codes(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 print(f"Built brand code->model lookup with {len(CODE_TO_MODEL)} entries")
 
-# ================================================================== 1. VFF Cart LP (csv)
+# ================================================================== 1. VFF Cart LP
+# Superseded 2026-08: the original 'fdc407d1-Sale_VFF_Cart_LP_01062026.csv'
+# (25 rows, VFF V-Soul only) was confirmed against the store's own payment
+# ledger to be a massively incomplete extract -- March-June totals were
+# understated by 44,000-70,000 THB/month. Replaced with the store's full
+# 'Orders'-schema export (same schema as load_orders_style/load_flat_branch_
+# file: Payment amount is the order's actual paid total, present once on the
+# order's first line; prorate each line to its share of it). Scoped to
+# March-June only -- July is already loaded via etl_jul2026.py's EDV
+# multi-store file (confirmed identical July total: 85,866.60).
 def load_vff_cart_lp():
-    fn = SRC + 'fdc407d1-Sale_VFF_Cart_LP_01062026.csv'
-    with open(fn, encoding='utf-8-sig') as f:
-        rows = list(csv.reader(f))
+    fn = SRC + 'f578885d-EDV_Cart_Central_LP_01072026.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Orders']
+    rows = list(ws.iter_rows(values_only=True))
     header = rows[0]
-    for r in rows[1:]:
-        if not any(c.strip() for c in r if c):
+    idx = {h: i for i, h in enumerate(header) if h}
+    data = rows[1:]
+    data = [r for r in data if any(r) and r[idx.get('Product code')]]
+
+    order_line_total = defaultdict(float)
+    order_paid, order_discount = {}, {}
+    for r in data:
+        oid = r[idx.get('Sales order No.')]
+        order_line_total[oid] += num(r[idx.get('Total amount')])
+        pay = r[idx.get('Payment amount')]
+        if pay not in (None, ''):
+            order_paid[oid] = num(pay)
+        disc = r[idx.get('Discount')]
+        if disc not in (None, '') and oid not in order_discount:
+            order_discount[oid] = disc
+
+    order_resolved = {}
+    n, skipped_july = 0, 0
+    for r in data:
+        d = to_date(r[idx.get('Date')])
+        if d is None:
             continue
-        order_id, dt, sku, item, qty, net = r[0], r[1], r[2], r[3], r[4], r[5]
-        d = parse_dmy(dt)
-        brand, sub = classify_by_code(sku)
-        model = model_from_name(item)
-        add_record('VFF Cart LP', 'store', d, brand, model, sub, num(qty), num(net), order_id, vff_source_text=sku)
+        if d >= date(2026, 7, 1):
+            skipped_july += 1
+            continue  # July already covered by etl_jul2026.py
+        pc = r[idx.get('Product code')]
+        order_id = r[idx.get('Sales order No.')]
+        line_amt = num(r[idx.get('Total amount')])
+        order_total = order_line_total[order_id]
+        if order_id not in order_resolved:
+            order_resolved[order_id] = resolve_order_amount(
+                order_total, order_paid.get(order_id), order_discount.get(order_id))
+        resolved = order_resolved[order_id]
+        amt = (line_amt / order_total * resolved) if order_total else 0.0
+        qty = num(r[idx.get('Quantity')])
+        brand, sub = classify_by_code(pc)
+        pname = r[idx.get('Product name')]
+        model = model_from_name(pname)
+        add_record('VFF Cart LP', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc)
+        n += 1
+    print(f"loaded {n} rows -> VFF Cart LP (Mar-Jun 2026; {skipped_july} July rows skipped, already covered)")
 load_vff_cart_lp()
 
 # ================================================================== generic "Orders" schema loader
