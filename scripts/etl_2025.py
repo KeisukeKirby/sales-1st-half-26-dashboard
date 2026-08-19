@@ -50,6 +50,38 @@ def num(v):
     except ValueError:
         return 0.0
 
+def resolve_order_amount(line_total, paid, raw_discount):
+    """Resolve an order's actual collected amount, cross-checking 'Payment
+    amount' against the recorded 'Discount' to guard against occasional
+    broken exports seen across real files: some registers log only part of
+    a split/voucher payment in Payment amount while Discount stays an
+    explicit '0.0' (Payment amount is then unreliable -- trust the line
+    total instead); rarely a stray fractional Discount typo shows up that
+    is not really a THB amount (Discount is then unreliable -- trust
+    Payment amount instead, as already handled by requiring discount >= 1
+    below). Percentage-formatted Discount values ('40.00%') are ignored
+    entirely since they can't be compared in THB.
+    """
+    if not line_total:
+        return 0.0
+    discount = None
+    if raw_discount not in (None, '') and not (isinstance(raw_discount, str) and '%' in raw_discount):
+        discount = num(raw_discount)
+    discount_implied = (line_total - discount) if (discount is not None and discount >= 1) else None
+    if paid is None:
+        return discount_implied if discount_implied is not None else line_total
+    # Only distrust 'paid' when it looks suspiciously TOO LOW versus what
+    # Total/Discount implies -- never when it's higher (a legitimate
+    # marketplace-subsidized voucher, tip, or other case we don't model can
+    # make actual payment exceed a naive total-minus-discount; only a value
+    # far below that floor is a sign of a truncated/partial payment read).
+    expected = discount_implied if discount_implied is not None else (line_total if discount == 0 else None)
+    if expected is not None:
+        tol = max(500.0, 0.15 * line_total)
+        if paid < expected - tol:
+            return expected
+    return paid
+
 BRAND_PREFIX = {
     'VFF': 'VFF', 'BFJ': 'BFJ', 'CP': 'Coolcore', 'CC': 'Coolcore',
     'OLN': 'Oleno', 'MTB': 'TabiRela',
@@ -292,14 +324,18 @@ def load_flat_branch_file(fn, sheet, branch_map, label):
     data = [r for r in data if any(r) and r[idx.get('Product code')]]
 
     order_line_total = defaultdict(float)  # order_id -> sum('Total amount') across its lines
-    order_paid = {}                        # order_id -> 'Payment amount' (first line only)
+    order_paid, order_discount = {}, {}    # order_id -> 'Payment amount' / 'Discount' (first line only)
     for r in data:
         order_id = r[idx.get('Sales order No.')]
         order_line_total[order_id] += num(r[idx.get('Total amount')])
         pay = r[idx.get('Payment amount')]
         if pay not in (None, ''):
             order_paid[order_id] = num(pay)
+        disc = r[idx.get('Discount')]
+        if disc not in (None, '') and order_id not in order_discount:
+            order_discount[order_id] = disc
 
+    order_resolved = {}
     n, skipped_unmapped = 0, 0
     for r in data:
         branch = r[idx.get('Warehouse/Branch')]
@@ -317,16 +353,22 @@ def load_flat_branch_file(fn, sheet, branch_map, label):
         qty = num(r[idx.get('Quantity')])
         line_amt = num(r[idx.get('Total amount')])
         order_total = order_line_total[order_id]
-        paid = order_paid.get(order_id, order_total)
-        amt = (line_amt / order_total * paid) if order_total else 0.0
+        if order_id not in order_resolved:
+            order_resolved[order_id] = resolve_order_amount(
+                order_total, order_paid.get(order_id), order_discount.get(order_id))
+        resolved = order_resolved[order_id]
+        amt = (line_amt / order_total * resolved) if order_total else 0.0
         channel = normalize_channel(r[idx.get('Sales channel')])
         pname = r[idx.get('Product name')]
         brand, sub = classify_by_code(pc, pname)
         model = model_from_name(pname)
         add_record(store, cat, d, brand, model, sub, qty, amt, order_id, channel=channel, vff_source_text=pc)
         n += 1
+    overridden = sum(1 for oid, p in order_paid.items()
+                      if abs(order_resolved.get(oid, p) - p) > 0.01)
     print(f"loaded {n} rows -> {label} ({skipped_unmapped} unmapped, "
-          f"{len(order_paid)}/{len(order_line_total)} orders prorated to actual amount paid)")
+          f"{len(order_paid)}/{len(order_line_total)} orders prorated to actual amount paid, "
+          f"{overridden} Payment-amount overridden as unreliable)")
 
 BFT_BRANCH_MAP_2025 = {
     'Online': ('Online', 'online'),

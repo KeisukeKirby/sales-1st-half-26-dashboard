@@ -47,6 +47,42 @@ def num(v):
     except ValueError:
         return 0.0
 
+def resolve_order_amount(line_total, paid, raw_discount):
+    """Resolve an order's actual collected amount, cross-checking 'Payment
+    amount'/'จำนวนเงินที่ชำระ' (paid) against the recorded 'Discount'/'ส่วนลด'
+    (raw_discount) to guard against occasional broken exports seen across
+    real files: some registers log only part of a split/voucher payment in
+    Payment amount while Discount stays an explicit '0.0' (Payment amount is
+    then unreliable -- trust the line total instead); rarely a stray
+    fractional Discount typo like '0.05' shows up that is not really a THB
+    amount (Discount is then unreliable -- trust Payment amount instead, as
+    already handled by simply requiring discount >= 1 below). Percentage-
+    formatted Discount values ('40.00%') are ignored entirely since they
+    can't be compared in THB.
+    line_total: this order's summed line-item total (pre-discount).
+    paid: 'Payment amount' if any line in the order recorded one, else None.
+    raw_discount: the raw 'Discount' cell if any line recorded one, else None.
+    """
+    if not line_total:
+        return 0.0
+    discount = None
+    if raw_discount not in (None, '') and not (isinstance(raw_discount, str) and '%' in raw_discount):
+        discount = num(raw_discount)
+    discount_implied = (line_total - discount) if (discount is not None and discount >= 1) else None
+    if paid is None:
+        return discount_implied if discount_implied is not None else line_total
+    # Only distrust 'paid' when it looks suspiciously TOO LOW versus what
+    # Total/Discount implies -- never when it's higher (a legitimate
+    # marketplace-subsidized voucher, tip, or other case we don't model can
+    # make actual payment exceed a naive total-minus-discount; only a value
+    # far below that floor is a sign of a truncated/partial payment read).
+    expected = discount_implied if discount_implied is not None else (line_total if discount == 0 else None)
+    if expected is not None:
+        tol = max(500.0, 0.15 * line_total)
+        if paid < expected - tol:
+            return expected
+    return paid
+
 BRAND_PREFIX = {
     'VFF': 'VFF', 'BFJ': 'BFJ', 'CP': 'Coolcore', 'CC': 'Coolcore',
     'OLN': 'Oleno', 'MTB': 'TabiRela',
@@ -227,40 +263,60 @@ def load_orders_style(fn, sheet, store_label, category, header_row_idx=1,
     header = rows[header_row_idx]
     idx = {h: i for i, h in enumerate(header) if h}
     data = rows[header_row_idx + 1:]
+    data = [r for r in data if any(r) and r[idx.get('Product code')]]
 
-    # order-level fields (Sales channel / Payment channel) are only populated on an
-    # order's first line in these exports; forward-fill them per order_id first.
-    order_channel, order_payment = {}, {}
-    if has_channel or has_payment_channel:
-        for r in data:
-            if not any(r):
-                continue
-            oid = r[idx.get('Sales order No.')]
-            if not oid:
-                continue
-            if has_channel and 'Sales channel' in idx and r[idx['Sales channel']] and oid not in order_channel:
-                order_channel[oid] = r[idx['Sales channel']]
-            if has_payment_channel and 'Payment channel' in idx and r[idx['Payment channel']] and oid not in order_payment:
-                order_payment[oid] = r[idx['Payment channel']]
+    # order-level fields (Sales channel / Payment channel / Payment amount) are
+    # only populated on an order's first line in these exports; forward-fill
+    # them per order_id first. 'Total amount' is each line's PRE-discount
+    # total -- the order's actual collected revenue is 'Payment amount'.
+    # Confirmed 2026-08 against store-level payment-method ledgers (Central
+    # LP 3F, Thaniya, K Village): summing 'Total amount' directly overstates
+    # revenue by the order-level discount, so each line is prorated to its
+    # share of the order's actual amount paid. Orders with no 'Payment
+    # amount' anywhere fall back to their own line-total sum unprorated.
+    order_channel, order_payment_channel = {}, {}
+    order_line_total = defaultdict(float)
+    order_paid, order_discount = {}, {}
+    for r in data:
+        oid = r[idx.get('Sales order No.')]
+        order_line_total[oid] += num(r[idx.get('Total amount')])
+        if 'Payment amount' in idx:
+            pay = r[idx['Payment amount']]
+            if pay not in (None, ''):
+                order_paid[oid] = num(pay)
+        if 'Discount' in idx:
+            disc = r[idx['Discount']]
+            if disc not in (None, '') and oid not in order_discount:
+                order_discount[oid] = disc
+        if not oid:
+            continue
+        if has_channel and 'Sales channel' in idx and r[idx['Sales channel']] and oid not in order_channel:
+            order_channel[oid] = r[idx['Sales channel']]
+        if has_payment_channel and 'Payment channel' in idx and r[idx['Payment channel']] and oid not in order_payment_channel:
+            order_payment_channel[oid] = r[idx['Payment channel']]
+
+    order_resolved = {}
 
     n = 0
     for r in data:
-        if not any(r):
-            continue
         pc = r[idx.get('Product code')]
-        if not pc:
-            continue  # skip order-level-only rows (no product on this line)
         d = to_date(r[idx.get('Date')])
         if d is None:
             continue
         qty = num(r[idx.get('Quantity')])
-        amt = num(r[idx.get('Total amount')])
         order_id = r[idx.get('Sales order No.')]
+        line_amt = num(r[idx.get('Total amount')])
+        order_total = order_line_total[order_id]
+        if order_id not in order_resolved:
+            order_resolved[order_id] = resolve_order_amount(
+                order_total, order_paid.get(order_id), order_discount.get(order_id))
+        resolved = order_resolved[order_id]
+        amt = (line_amt / order_total * resolved) if order_total else 0.0
         brand, sub = classify_by_code(pc)
         pname = r[idx.get('Product name')]
         model = model_from_name(pname)
         channel = normalize_channel(order_channel.get(order_id)) if has_channel else None
-        payment_raw = order_payment.get(order_id) if has_payment_channel else None
+        payment_raw = order_payment_channel.get(order_id) if has_payment_channel else None
         payment = normalize_payment(payment_raw)
         store = store_label
         cat = category
@@ -270,7 +326,11 @@ def load_orders_style(fn, sheet, store_label, category, header_row_idx=1,
         add_record(store, cat, d, brand, model, sub, qty, amt, order_id, channel=channel,
                     payment=payment, entity=entity, vff_source_text=pc)
         n += 1
-    print(f"loaded {n} rows from {fn.split('/')[-1]} -> {store_label}")
+    overridden = sum(1 for oid, p in order_paid.items()
+                      if abs(order_resolved.get(oid, p) - p) > 0.01)
+    print(f"loaded {n} rows from {fn.split('/')[-1]} -> {store_label} "
+          f"({len(order_paid)}/{len(order_line_total)} orders prorated to actual amount paid, "
+          f"{overridden} Payment-amount overridden as unreliable)")
 
 # 2. BFT online (original)
 load_orders_style(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders',
@@ -312,14 +372,18 @@ def load_central_lp3f():
     data = [r for r in data if any(r) and r[idx['รหัสสินค้า']]]
 
     order_line_total = defaultdict(float)  # order_id -> sum('ราคารวม') across its lines
-    order_paid = {}                        # order_id -> 'จำนวนเงินที่ชำระ' (first line only)
+    order_paid, order_discount = {}, {}    # order_id -> 'จำนวนเงินที่ชำระ' / 'ส่วนลด' (first line only)
     for r in data:
         order_id = r[idx['รายการ']]
         order_line_total[order_id] += num(r[idx['ราคารวม']])
         paid = r[idx['จำนวนเงินที่ชำระ']]
         if paid not in (None, ''):
             order_paid[order_id] = num(paid)
+        disc = r[idx['ส่วนลด']]
+        if disc not in (None, '') and order_id not in order_discount:
+            order_discount[order_id] = disc
 
+    order_resolved = {}
     n = 0
     for r in data:
         d = to_date(r[idx['วันที่ทำรายการ']])
@@ -329,16 +393,22 @@ def load_central_lp3f():
         order_id = r[idx['รายการ']]
         line_amt = num(r[idx['ราคารวม']])
         order_total = order_line_total[order_id]
-        paid = order_paid.get(order_id, order_total)
-        amt = (line_amt / order_total * paid) if order_total else 0.0
+        if order_id not in order_resolved:
+            order_resolved[order_id] = resolve_order_amount(
+                order_total, order_paid.get(order_id), order_discount.get(order_id))
+        resolved = order_resolved[order_id]
+        amt = (line_amt / order_total * resolved) if order_total else 0.0
         qty = num(r[idx['จำนวน']])
         brand, sub = classify_by_code(pc)
         pname = r[idx['ชื่อสินค้า']]
         model = model_from_name(pname)
         add_record('Central Ladprao 3F (Coollabo)', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc)
         n += 1
+    overridden = sum(1 for oid, p in order_paid.items()
+                      if abs(order_resolved.get(oid, p) - p) > 0.01)
     print(f"loaded {n} rows -> Central Ladprao 3F "
-          f"(prorated {len(order_paid)}/{len(order_line_total)} orders to actual amount paid)")
+          f"(prorated {len(order_paid)}/{len(order_line_total)} orders to actual amount paid, "
+          f"{overridden} Payment-amount overridden as unreliable)")
 load_central_lp3f()
 
 # ================================================================== BFT consignment (with trap-row guard)
