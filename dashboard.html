@@ -214,10 +214,13 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <div id="summaryPeriodSel" style="margin-left:auto"></div>
     </div>
     <div id="summaryBlock"></div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
-      <button type="button" class="show-more-btn" id="summaryDetailBtn"></button>
-      <button type="button" class="show-more-btn" id="avgTicketDetailBtn"></button>
-    </div>
+    <!-- summaryDetailBtn/avgTicketDetailBtn live here at parse time only so
+         makeDetailToggle has a real element to bind to before summaryBlock's
+         first render; mountSummaryBlock() relocates (appendChild, which moves
+         rather than clones -- listeners survive) each button into its own
+         card every time the cards are rebuilt. -->
+    <button type="button" class="show-more-btn" id="summaryDetailBtn"></button>
+    <button type="button" class="show-more-btn" id="avgTicketDetailBtn"></button>
     <div id="summaryDetailWrap" style="display:none;margin-top:16px;overflow-x:auto"></div>
     <div id="avgTicketDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
 
@@ -1158,7 +1161,12 @@ function buildSummaryBlock(periodKey, months){
     const donutSvg = donutChart(items, {size:148, r:54, stroke:18,
       centerLabel: m.mkey==='amount' ? (total/1e6).toFixed(2)+'M' : fmt(total),
       centerUnit: m.mkey==='amount' ? 'THB' : m.unit});
-    return `<div class="panel summary-block">
+    // .summary-block-extra (orders card only) is a flex row so the relocated
+    // avgTicketDetailBtn lands right next to the 全体合計客単価 text instead
+    // of on its own line; .summary-block-btnrow (amount card only) is an
+    // empty slot that only ever exists to receive the relocated
+    // summaryDetailBtn, so both buttons end up inside their card's box.
+    return `<div class="panel summary-block" data-mkey="${m.mkey}">
       <div class="summary-block-head">
         <div class="summary-block-label">${esc(t(m.labelKey))}</div>
         ${yoyBadge(m.total, m.prev)}
@@ -1168,7 +1176,8 @@ function buildSummaryBlock(periodKey, months){
         <div class="sb-donut" data-mi="${mi}">${donutSvg}</div>
         <div class="legend">${items.map(d=>`<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span><span class="v">${fmtPct(d.value/total)}</span></div>`).join('')}</div>
       </div>
-      ${m.extra ? `<div class="summary-block-extra">${m.extra}</div>` : ''}
+      ${m.extra ? `<div class="summary-block-extra" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>${m.extra}</span></div>` : ''}
+      ${m.mkey === 'amount' ? `<div class="summary-block-btnrow" style="margin-top:14px"></div>` : ''}
     </div>`;
   }).join('');
   html += `</div>`;
@@ -1177,6 +1186,14 @@ function buildSummaryBlock(periodKey, months){
 function mountSummaryBlock(periodKey, months){
   const {html, metrics} = buildSummaryBlock(periodKey, months);
   const container = document.getElementById('summaryBlock');
+  // Grab the two buttons BEFORE wiping container's contents -- on every
+  // render after the first, they live inside the card that's about to be
+  // destroyed (last render's relocation target), so querying them by ID
+  // has to happen while they're still connected to the document; querying
+  // after the innerHTML swap below would find nothing; both buttons
+  // permanently detached and gone.
+  const summaryBtn = document.getElementById('summaryDetailBtn');
+  const avgBtn = document.getElementById('avgTicketDetailBtn');
   container.innerHTML = html;
   metrics.forEach((m,mi) => {
     const items = channelBreakdown(m.mkey, months);
@@ -1184,6 +1201,15 @@ function mountSummaryBlock(periodKey, months){
     const unit = m.mkey==='amount' ? 'THB' : m.unit;
     attachDonutTip(container.querySelector(`.sb-donut[data-mi="${mi}"]`), items, total, unit);
   });
+  // Relocate the two detail-toggle buttons into their cards -- appendChild
+  // moves the existing node (listeners intact) rather than recreating it, so
+  // makeDetailToggle's one-time getElementById reference from page load
+  // stays valid across every summaryBlock rebuild (period switch, language
+  // switch, etc.).
+  const amountBtnRow = container.querySelector('.summary-block[data-mkey="amount"] .summary-block-btnrow');
+  const ordersExtra = container.querySelector('.summary-block[data-mkey="orders"] .summary-block-extra');
+  if (amountBtnRow && summaryBtn) amountBtnRow.appendChild(summaryBtn);
+  if (ordersExtra && avgBtn) ordersExtra.appendChild(avgBtn);
 }
 // One picker (month/Q1/Q2/H1), same pattern as every other section, replaces
 // the old always-stacked H1+Q1+Q2+month-dropdown layout so the 4 period views
@@ -1299,18 +1325,39 @@ function buildSummaryDetailTable(){
 }
 const summaryDetailHandle = makeDetailToggle('summaryDetailBtn', 'summaryDetailWrap', buildSummaryDetailTable);
 // Detail table behind the "客数" card's own "実績詳細を表示": per-store
-// monthly avg. ticket (amount/orders), since the overall avg ticket shown
-// on the card is a single blended figure across every store.
+// monthly 客数（伝票数）and 客単価 (amount/orders), since both the overall
+// customer count and its avg ticket shown on the card are single blended
+// figures across every store. Each store gets two stacked rows (rowspan'd
+// name cell) rather than two side-by-side tables, so the pair reads
+// together at a glance.
+// Central Chidlom/Chidlom Online/World (CDS)/Lardprao (Dept.)/Eastville are
+// excluded here: their only source (BFT_Central_Total_Department_*, a
+// SKU x month rollup with no order id or per-transaction row at all) has no
+// receipt-count granularity to recompute from, and none of the other files
+// or screenshots sent for this project cover them either -- confirmed by
+// checking every Central-department source file before adding this filter.
+// A row of pure "—" conveys nothing, so those stores are omitted rather than
+// shown empty (their real 点数/売上金額 are still visible elsewhere, e.g. the
+// store・チャネル別 detail tables, which don't depend on order counts).
+const NO_ORDER_DATA_STORES = new Set([
+  'Central Chidlom', 'Central Chidlom Online', 'Central World (CDS)',
+  'Central Lardprao (Dept.)', 'Central Eastville',
+]);
 function buildAvgTicketDetailTable(){
-  const rows = fixedOrderStores().map(s => {
-    const cells = MONTHS.map(m => {
+  const rows = fixedOrderStores().filter(s => !NO_ORDER_DATA_STORES.has(s.store)).map(s => {
+    const ordersCells = MONTHS.map(m => {
+      const v = s.monthly[m];
+      return `<td class="num">${v && v.orders ? fmt(v.orders) : '—'}</td>`;
+    }).join('');
+    const avgCells = MONTHS.map(m => {
       const v = s.monthly[m];
       const avg = (v && v.orders) ? v.amount / v.orders : null;
       return `<td class="num">${avg != null ? fmt(avg) : '—'}</td>`;
     }).join('');
-    return `<tr><td>${esc(storeDisplay(s.store))}</td>${cells}</tr>`;
+    return `<tr><td rowspan="2">${esc(storeDisplay(s.store))}</td><td style="color:var(--ink-dim)">${esc(t('kpiTotalOrders'))}</td>${ordersCells}</tr>`
+      + `<tr><td style="color:var(--ink-dim)">${esc(t('avgTicketPrefix'))}</td>${avgCells}</tr>`;
   }).join('');
-  const head = `<th>${esc(t('thStoreChannel'))}</th>` + MONTHS.map(m => `<th style="text-align:right">${esc(monthLabel(m))}</th>`).join('');
+  const head = `<th>${esc(t('thStoreChannel'))}</th><th></th>` + MONTHS.map(m => `<th style="text-align:right">${esc(monthLabel(m))}</th>`).join('');
   return `<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 const avgTicketDetailHandle = makeDetailToggle('avgTicketDetailBtn', 'avgTicketDetailWrap', buildAvgTicketDetailTable);
@@ -1699,7 +1746,7 @@ function renderStoreDetail(storeName, months){
   const curPayTotal = s.payment_monthly ? payTotalFor(months) : 0;
   if (curPayTotal > 0) {
     const prevMo = prevMonthsFor(storeDetailPeriod.key);
-    payBlock.innerHTML = `<h3 style="margin-bottom:10px">${esc(t('paymentRatioTitleData'))}</h3>
+    payBlock.innerHTML = `<h3 style="margin-bottom:10px">${esc(t('paymentRatioTitle'))}</h3>
       <div class="grid2">
         <div>
           <h4 style="margin:0 0 10px;font-size:13px;color:var(--ink-dim);font-weight:600" data-i18n="payCurYearTitle">${esc(t('payCurYearTitle'))}</h4>
