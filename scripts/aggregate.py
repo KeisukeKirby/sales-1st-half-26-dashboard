@@ -29,6 +29,12 @@ H1_2024 = [f'2024-{m:02d}' for m in range(1, 8)]  # same calendar months, two ye
 # H1 2024 too so every store/model/VFF-shoe breakdown can support a 2-year-back
 # comparison, not just last year's.
 ALL_MONTHS = MONTHS + PREV_MONTHS + H1_2024
+# Full calendar years for 2025/2024 -- used only for the VFF Shoes detail
+# table's annual reference columns (a narrower need than ALL_MONTHS, which
+# stays Jan-Jul-only so every other monthly_out() breakdown isn't bloated
+# with 5 unused months per year).
+FULL_YEAR_2025 = [f'2025-{m:02d}' for m in range(1, 13)]
+FULL_YEAR_2024 = [f'2024-{m:02d}' for m in range(1, 13)]
 
 
 # Store -> channel-group mapping, used dashboard-wide (Overall tab, By Store tab,
@@ -101,6 +107,8 @@ vff_shoe_by_month = defaultdict(new_acc)                                   # mon
 vff_shoe_store_month = defaultdict(lambda: defaultdict(new_acc))           # raw store name -> month (individual stores; the dashboard derives the channel-group rollup client-side via STORE_GROUP, same as everywhere else)
 vff_shoe_model_month = defaultdict(lambda: defaultdict(new_acc))           # model (VFF shoes only) -> month
 vff_shoe_gender_month = defaultdict(lambda: defaultdict(new_acc))          # gender -> month
+vff_shoe_online_channel_month = defaultdict(lambda: defaultdict(new_acc))  # channel -> month (VFF shoes sold via Online only)
+vff_shoe_store_gender_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))  # raw store name -> gender -> month
 
 for r in records:
     store, month, brand = r['store'], r['month'], r['brand']
@@ -146,6 +154,9 @@ for r in records:
             add(vff_shoe_model_month[model_c][month])
         g = r.get('gender') or 'Unisex'
         add(vff_shoe_gender_month[g][month])
+        add(vff_shoe_store_gender_month[store][g][month])
+        if store == 'Online' and r['channel']:
+            add(vff_shoe_online_channel_month[r['channel']][month])
 
 # ---------------------------------------------------------------- payment-method ledgers (store-supplied, not derivable from any order-level source)
 # Central Ladprao 3F, Thaniya, and K Village each keep their own daily
@@ -213,6 +224,15 @@ PAYMENT_LEDGER = {
         '2026-05': {'Cash': 4800.00, 'Credit Card': 149635.80, 'QR Code': 100055.20},
         '2026-06': {'Cash': 0.0, 'Credit Card': 105061.00, 'QR Code': 79681.40},
         '2026-07': {'Cash': 2300.00, 'Credit Card': 190489.40, 'QR Code': 51818.40},
+    },
+    'VFF Cart LP': {
+        # No Jan-Feb entry: this cart didn't open until March 2026 (0 sales
+        # those months already); no 2025 ledger received (store didn't exist yet).
+        '2026-03': {'Cash': 15241.00, 'Credit Card': 22506.00, 'QR Code': 20735.00},
+        '2026-04': {'Cash': 8754.00, 'Credit Card': 36419.00, 'QR Code': 58998.30},
+        '2026-05': {'Cash': 16287.92, 'Credit Card': 51236.20, 'QR Code': 35657.00},
+        '2026-06': {'Cash': 12102.00, 'Credit Card': 39526.40, 'QR Code': 31635.00},
+        '2026-07': {'Cash': 15745.00, 'Credit Card': 39425.60, 'QR Code': 30696.00},
     },
 }
 for _store, _months in PAYMENT_LEDGER.items():
@@ -307,6 +327,19 @@ out['vff_shoes'] = {
     'store_monthly': monthly_out(vff_shoe_store_month),
     'model_monthly': monthly_out(vff_shoe_model_month),
     'gender_monthly': {GENDER_LABEL.get(g, g): v for g, v in monthly_out(vff_shoe_gender_month).items()},
+    # Online is a single store in DATA.stores, so its VFF-shoe detail-table
+    # sub-row breaks out by sales channel instead (same treatment as the
+    # combo detail table's Online row).
+    'online_channel_monthly': monthly_out(vff_shoe_online_channel_month),
+    # Per-store gender split, for the "詳細を表示" breakdown behind the
+    # Gender Segment Split donut (H1 2026 ratio per store).
+    'store_gender_monthly': {store: {GENDER_LABEL.get(g, g): v for g, v in monthly_out(genders).items()}
+                              for store, genders in vff_shoe_store_gender_month.items()},
+    # Full calendar-year 2025/2024 totals per store, for the detail table's
+    # annual reference columns (narrower than monthly_out()'s Jan-Jul-only
+    # ALL_MONTHS -- these are single summed totals, not a monthly breakdown).
+    'store_annual_2025': {store: ser(sum_months(months, FULL_YEAR_2025)) for store, months in vff_shoe_store_month.items()},
+    'store_annual_2024': {store: ser(sum_months(months, FULL_YEAR_2024)) for store, months in vff_shoe_store_month.items()},
 }
 
 # ---- payment (the store-level ledgers seeded above only; per user confirmation
