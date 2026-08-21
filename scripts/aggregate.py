@@ -109,6 +109,8 @@ vff_shoe_model_month = defaultdict(lambda: defaultdict(new_acc))           # mod
 vff_shoe_gender_month = defaultdict(lambda: defaultdict(new_acc))          # gender -> month
 vff_shoe_online_channel_month = defaultdict(lambda: defaultdict(new_acc))  # channel -> month (VFF shoes sold via Online only)
 vff_shoe_store_gender_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))  # raw store name -> gender -> month
+vff_shoe_color_month = defaultdict(lambda: defaultdict(new_acc))           # color -> month (color/size only extracted for etl.py/etl_jul2026.py sources -- see there)
+vff_shoe_gender_size_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))  # gender -> size -> month
 
 for r in records:
     store, month, brand = r['store'], r['month'], r['brand']
@@ -157,6 +159,10 @@ for r in records:
         add(vff_shoe_store_gender_month[store][g][month])
         if store == 'Online' and r['channel']:
             add(vff_shoe_online_channel_month[r['channel']][month])
+        if r.get('color'):
+            add(vff_shoe_color_month[r['color']][month])
+        if r.get('size'):
+            add(vff_shoe_gender_size_month[g][r['size']][month])
 
 # ---------------------------------------------------------------- payment-method ledgers (store-supplied, not derivable from any order-level source)
 # Central Ladprao 3F, Thaniya, and K Village each keep their own daily
@@ -340,6 +346,14 @@ out['vff_shoes'] = {
     # ALL_MONTHS -- these are single summed totals, not a monthly breakdown).
     'store_annual_2025': {store: ser(sum_months(months, FULL_YEAR_2025)) for store, months in vff_shoe_store_month.items()},
     'store_annual_2024': {store: ser(sum_months(months, FULL_YEAR_2024)) for store, months in vff_shoe_store_month.items()},
+    # Color/size are only extracted for sources loaded by etl.py/etl_jul2026.py
+    # (Jan-Jul 2026 -- see vff_shoe_size_color() there); coverage is ~99% of
+    # VFF-shoe records by qty, the rest (malformed Central_Total_Department
+    # codes with no parseable comma-separated parens group) simply don't
+    # contribute to these two breakdowns rather than showing a wrong value.
+    'color_monthly': monthly_out(vff_shoe_color_month),
+    'gender_size_monthly': {GENDER_LABEL.get(g, g): monthly_out(sizes)
+                             for g, sizes in vff_shoe_gender_size_month.items()},
 }
 
 # ---- payment (the store-level ledgers seeded above only; per user confirmation

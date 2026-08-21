@@ -186,19 +186,55 @@ def vff_shoe_gender(text):
         return True, ('Women' if g == 'W' else 'Men' if g == 'M' else 'Unisex')
     return False, None
 
+# Color + size extraction for VFF shoes. Two conventions appear across the
+# source files, both a single trailing parenthesized group:
+#   name-style: 'Model(SizeToken, Color Name)'   e.g. '(W40, Fuchsia)'
+#   code-style: 'PREFIX(ColorCode,SizeToken)'    e.g. '(TT/BK,M43)'
+# Whichever end of the comma list matches the gender+size token shape
+# (letter?+digits) is size; the other end is the color, resolved to a full
+# name via COLOR_CODE_TO_NAME (built below) when it's an abbreviated code --
+# Siam Discovery's item names and Central_Total_Department's catalogue codes
+# are code-style with no separate name field of their own, so their color
+# text only ever comes through as a code. Falls back to the raw text when no
+# mapping exists (better than dropping a real sale from the breakdown).
+COLOR_CODE_TO_NAME = {}
+def vff_shoe_size_color(text):
+    if not text:
+        return None, None
+    m = re.search(r'\(([^()]*)\)\s*$', str(text))
+    if not m:
+        return None, None
+    parts = [p.strip() for p in m.group(1).split(',')]
+    if len(parts) < 2:
+        return None, None
+    if VFF_SIZE_TOKEN_RE.match(parts[0]):
+        size_tok, color_raw = parts[0], ','.join(parts[1:]).strip()
+    elif VFF_SIZE_TOKEN_RE.match(parts[-1]):
+        size_tok, color_raw = parts[-1], ','.join(parts[:-1]).strip()
+    else:
+        return None, None
+    size_num = VFF_SIZE_TOKEN_RE.match(size_tok).group(2)
+    color = COLOR_CODE_TO_NAME.get(color_raw.upper(), color_raw) if color_raw else None
+    if color:
+        color = COLOR_NAME_CANON.get(color.upper(), color)
+    return size_num, color
+
 def add_record(store, category, date_, brand, model, sub, qty, amount, order_id,
-                channel=None, payment=None, entity=None, vff_source_text=None):
+                channel=None, payment=None, entity=None, vff_source_text=None, vff_name_text=None):
     if date_ is None:
         return
     if brand == 'EXCLUDE':
         return
     is_shoe, gender = (False, None)
+    size, color = None, None
     if brand == 'VFF':
         is_shoe, gender = vff_shoe_gender(vff_source_text)
+        if is_shoe:
+            size, color = vff_shoe_size_color(vff_name_text or vff_source_text)
     records.append(dict(
         store=store, category=category, date=date_.isoformat(),
         month=date_.strftime('%Y-%m'), brand=brand or 'Unknown', model=model,
-        is_vff_shoe=is_shoe, gender=gender,
+        is_vff_shoe=is_shoe, gender=gender, size=size, color=color,
         sub=sub, qty=qty, amount=amount, order_id=order_id,
         channel=channel, payment=payment, entity=entity,
     ))
@@ -236,6 +272,65 @@ _scan_codes(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product
 _scan_codes(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 _scan_codes(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 print(f"Built brand code->model lookup with {len(CODE_TO_MODEL)} entries")
+
+# ================================================================== color-code -> full color name lookup
+# Same source files as CODE_TO_MODEL above, since they're the ones with both
+# a product code (abbreviated color, e.g. "TT/BK") and a product name (full
+# color name, e.g. "Total Black") on the same row -- feeds
+# vff_shoe_size_color()'s code-style branch for sources that only carry the
+# abbreviated code (Siam Discovery, Central_Total_Department).
+def _scan_colors(fn, sheet, header_row_idx, code_key, name_key):
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb[sheet]
+    rows = list(ws.iter_rows(values_only=True))
+    header = rows[header_row_idx]
+    idx = {h: i for i, h in enumerate(header) if h}
+    for r in rows[header_row_idx + 1:]:
+        if not any(r):
+            continue
+        code = r[idx.get(code_key)] if code_key in idx else None
+        name = r[idx.get(name_key)] if name_key in idx else None
+        if not code or not name:
+            continue
+        cm = re.search(r'\(([^()]*)\)\s*$', str(code))
+        nm = re.search(r'\(([^()]*)\)\s*$', str(name))
+        if not cm or not nm:
+            continue
+        c_parts = [p.strip() for p in cm.group(1).split(',')]
+        n_parts = [p.strip() for p in nm.group(1).split(',')]
+        if len(c_parts) < 2 or len(n_parts) < 2:
+            continue
+        if not VFF_SIZE_TOKEN_RE.match(c_parts[-1]) or not VFF_SIZE_TOKEN_RE.match(n_parts[0]):
+            continue  # not a shoe row (code-style size not last, or name-style size not first)
+        color_code = ','.join(c_parts[:-1]).strip().upper()
+        color_name = ','.join(n_parts[1:]).strip()
+        if not (color_code and color_name):
+            continue
+        if color_code not in COLOR_CODE_TO_NAME:
+            COLOR_CODE_TO_NAME[color_code] = color_name
+        # Central_Total_Department uses the same color codes without the '/'
+        # separator (e.g. "TTBK" instead of "TT/BK") -- register that variant
+        # too so its code-only rows resolve to the same full name.
+        stripped = color_code.replace('/', '')
+        if stripped and stripped not in COLOR_CODE_TO_NAME:
+            COLOR_CODE_TO_NAME[stripped] = color_name
+
+_scan_colors(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_colors(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_colors(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_colors(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+print(f"Built color code->name lookup with {len(COLOR_CODE_TO_NAME)} entries")
+
+# Casing canonicalizer: some sources spell color names in ALL CAPS (Central
+# Total Department's July 'SKU Name' column, e.g. "BLACK") while others use
+# proper case (K Village etc., "Black") for the exact same color -- without
+# this, the two would fragment into separate breakdown entries. Built from
+# COLOR_CODE_TO_NAME's own values (the properly-cased names harvested above),
+# applied to every vff_shoe_size_color() result regardless of which branch
+# produced it.
+COLOR_NAME_CANON = {}
+for _name in COLOR_CODE_TO_NAME.values():
+    COLOR_NAME_CANON.setdefault(_name.upper(), _name)
 
 # ================================================================== 1. VFF Cart LP
 # Superseded 2026-08: the original 'fdc407d1-Sale_VFF_Cart_LP_01062026.csv'
@@ -291,7 +386,7 @@ def load_vff_cart_lp():
         brand, sub = classify_by_code(pc)
         pname = r[idx.get('Product name')]
         model = model_from_name(pname)
-        add_record('VFF Cart LP', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc)
+        add_record('VFF Cart LP', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc, vff_name_text=pname)
         n += 1
     print(f"loaded {n} rows -> VFF Cart LP (Mar-Jun 2026; {skipped_july} July rows skipped, already covered)")
 load_vff_cart_lp()
@@ -367,7 +462,7 @@ def load_orders_style(fn, sheet, store_label, category, header_row_idx=1,
             store = 'Online'
             cat = 'online'
         add_record(store, cat, d, brand, model, sub, qty, amt, order_id, channel=channel,
-                    payment=payment, entity=entity, vff_source_text=pc)
+                    payment=payment, entity=entity, vff_source_text=pc, vff_name_text=pname)
         n += 1
     overridden = sum(1 for oid, p in order_paid.items()
                       if abs(order_resolved.get(oid, p) - p) > 0.01)
@@ -445,7 +540,7 @@ def load_central_lp3f():
         brand, sub = classify_by_code(pc)
         pname = r[idx['ชื่อสินค้า']]
         model = model_from_name(pname)
-        add_record('Central Ladprao 3F (Coollabo)', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc)
+        add_record('Central Ladprao 3F (Coollabo)', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc, vff_name_text=pname)
         n += 1
     overridden = sum(1 for oid, p in order_paid.items()
                       if abs(order_resolved.get(oid, p) - p) > 0.01)
@@ -480,7 +575,7 @@ def load_consignment(fn, sheet, store_label):
         brand, sub = classify_by_code(pc)
         pname = r[idx['ชื่อสินค้า/บริการ']]
         model = model_from_name(pname)
-        add_record(store_label, 'consignment', d, brand, model, sub, qty, amt, doc, vff_source_text=pc)
+        add_record(store_label, 'consignment', d, brand, model, sub, qty, amt, doc, vff_source_text=pc, vff_name_text=pname)
         n += 1
     print(f"loaded {n} rows -> {store_label}")
 load_consignment(SRC + 'c49fbb57-BFT_consignment__JanJun_26.xlsx', 'รายงานใบแจ้งหนี้', 'BFT Consignment')
@@ -510,7 +605,7 @@ def load_edv_consignment():
         brand, sub = classify_by_code(pc)
         pname = r[COL['prodname']]
         model = model_from_name(pname)
-        add_record('EDV Consignment', 'consignment', d, brand, model, sub, qty, amt, order, vff_source_text=pc)
+        add_record('EDV Consignment', 'consignment', d, brand, model, sub, qty, amt, order, vff_source_text=pc, vff_name_text=pname)
         n += 1
     print(f"loaded {n} rows -> EDV Consignment")
 load_edv_consignment()
@@ -532,7 +627,7 @@ def load_siam_discovery():
         net = num(r[3])
         brand, sub, model = classify_by_name(item)
         add_record('Siam Discovery', 'store', d, brand, model, sub,
-                    qty, net, f'SIAMDIS-{i}', vff_source_text=item)
+                    qty, net, f'SIAMDIS-{i}', vff_source_text=item, vff_name_text=item)
         n += 1
     print(f"loaded {n} rows -> Siam Discovery")
 load_siam_discovery()
@@ -563,7 +658,7 @@ def load_simple_online(fn, store_label, category, entity=None):
         item = r[idx['Item']]
         model = model_from_name(item)
         add_record(store_label, category, d, brand, model, sub, qty, amt, order_id, channel=channel,
-                    entity=entity, vff_source_text=sku)
+                    entity=entity, vff_source_text=sku, vff_name_text=item)
         n += 1
     print(f"loaded {n} rows -> {store_label}")
     return set(str(r[idx['No.']]).strip() for r in data if any(r) and r[idx.get('No.')])
@@ -633,9 +728,9 @@ def load_bft_merged_new_only():
         # is why it doesn't appear in that store's Cash/Credit/QR ledger). Only
         # a genuine walk-in (channel blank or 'POS') counts as the store itself.
         if warehouse == 'Paradise Park' and channel in (None, 'POS'):
-            add_record('Paradise Park', 'store', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku)
+            add_record('Paradise Park', 'store', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku, vff_name_text=item)
         else:
-            add_record('Online', 'online', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku)
+            add_record('Online', 'online', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku, vff_name_text=item)
         n += 1
     print(f"loaded {n} rows (non-duplicate only) -> BFT merged supplemental")
 load_bft_merged_new_only()
@@ -677,7 +772,7 @@ def load_central_total_department():
             model = CODE_TO_MODEL.get((mcode.group(1), int(mcode.group(2))), 'Other')
         store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
         add_record(store_label, 'central_dept', d, brand, model, sub, qty, amt,
-                   order_id=None, vff_source_text=cat)
+                   order_id=None, vff_source_text=cat, vff_name_text=cat)
         n += 1
     print(f"loaded {n} rows -> Central Total Department (5 stores)")
 load_central_total_department()

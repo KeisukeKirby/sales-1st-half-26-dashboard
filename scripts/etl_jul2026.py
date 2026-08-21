@@ -200,19 +200,48 @@ def vff_shoe_gender(text):
         return True, ('Women' if g == 'W' else 'Men' if g == 'M' else 'Unisex')
     return False, None
 
+# Color + size extraction for VFF shoes -- same dual-convention parser as
+# etl.py (see there for the full rationale); COLOR_CODE_TO_NAME is rebuilt
+# from the same 2026 source files (color codes don't change month to month
+# for the same SKU).
+COLOR_CODE_TO_NAME = {}
+def vff_shoe_size_color(text):
+    if not text:
+        return None, None
+    m = re.search(r'\(([^()]*)\)\s*$', str(text))
+    if not m:
+        return None, None
+    parts = [p.strip() for p in m.group(1).split(',')]
+    if len(parts) < 2:
+        return None, None
+    if VFF_SIZE_TOKEN_RE.match(parts[0]):
+        size_tok, color_raw = parts[0], ','.join(parts[1:]).strip()
+    elif VFF_SIZE_TOKEN_RE.match(parts[-1]):
+        size_tok, color_raw = parts[-1], ','.join(parts[:-1]).strip()
+    else:
+        return None, None
+    size_num = VFF_SIZE_TOKEN_RE.match(size_tok).group(2)
+    color = COLOR_CODE_TO_NAME.get(color_raw.upper(), color_raw) if color_raw else None
+    if color:
+        color = COLOR_NAME_CANON.get(color.upper(), color)
+    return size_num, color
+
 def add_record(store, category, date_, brand, model, sub, qty, amount, order_id,
-                channel=None, payment=None, entity=None, vff_source_text=None):
+                channel=None, payment=None, entity=None, vff_source_text=None, vff_name_text=None):
     if date_ is None:
         return
     if brand == 'EXCLUDE':
         return
     is_shoe, gender = (False, None)
+    size, color = None, None
     if brand == 'VFF':
         is_shoe, gender = vff_shoe_gender(vff_source_text)
+        if is_shoe:
+            size, color = vff_shoe_size_color(vff_name_text or vff_source_text)
     records.append(dict(
         store=store, category=category, date=date_.isoformat(),
         month=date_.strftime('%Y-%m'), brand=brand or 'Unknown', model=model,
-        is_vff_shoe=is_shoe, gender=gender,
+        is_vff_shoe=is_shoe, gender=gender, size=size, color=color,
         sub=sub, qty=qty, amount=amount, order_id=order_id,
         channel=channel, payment=payment, entity=entity,
     ))
@@ -248,6 +277,51 @@ _scan_codes(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product
 _scan_codes(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 _scan_codes(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 print(f"Built brand code->model lookup with {len(CODE_TO_MODEL)} entries")
+
+# color-code -> full color name lookup (see etl.py for the full rationale)
+def _scan_colors(fn, sheet, header_row_idx, code_key, name_key):
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb[sheet]
+    rows = list(ws.iter_rows(values_only=True))
+    header = rows[header_row_idx]
+    idx = {h: i for i, h in enumerate(header) if h}
+    for r in rows[header_row_idx + 1:]:
+        if not any(r):
+            continue
+        code = r[idx.get(code_key)] if code_key in idx else None
+        name = r[idx.get(name_key)] if name_key in idx else None
+        if not code or not name:
+            continue
+        cm = re.search(r'\(([^()]*)\)\s*$', str(code))
+        nm = re.search(r'\(([^()]*)\)\s*$', str(name))
+        if not cm or not nm:
+            continue
+        c_parts = [p.strip() for p in cm.group(1).split(',')]
+        n_parts = [p.strip() for p in nm.group(1).split(',')]
+        if len(c_parts) < 2 or len(n_parts) < 2:
+            continue
+        if not VFF_SIZE_TOKEN_RE.match(c_parts[-1]) or not VFF_SIZE_TOKEN_RE.match(n_parts[0]):
+            continue
+        color_code = ','.join(c_parts[:-1]).strip().upper()
+        color_name = ','.join(n_parts[1:]).strip()
+        if not (color_code and color_name):
+            continue
+        if color_code not in COLOR_CODE_TO_NAME:
+            COLOR_CODE_TO_NAME[color_code] = color_name
+        stripped = color_code.replace('/', '')
+        if stripped and stripped not in COLOR_CODE_TO_NAME:
+            COLOR_CODE_TO_NAME[stripped] = color_name
+
+_scan_colors(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_colors(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_colors(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_colors(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+print(f"Built color code->name lookup with {len(COLOR_CODE_TO_NAME)} entries")
+
+# Casing canonicalizer -- see etl.py for the full rationale.
+COLOR_NAME_CANON = {}
+for _name in COLOR_CODE_TO_NAME.values():
+    COLOR_NAME_CANON.setdefault(_name.upper(), _name)
 
 
 # ================================================================== 1. BFT consignment July 2026 (same schema/proration as the 2025/2024 files)
@@ -291,7 +365,7 @@ def load_bft_consignment_jul2026():
         pname = r[4]
         brand, sub = classify_by_code(pc, pname)
         model = model_from_name(pname)
-        add_record('BFT Consignment', 'consignment', d, brand, model, sub, qty, amt, doc, vff_source_text=pc)
+        add_record('BFT Consignment', 'consignment', d, brand, model, sub, qty, amt, doc, vff_source_text=pc, vff_name_text=pname)
         n += 1
     print(f"loaded {n} rows -> BFT Consignment July 2026")
 load_bft_consignment_jul2026()
@@ -361,7 +435,7 @@ def load_flat_branch_file(fn, sheet, branch_map, label):
         pname = r[idx.get('Product name')]
         brand, sub = classify_by_code(pc, pname)
         model = model_from_name(pname)
-        add_record(store, cat, d, brand, model, sub, qty, amt, order_id, channel=channel, vff_source_text=pc)
+        add_record(store, cat, d, brand, model, sub, qty, amt, order_id, channel=channel, vff_source_text=pc, vff_name_text=pname)
         n += 1
     overridden = sum(1 for oid, p in order_paid.items()
                       if abs(order_resolved.get(oid, p) - p) > 0.01)
@@ -452,8 +526,12 @@ def load_central_total_department_jul2026():
         if mcode:
             model = CODE_TO_MODEL.get((mcode.group(1), int(mcode.group(2))), 'Other')
         store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
+        # unlike the JanJun26 file, this month's export also carries 'SKU
+        # Name' (name-style, e.g. "V-Soul(W40, Fuchsia)") -- prefer it for
+        # color/size over the code-style Catalogue No. when present.
+        sku_name = r[idx.get('SKU Name')] if 'SKU Name' in idx else None
         add_record(store_label, 'central_dept', d, brand, model, sub, qty, amt,
-                   order_id=None, vff_source_text=cat)
+                   order_id=None, vff_source_text=cat, vff_name_text=sku_name or cat)
         n += 1
     stores_seen = len(set(r[idx['Store Name']] for r in data if r[idx['Store Name']]))
     print(f"loaded {n} rows -> Central Total Department July 2026 ({stores_seen} of 5 stores; no Eastville data this month)")
@@ -511,7 +589,7 @@ def load_siam_discovery_jul2026():
         net = num(r[net_idx]) if len(r) > net_idx else 0.0
         brand, sub, model = classify_by_name(item)
         add_record('Siam Discovery', 'store', d, brand, model, sub,
-                    qty, net, f'SIAMDIS2607-{i}', vff_source_text=item)
+                    qty, net, f'SIAMDIS2607-{i}', vff_source_text=item, vff_name_text=item)
         n += 1
     print(f"loaded {n} rows -> Siam Discovery July 2026 (name_idx={name_idx})")
 load_siam_discovery_jul2026()
