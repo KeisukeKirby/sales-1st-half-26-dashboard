@@ -483,7 +483,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <li><b>決済方法（Cash/Credit Card/QR）</b> — Paradise Parkの店舗別決済台帳から記録しています（「イベント」カテゴリの決済方法データは対象外としています）。それ以外の店舗・カテゴリには記録がありません。※Central Ladprao 3F（Coollabo）・Thaniya・K Village・VFF Cart LPの決済台帳は2026年8月の対EDV統合に伴い集計対象から除外（店舗自体がダッシュボードから外れたため）。</li>
         <li><b>VFF Cart LP（Cart Central LP）2026年5月分</b> — 注文RV-202605003（2,560.00 THB、5月22日）が、決済台帳のTotalには含まれていません。他の月（3・4・6・7月）は決済台帳と完全一致しています。この注文の性質（返品/振替等）をご確認ください。※本店舗自体、2026年8月より対EDVに統合されダッシュボードから除外されています。</li>
         <li><b>Coollabo MEGA Bang-na</b> — 2025年の店舗別決済台帳で存在が判明した店舗（2025年のみ出店、2026年は非対象と確認済み）。売上のソースファイルは未受領のため実績自体はダッシュボードに含まれていませんが、ご確認の上、決済方法の集計対象からも除外しています。</li>
-        <li><b>対EDVへの統合（2026年8月）</b> — Central Ladprao 3F（Coollabo）・VFF Cart LP・Thaniya・K Village・Central Chidlom・Central Chidlom Online・Central World (CDS)・Central Eastville・EDV Consignment・オンライン(EDV)・EDV_EVENT_1の実績を、Barefoot社がEndeavors社（EDV）へ発行した卸売請求データ（Barefootinc_to_Endeavors_JanJul_2026.xlsx、1〜7月で16件・数量2,782点・合計5,392,746 THB）による「対EDV」1本の実績に統合しました。小売価格ではなく卸売価格（請求額）ベースのため、他の店舗・チャネルの売上金額とは性質が異なります。2025年・2024年の同名店舗の実績も、前年比較の一貫性のため合わせて集計対象外としています（このため今回の変更後は「対EDV」自体に前年比較データはありません）。伝票番号は個々の小売取引ではなく卸売請求書単位のため、客数（伝票数）・客単価の算出対象からも除外しています。</li>
+        <li><b>対EDVへの統合（2026年8月）</b> — Central Ladprao 3F（Coollabo）・VFF Cart LP・Thaniya・K Village・Central Chidlom・Central Chidlom Online・Central World (CDS)・Central Eastville・EDV Consignment・オンライン(EDV)・EDV_EVENT_1の実績を、Barefoot社がEndeavors社（EDV）へ発行した卸売請求データ（Barefootinc_to_Endeavors_JanJul_2026.xlsx、1〜7月で16件・数量2,782点・合計5,392,746 THB）による「対EDV」1本の実績に統合しました。小売価格ではなく卸売価格（請求額）ベースのため、他の店舗・チャネルの売上金額とは性質が異なります。2025年・2024年の同名店舗の実績も、前年比較の一貫性のため合わせて集計対象外としています（このため今回の変更後は「対EDV」自体に前年比較データはありません）。伝票番号は個々の小売取引ではなく卸売請求書単位のため、客数（伝票数）・客単価の算出対象からも除外しています。※対EDVの正確なデータをまだ完全には把握できていないため、2025年・2024年の実績表記および前年比（YoY）表示はダッシュボード全体で一時的に非表示にしています（データ確認後、順次再表示予定）。</li>
       </ul>
     </div>
     <div class="panel">
@@ -502,7 +502,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <li>性別区分（女性/男性/ユニセックス）はシューズのサイズ表記の先頭文字（W=女性/M=男性/未表記orU=ユニセックス）から推定した参考値。実際の購入者属性データではない</li>
         <li>VFFシューズの販売チャネル区分: オンラインストア＝オンライン全体／直営実店舗＝Paradise Park／Central百貨店＝Central Lardprao (Dept.)／イベント／Siam Discovery／委託販売(オフライン)＝BFT委託／対EDV＝Barefoot社からEndeavors社への卸売請求データ（Thaniyaは元々VFFシューズを扱っておらず、店舗自体2026年8月に対EDVへ統合されたためチャネル別内訳には登場しません）</li>
         <li>VFFシューズ月次販売足数推移（店舗別）は、個別店舗ではなく「全体」タブと同じ区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery／対EDV）で色分けしています。ThaniyaはVFFシューズを扱っていないため、この区分には表示されません</li>
-        <li>分析期間の指定（月別／Q1／Q2／半期）は各セクション見出しのプルダウンから個別に選択できます（事前集計済みの月次データをクライアント側で合算して算出）。選択した期間に応じて前年同期間（2025年）と比較したYoY表示が「全体」タブのサマリーカードに表示されます。あわせて「全体サマリー」「月次推移」「VFFシューズ」タブの各「実績詳細を表示」テーブルでは、2025年・2024年の同期間（H1）実績との比較列も確認できます</li>
+        <li>分析期間の指定（月別／Q1／Q2／半期）は各セクション見出しのプルダウンから個別に選択できます（事前集計済みの月次データをクライアント側で合算して算出）。※前年同期間（2025年）比のYoY表示、および2025年・2024年の同期間（H1）実績との比較列は、対EDVのデータ確認が完了するまで一時的に非表示にしています</li>
       </ul>
     </div>
     <div class="panel">
@@ -556,7 +556,7 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <footer>
     <div data-i18n="footerText">対象期間 2026/01/01 – 07/31 ｜ 集計対象ブランド: VFF / BFJ / Coolcore / Oleno / TabiRela / Others</div>
-    <div class="period" style="margin:10px 0 0" data-i18n-html="periodInfo">対象期間: <b>2026年1月1日〜7月31日</b><br>前年同期間比較: <b>反映済み</b></div>
+    <div class="period" style="margin:10px 0 0" data-i18n-html="periodInfo">対象期間: <b>2026年1月1日〜7月31日</b><br>前年同期間比較: <b>一時非表示（対EDVのデータ確認待ち）</b></div>
   </footer>
 </div>
 
@@ -663,6 +663,16 @@ const VFF_ACTIVE_GROUPS = (() => {
   return GROUP_ORDER.filter(g => MONTHS.some(m => (gm[g][m] || {}).qty > 0));
 })();
 
+// Master toggle, added 2026-08: 対EDV's wholesale-invoice figures haven't
+// been confirmed accurate yet, and they now make up a meaningful share of
+// this year's total -- so any YoY comparison or 2025/2024 reference column
+// built from that total would be resting on an unverified number. Hides
+// every prior-year badge/column/row/chart-series dashboard-wide (not just
+// for 対EDV) until the user confirms the data and this is flipped back to
+// true. Every touch point below checks this single flag, so re-enabling is
+// a one-line change.
+const SHOW_PRIOR_YEAR = false;
+
 const fmt = n => Math.round(n).toLocaleString('en-US');
 const fmtPct = v => (v*100).toFixed(1) + '%';
 const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -672,7 +682,7 @@ const T = {
   ja: {
     eyebrow: 'Barefoot Inc. 2026 Performance Report',
     title: '販売実績ダッシュボード',
-    periodInfo: '対象期間: <b>2026年1月1日〜7月31日</b><br>前年同期間比較: <b>反映済み</b>',
+    periodInfo: '対象期間: <b>2026年1月1日〜7月31日</b><br>前年同期間比較: <b>一時非表示（対EDVのデータ確認待ち）</b>',
     tabOverview: '全体', tabVffShoes: 'VFFシューズ', tabStores: '店舗別', tabBrand: '商品・ブランド別', tabNotes: 'このデータについて',
     allSummaryTitle: '全体サマリー', summaryMonthlyChartTitle: '月別売上金額',
     ov01Title: '月次推移（チャネル別内訳）',
@@ -713,7 +723,7 @@ const T = {
     correctionLabel: '訂正履歴:',
     correctionText: '当初「BFT委託」の合計を 1,316,111.80 THB と報告しましたが、元データ末尾の合計行（รวม）を通常の明細行と誤認して二重計上していたため、正しくは <b>658,055.60 THB</b> です。本ダッシュボードは訂正後の値を使用しています。',
     pendingDataTitle: '未対応のデータ',
-    pendingDataList: '<li><b>Central Total Department（CHIDLOM等5店舗）</b> — 2024年分のファイルは未受領のため集計に含まれていません（2025年分も9〜12月のみ受領、1〜8月分は未受領。2026年7月分もEastvilleのデータなし）。※このうちCHIDLOM/CHIDLOM ONLINE/CENTRAL WORLD-CDS/EASTVILLEの4店舗は2026年8月より対EDVに統合（下記参照）、LARDPRAOのみ引き続きこのファイルから集計。</li><li><b>Siam Discovery 2024年1月分</b> — ソースファイルに同月のシートが存在しないため、データ欠落として扱っています。</li><li><b>決済方法（Cash/Credit Card/QR）</b> — Paradise Parkの店舗別決済台帳から記録しています（「イベント」カテゴリの決済方法データは対象外としています）。それ以外の店舗・カテゴリには記録がありません。※Central Ladprao 3F（Coollabo）・Thaniya・K Village・VFF Cart LPの決済台帳は2026年8月の対EDV統合に伴い集計対象から除外（店舗自体がダッシュボードから外れたため）。</li><li><b>VFF Cart LP（Cart Central LP）2026年5月分</b> — 注文RV-202605003（2,560.00 THB、5月22日）が、決済台帳のTotalには含まれていません。他の月（3・4・6・7月）は決済台帳と完全一致しています。この注文の性質（返品/振替等）をご確認ください。※本店舗自体、2026年8月より対EDVに統合されダッシュボードから除外されています。</li><li><b>Coollabo MEGA Bang-na</b> — 2025年の店舗別決済台帳で存在が判明した店舗（2025年のみ出店、2026年は非対象と確認済み）。売上のソースファイルは未受領のため実績自体はダッシュボードに含まれていませんが、ご確認の上、決済方法の集計対象からも除外しています。</li><li><b>対EDVへの統合（2026年8月）</b> — Central Ladprao 3F（Coollabo）・VFF Cart LP・Thaniya・K Village・Central Chidlom・Central Chidlom Online・Central World (CDS)・Central Eastville・EDV Consignment・オンライン(EDV)・EDV_EVENT_1の実績を、Barefoot社がEndeavors社（EDV）へ発行した卸売請求データ（Barefootinc_to_Endeavors_JanJul_2026.xlsx、1〜7月で16件・数量2,782点・合計5,392,746 THB）による「対EDV」1本の実績に統合しました。小売価格ではなく卸売価格（請求額）ベースのため、他の店舗・チャネルの売上金額とは性質が異なります。2025年・2024年の同名店舗の実績も、前年比較の一貫性のため合わせて集計対象外としています（このため今回の変更後は「対EDV」自体に前年比較データはありません）。伝票番号は個々の小売取引ではなく卸売請求書単位のため、客数（伝票数）・客単価の算出対象からも除外しています。</li>',
+    pendingDataList: '<li><b>Central Total Department（CHIDLOM等5店舗）</b> — 2024年分のファイルは未受領のため集計に含まれていません（2025年分も9〜12月のみ受領、1〜8月分は未受領。2026年7月分もEastvilleのデータなし）。※このうちCHIDLOM/CHIDLOM ONLINE/CENTRAL WORLD-CDS/EASTVILLEの4店舗は2026年8月より対EDVに統合（下記参照）、LARDPRAOのみ引き続きこのファイルから集計。</li><li><b>Siam Discovery 2024年1月分</b> — ソースファイルに同月のシートが存在しないため、データ欠落として扱っています。</li><li><b>決済方法（Cash/Credit Card/QR）</b> — Paradise Parkの店舗別決済台帳から記録しています（「イベント」カテゴリの決済方法データは対象外としています）。それ以外の店舗・カテゴリには記録がありません。※Central Ladprao 3F（Coollabo）・Thaniya・K Village・VFF Cart LPの決済台帳は2026年8月の対EDV統合に伴い集計対象から除外（店舗自体がダッシュボードから外れたため）。</li><li><b>VFF Cart LP（Cart Central LP）2026年5月分</b> — 注文RV-202605003（2,560.00 THB、5月22日）が、決済台帳のTotalには含まれていません。他の月（3・4・6・7月）は決済台帳と完全一致しています。この注文の性質（返品/振替等）をご確認ください。※本店舗自体、2026年8月より対EDVに統合されダッシュボードから除外されています。</li><li><b>Coollabo MEGA Bang-na</b> — 2025年の店舗別決済台帳で存在が判明した店舗（2025年のみ出店、2026年は非対象と確認済み）。売上のソースファイルは未受領のため実績自体はダッシュボードに含まれていませんが、ご確認の上、決済方法の集計対象からも除外しています。</li><li><b>対EDVへの統合（2026年8月）</b> — Central Ladprao 3F（Coollabo）・VFF Cart LP・Thaniya・K Village・Central Chidlom・Central Chidlom Online・Central World (CDS)・Central Eastville・EDV Consignment・オンライン(EDV)・EDV_EVENT_1の実績を、Barefoot社がEndeavors社（EDV）へ発行した卸売請求データ（Barefootinc_to_Endeavors_JanJul_2026.xlsx、1〜7月で16件・数量2,782点・合計5,392,746 THB）による「対EDV」1本の実績に統合しました。小売価格ではなく卸売価格（請求額）ベースのため、他の店舗・チャネルの売上金額とは性質が異なります。2025年・2024年の同名店舗の実績も、前年比較の一貫性のため合わせて集計対象外としています（このため今回の変更後は「対EDV」自体に前年比較データはありません）。伝票番号は個々の小売取引ではなく卸売請求書単位のため、客数（伝票数）・客単価の算出対象からも除外しています。※対EDVの正確なデータをまだ完全には把握できていないため、2025年・2024年の実績表記および前年比（YoY）表示はダッシュボード全体で一時的に非表示にしています（データ確認後、順次再表示予定）。</li>',
     rulesTitle: '集計ルール',
     rulesList: '<li>ブランド分類: VFF=Vibram FiveFingers／BFJ=BFJ Socks／Coolcore=CP+CCコード統合／Oleno=OLN／TabiRela=MTB(Marugo)／Tabio=KC+TBOコード統合（2026年7月データより追加の第三者ソックスブランド）／Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB)+KEEN(KE)+Pet House(ST)等を統合</li><li>値引き行（DCコード）・資産売却等の非商品行（P, CONコード）は売上・点数の集計から除外</li><li>日付は全ファイルでD/M/YYYY（日始まり）形式であることを確認して解析（ファイルにより表記が混在するため都度検証）</li><li>オンライン販売はBFT・EDV両エンティティを「オンライン」1カテゴリに統合。チャネル別内訳（Shopee/Lazada/LINE/Facebook/Instagram/Website）は別集計</li><li>イベント4ファイル（EDV_EVENT_1、BFT_EVENT_1/2/3）は「イベント」1カテゴリに合算</li><li>委託販売はBFT委託・EDV委託を別カテゴリとして集計</li><li>BFT_Shopee_Lazada_Facebook_Paradise_Event（重複ファイル）は既存5ファイルと伝票番号を照合し、重複しない13伝票のみ追加取り込み（二重計上を回避）</li><li>Central Total Department（CHIDLOM等5店舗）は月次集計のみのため、伝票数・客単価は算出不可</li><li>モデル名の表記ゆれ（例: "VFF KSO EVO" と "VFF Kso Evo"）はブランド内で最も売上の大きい表記に統一</li><li>「VFFシューズ」タブはVFFブランドのうちシューズのみ集計（ソックス・Furoshiki等、サイズ表記が S/M/L/XL等の非シューズ商品は除外。シューズのサイズ表記 W37/M43 等の数値有無で判定）</li><li>性別区分（女性/男性/ユニセックス）はシューズのサイズ表記の先頭文字（W=女性/M=男性/未表記orU=ユニセックス）から推定した参考値。実際の購入者属性データではない</li><li>店舗・チャネルの8区分（直営実店舗／Central百貨店内／オンライン／イベント／委託販売／Siam Discovery／Thaniya／対EDV）は「全体」「店舗別」「VFFシューズ」の全タブで共通の分類です。直営実店舗＝Paradise Park／Central百貨店内＝Central Lardprao (Dept.)／委託販売＝BFT委託／対EDV＝Barefoot社からEndeavors社への卸売請求データ（2026年8月追加、詳細は「未対応のデータ」参照）（ThaniyaはVFFシューズを扱っておらず、店舗自体2026年8月に対EDVへ統合されたため、VFFシューズタブのチャネル別内訳には登場しません）</li><li>「全体」タブの全体サマリーは、見出しのプルダウンで月次／Q1／Q2／半期のいずれかを選択し、総売上金額・総点数・客数をチャネル区分別の内訳ドーナツグラフとあわせて1ブロックで表示します。選択中の期間に応じた前年同期間（2025年）比を各カードに表示します</li><li>全体サマリーの「実績詳細を表示」テーブルは、選択中の期間によらず常にデータのある全ての月の月次内訳＋半期(1〜6月)合計を表示し、あわせて2025年・2024年の同期間（H1）実績と前年比の列を確認できます</li><li>「月次推移（チャネル別内訳）」の「実績詳細を表示」テーブルには、各チャネルの月次内訳・半期合計に加えて、2025年・2024年の同期間（H1）実績の参考列があります</li><li>「総点数」は靴以外の商品（ソックス・タオル・サングラス等）も含む全商品の合計です。VFFシューズのみの足数・内訳は「VFFシューズ」タブで確認できます</li><li>「全体」タブの月次推移グラフ、「VFFシューズ」タブの月次店舗別グラフ・モデル別販売ランキングには、グラフ下の「実績詳細を表示」ボタンから月別の詳細数値を表形式で確認できます</li><li>「VFFシューズ」タブの総足数・総売上金額は、月次販売足数推移（店舗別）の「実績詳細を表示」テーブルで、月次内訳に続けてQ1・Q2・半期の列、合計行の下に売上金額の行として確認できます。同テーブルおよびモデル別販売ランキングの「実績詳細を表示」テーブルには、半期合計に続けて2025年・2024年の同期間（H1）実績の参考列もあります</li><li>月次販売足数推移（店舗別）の「実績詳細を表示」テーブルは、区分（直営実店舗／Central百貨店内等）の行の下に、そのグループに属する個別店舗の内訳行を表示します（区分内の店舗が1店舗のみの場合は内訳行を省略）</li><li>分析期間の指定（月別／Q1／Q2／半期）は各セクション見出しのプルダウンから個別に選択できます（事前集計済みの月次データをクライアント側で合算して算出）</li>',
     sourceFilesTitle: '読み込んだソースファイル（17件）',
@@ -748,7 +758,7 @@ const T = {
   en: {
     eyebrow: 'Barefoot Inc. 2026 Performance Report',
     title: 'Sales Performance Dashboard',
-    periodInfo: 'Period: <b>Jan 1 – Jul 31, 2026</b><br>Same-period YoY comparison: <b>available</b>',
+    periodInfo: 'Period: <b>Jan 1 – Jul 31, 2026</b><br>Same-period YoY comparison: <b>temporarily hidden (pending 対EDV data confirmation)</b>',
     tabOverview: 'Overall', tabVffShoes: 'VFF Shoes', tabStores: 'By Store', tabBrand: 'Products & Brands', tabNotes: 'About This Data',
     allSummaryTitle: 'Overall Summary', summaryMonthlyChartTitle: 'Monthly Sales Amount',
     ov01Title: 'Monthly Trend by Channel',
@@ -789,7 +799,7 @@ const T = {
     correctionLabel: 'Correction:',
     correctionText: 'We originally reported "BFT Consignment" total sales as 1,316,111.80 THB. A trailing "รวม" (total) row in the source sheet had been mistaken for a regular line item and double-counted; the correct figure is <b>658,055.60 THB</b>. This dashboard uses the corrected value.',
     pendingDataTitle: 'Data Not Yet Available',
-    pendingDataList: '<li><b>Central Total Department (CHIDLOM and 4 other stores)</b> — no 2024 source file has been received, so 2024 is not covered (2025 coverage is also partial: only Sep–Dec was received, Jan–Aug is missing; July 2026 also has no Eastville data). Of these 5, CHIDLOM/CHIDLOM ONLINE/CENTRAL WORLD-CDS/EASTVILLE were folded into vs. Endeavors (EDV) in August 2026 (see below); only LARDPRAO still comes from this file.</li><li><b>Siam Discovery, January 2024</b> — no sheet for that month exists in the source file, so it is treated as a genuine data gap.</li><li><b>Payment method (Cash/Credit Card/QR)</b> — recorded for Paradise Park from its own store-level payment ledger (the "Events" category\'s payment-method data is excluded from this feature). No other store or category has this data. Central Ladprao 3F (Coollabo), Thaniya, K Village, and VFF Cart LP\'s ledgers were dropped from this aggregation in August 2026, alongside those stores themselves (see the vs. Endeavors note below).</li><li><b>VFF Cart LP (Cart Central LP), May 2026</b> — order RV-202605003 (2,560.00 THB, May 22) is not included in the store\'s payment ledger total for that month. Every other month (Mar, Apr, Jun, Jul) matches the ledger exactly. Please confirm the nature of this order (return/transfer/etc.). This store itself was folded into vs. Endeavors (EDV) in August 2026 and no longer appears in the dashboard.</li><li><b>Coollabo MEGA Bang-na</b> — this store surfaced in a 2025 store-level payment ledger (confirmed: it only operated in 2025, out of scope for 2026). No sales source file has been received for it, so its actuals aren\'t in the dashboard, and it has been confirmed excluded from the payment-method aggregation too.</li><li><b>Folded into vs. Endeavors (August 2026)</b> — Central Ladprao 3F (Coollabo), VFF Cart LP, Thaniya, K Village, Central Chidlom, Central Chidlom Online, Central World (CDS), Central Eastville, EDV Consignment, Online (EDV), and EDV_EVENT_1 have been replaced with a single "vs. Endeavors" line, sourced from Barefoot\'s own wholesale invoices to Endeavors (EDV) (Barefootinc_to_Endeavors_JanJul_2026.xlsx — 16 invoices Jan-Jul, 2,782 units, 5,392,746 THB total). This is a wholesale (invoiced) price basis, not retail, so it is not directly comparable to every other store/channel\'s figures. The same-named stores\' 2025/2024 records were also excluded, for a consistent YoY comparison (as a result, vs. Endeavors itself has no prior-year comparison after this change). Document numbers are wholesale invoices, not individual retail transactions, so this store is also excluded from customer-count (orders) and average-ticket calculations.</li>',
+    pendingDataList: '<li><b>Central Total Department (CHIDLOM and 4 other stores)</b> — no 2024 source file has been received, so 2024 is not covered (2025 coverage is also partial: only Sep–Dec was received, Jan–Aug is missing; July 2026 also has no Eastville data). Of these 5, CHIDLOM/CHIDLOM ONLINE/CENTRAL WORLD-CDS/EASTVILLE were folded into vs. Endeavors (EDV) in August 2026 (see below); only LARDPRAO still comes from this file.</li><li><b>Siam Discovery, January 2024</b> — no sheet for that month exists in the source file, so it is treated as a genuine data gap.</li><li><b>Payment method (Cash/Credit Card/QR)</b> — recorded for Paradise Park from its own store-level payment ledger (the "Events" category\'s payment-method data is excluded from this feature). No other store or category has this data. Central Ladprao 3F (Coollabo), Thaniya, K Village, and VFF Cart LP\'s ledgers were dropped from this aggregation in August 2026, alongside those stores themselves (see the vs. Endeavors note below).</li><li><b>VFF Cart LP (Cart Central LP), May 2026</b> — order RV-202605003 (2,560.00 THB, May 22) is not included in the store\'s payment ledger total for that month. Every other month (Mar, Apr, Jun, Jul) matches the ledger exactly. Please confirm the nature of this order (return/transfer/etc.). This store itself was folded into vs. Endeavors (EDV) in August 2026 and no longer appears in the dashboard.</li><li><b>Coollabo MEGA Bang-na</b> — this store surfaced in a 2025 store-level payment ledger (confirmed: it only operated in 2025, out of scope for 2026). No sales source file has been received for it, so its actuals aren\'t in the dashboard, and it has been confirmed excluded from the payment-method aggregation too.</li><li><b>Folded into vs. Endeavors (August 2026)</b> — Central Ladprao 3F (Coollabo), VFF Cart LP, Thaniya, K Village, Central Chidlom, Central Chidlom Online, Central World (CDS), Central Eastville, EDV Consignment, Online (EDV), and EDV_EVENT_1 have been replaced with a single "vs. Endeavors" line, sourced from Barefoot\'s own wholesale invoices to Endeavors (EDV) (Barefootinc_to_Endeavors_JanJul_2026.xlsx — 16 invoices Jan-Jul, 2,782 units, 5,392,746 THB total). This is a wholesale (invoiced) price basis, not retail, so it is not directly comparable to every other store/channel\'s figures. The same-named stores\' 2025/2024 records were also excluded, for a consistent YoY comparison (as a result, vs. Endeavors itself has no prior-year comparison after this change). Document numbers are wholesale invoices, not individual retail transactions, so this store is also excluded from customer-count (orders) and average-ticket calculations. *Since the 対EDV figures haven\'t been fully confirmed yet, all 2025/2024 figures and YoY comparisons are temporarily hidden dashboard-wide (to be re-enabled once confirmed).</li>',
     rulesTitle: 'Aggregation Rules',
     rulesList: '<li>Brand grouping: VFF=Vibram FiveFingers / BFJ=BFJ Socks / Coolcore=CP+CC codes merged / Oleno=OLN / TabiRela=MTB(Marugo) / Tabio=KC+TBO codes merged (a 3rd-party sock brand added from the July 2026 data) / Others=Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB)+KEEN(KE)+Pet House(ST) and others merged</li><li>Discount lines (DC code) and non-product entries such as asset-sale income (P, CON codes) are excluded from sales/quantity totals</li><li>Every file\'s dates were verified to use D/M/YYYY (day-first) format before parsing, since formatting is inconsistent across files</li><li>Online sales from both the BFT and EDV entities are merged into one "Online" category; the channel breakdown (Shopee/Lazada/LINE/Facebook/Instagram/Website) is tracked separately</li><li>The 4 event files (EDV_EVENT_1, BFT_EVENT_1/2/3) are combined into one "Events" category</li><li>Consignment sales are tracked as two separate categories, BFT and EDV</li><li>The duplicate file BFT_Shopee_Lazada_Facebook_Paradise_Event was cross-checked against the existing 5 files by order number; only the 13 non-duplicate orders were added, to avoid double-counting</li><li>Central Total Department (CHIDLOM and 4 other stores) reports monthly totals only, so order count and average ticket cannot be computed</li><li>Model-name casing variants (e.g. "VFF KSO EVO" vs "VFF Kso Evo") are unified to whichever spelling carries the most revenue within that brand</li><li>The "VFF Shoes" tab counts VFF footwear only — socks, Furoshiki wraps, and other items sized with letters only (S/M/L/XL) are excluded; footwear is identified by a numeric size code such as W37/M43</li><li>Gender (Women/Men/Unisex) is estimated from the leading letter of the footwear size code (W=Women/M=Men/unmarked or U=Unisex) — an estimate, not recorded customer data</li><li>The 8 store/channel categories (Directly-operated Stores / Central Dept. Store / Online / Events / Consignment / Siam Discovery / Thaniya / vs. Endeavors) are shared across the Overall, By Store, and VFF Shoes tabs. Directly-operated Stores = Paradise Park / Central Dept. Store = Central Lardprao (Dept.) / Consignment = BFT consignment / vs. Endeavors = Barefoot\'s wholesale invoices to Endeavors (added August 2026, see "Data Not Yet Covered" above) (Thaniya carries no VFF footwear sales, and that store itself was folded into vs. Endeavors in August 2026, so it never appears in the VFF Shoes channel breakdown)</li><li>The VFF Shoes tab\'s monthly-by-store chart is colored by the same categories as the Overall tab (Directly-operated Stores / Central Dept. Stores / Online / Events / Consignment / Siam Discovery), not individual stores. Thaniya is omitted from this breakdown since it carries no VFF footwear sales</li><li>The Overall tab\'s summary lets you pick month / Q1 / Q2 / half-year from a dropdown in the section heading, showing total sales amount, total units, and customer count together with a channel-group breakdown donut chart in a single block. Each card shows a YoY badge comparing the selected period against the same period in 2025</li><li>The Overall summary\'s "Show detailed figures" table always shows the monthly breakdown for every month loaded so far, plus the H1 (Jan-Jun) total regardless of the period picker above it, alongside reference columns for the same H1 period in 2025 and 2024 and a YoY column</li><li>The "Monthly Trend (by Channel)" section\'s "Show detailed figures" table has, alongside each channel\'s monthly breakdown and H1 total, reference columns for the same H1 period in 2025 and 2024</li><li>"Total Units" covers every product including non-footwear (socks, towels, sunglasses, etc). For VFF footwear pairs and detail, see the "VFF Shoes" tab</li><li>The Overall tab\'s monthly trend chart and the VFF Shoes tab\'s monthly-by-store chart and model ranking each have a "Show detailed figures" button below the chart that reveals a month-by-month breakdown table</li><li>The VFF Shoes tab\'s total pairs sold and sales amount are available in the monthly-by-store chart\'s "Show detailed figures" table, which adds Q1/Q2/half-year columns after the monthly breakdown and a sales-amount row below the total row. That table and the model ranking\'s "Show detailed figures" table both also add reference columns for the same H1 period in 2025 and 2024, after the H1 total</li><li>The monthly-by-store chart\'s "Show detailed figures" table lists each category\'s (Directly-operated Stores / Central Dept. Stores / etc.) individual stores as sub-rows beneath its row (omitted when a category has only one store)</li><li>The period (by month / Q1 / Q2 / half-year) is selected independently from a dropdown in each section\'s heading, summing pre-aggregated monthly data client-side</li>',
     sourceFilesTitle: 'Source Files Loaded (17)',
@@ -823,7 +833,7 @@ const T = {
   th: {
     eyebrow: 'Barefoot Inc. รายงานผลประกอบการปี 2026',
     title: 'แดชบอร์ดผลการขาย',
-    periodInfo: 'ช่วงเวลา: <b>1 ม.ค. – 31 ก.ค. 2026</b><br>เปรียบเทียบช่วงเวลาเดียวกันปีก่อน: <b>พร้อมใช้งาน</b>',
+    periodInfo: 'ช่วงเวลา: <b>1 ม.ค. – 31 ก.ค. 2026</b><br>เปรียบเทียบช่วงเวลาเดียวกันปีก่อน: <b>ซ่อนชั่วคราว (รอยืนยันข้อมูลต่อ EDV)</b>',
     tabOverview: 'ภาพรวม', tabVffShoes: 'รองเท้า VFF', tabStores: 'แยกตามร้าน', tabBrand: 'สินค้า/แบรนด์', tabNotes: 'เกี่ยวกับข้อมูลนี้',
     allSummaryTitle: 'สรุปภาพรวม', summaryMonthlyChartTitle: 'ยอดขายรายเดือน',
     ov01Title: 'แนวโน้มรายเดือนตามช่องทาง',
@@ -864,7 +874,7 @@ const T = {
     correctionLabel: 'การแก้ไข:',
     correctionText: 'เดิมเรารายงานยอดขายรวมของ "BFT Consignment" ไว้ที่ 1,316,111.80 บาท แต่แถว "รวม" ท้ายชีทข้อมูลต้นฉบับถูกเข้าใจผิดว่าเป็นรายการสินค้าปกติและถูกนับซ้ำ ตัวเลขที่ถูกต้องคือ <b>658,055.60 บาท</b> แดชบอร์ดนี้ใช้ค่าที่แก้ไขแล้ว',
     pendingDataTitle: 'ข้อมูลที่ยังไม่ครบถ้วน',
-    pendingDataList: '<li><b>Central Total Department (CHIDLOM และอีก 4 สาขา)</b> — ยังไม่ได้รับไฟล์ข้อมูลปี 2024 จึงไม่รวมอยู่ในรายงาน (ข้อมูลปี 2025 ก็ยังไม่ครบเช่นกัน ได้รับเฉพาะเดือน ก.ย.–ธ.ค. ส่วน ม.ค.–ส.ค. ยังไม่ได้รับ และเดือนกรกฎาคม 2026 ก็ไม่มีข้อมูลของ Eastville) ในจำนวนนี้ CHIDLOM/CHIDLOM ONLINE/CENTRAL WORLD-CDS/EASTVILLE ถูกรวมเข้ากับ "ต่อ Endeavors (EDV)" ตั้งแต่เดือนสิงหาคม 2026 (ดูด้านล่าง) เหลือเพียง LARDPRAO ที่ยังคงมาจากไฟล์นี้</li><li><b>Siam Discovery เดือนมกราคม 2024</b> — ไม่มีชีทของเดือนนี้ในไฟล์ต้นฉบับ จึงถือว่าเป็นข้อมูลที่ขาดหายจริง</li><li><b>วิธีชำระเงิน (Cash/Credit Card/QR)</b> — บันทึกจากบัญชีระดับร้านของ Paradise Park เท่านั้น (ข้อมูลวิธีชำระเงินของหมวด "Events" ไม่รวมอยู่ในฟีเจอร์นี้) ร้าน/หมวดอื่นไม่มีข้อมูลนี้ บัญชีของ Central Ladprao 3F (Coollabo), Thaniya, K Village และ VFF Cart LP ถูกตัดออกจากการรวมนี้ตั้งแต่เดือนสิงหาคม 2026 พร้อมกับร้านเหล่านั้นเอง (ดูหมายเหตุ "ต่อ Endeavors" ด้านล่าง)</li><li><b>VFF Cart LP (Cart Central LP) เดือนพฤษภาคม 2026</b> — ออเดอร์ RV-202605003 (2,560.00 บาท, 22 พ.ค.) ไม่ได้รวมอยู่ในยอดรวมตามบัญชีของร้านสำหรับเดือนนั้น เดือนอื่น ๆ (มี.ค., เม.ย., มิ.ย., ก.ค.) ตรงกับบัญชีทุกประการ กรุณายืนยันลักษณะของออเดอร์นี้ (คืนสินค้า/โอนย้าย ฯลฯ) ร้านนี้เองถูกรวมเข้ากับ "ต่อ Endeavors (EDV)" ตั้งแต่เดือนสิงหาคม 2026 และไม่ปรากฏในแดชบอร์ดอีกต่อไป</li><li><b>Coollabo MEGA Bang-na</b> — ร้านนี้ปรากฏในบัญชีชำระเงินระดับร้านปี 2025 (ยืนยันแล้วว่าเปิดดำเนินการเฉพาะปี 2025 ไม่อยู่ในขอบเขตปี 2026) ยังไม่ได้รับไฟล์ข้อมูลยอดขายของร้านนี้ จึงไม่มีข้อมูลจริงอยู่ในแดชบอร์ด และได้รับการยืนยันให้ไม่รวมอยู่ในการรวมข้อมูลวิธีชำระเงินด้วยเช่นกัน</li><li><b>การรวมเข้ากับ "ต่อ Endeavors" (สิงหาคม 2026)</b> — Central Ladprao 3F (Coollabo), VFF Cart LP, Thaniya, K Village, Central Chidlom, Central Chidlom Online, Central World (CDS), Central Eastville, EDV Consignment, Online (EDV) และ EDV_EVENT_1 ถูกแทนที่ด้วยรายการเดียวคือ "ต่อ Endeavors" ซึ่งมาจากใบแจ้งหนี้ขายส่งของ Barefoot ถึง Endeavors (EDV) เอง (Barefootinc_to_Endeavors_JanJul_2026.xlsx — 16 ใบแจ้งหนี้ ม.ค.-ก.ค. จำนวน 2,782 ชิ้น รวม 5,392,746 บาท) นี่คือฐานราคาขายส่ง (ตามใบแจ้งหนี้) ไม่ใช่ราคาขายปลีก จึงไม่สามารถเทียบเคียงโดยตรงกับร้าน/ช่องทางอื่น ๆ ได้ ข้อมูลปี 2025/2024 ของร้านชื่อเดียวกันก็ถูกตัดออกด้วยเพื่อให้การเทียบเทียบปีต่อปีสอดคล้องกัน (ผลคือ "ต่อ Endeavors" เองไม่มีข้อมูลเทียบปีก่อนหลังการเปลี่ยนแปลงนี้) หมายเลขเอกสารเป็นใบแจ้งหนี้ขายส่ง ไม่ใช่รายการขายปลีกแต่ละรายการ จึงไม่รวมอยู่ในการคำนวณจำนวนลูกค้า (บิล) และยอดเฉลี่ยต่อบิลด้วยเช่นกัน</li>',
+    pendingDataList: '<li><b>Central Total Department (CHIDLOM และอีก 4 สาขา)</b> — ยังไม่ได้รับไฟล์ข้อมูลปี 2024 จึงไม่รวมอยู่ในรายงาน (ข้อมูลปี 2025 ก็ยังไม่ครบเช่นกัน ได้รับเฉพาะเดือน ก.ย.–ธ.ค. ส่วน ม.ค.–ส.ค. ยังไม่ได้รับ และเดือนกรกฎาคม 2026 ก็ไม่มีข้อมูลของ Eastville) ในจำนวนนี้ CHIDLOM/CHIDLOM ONLINE/CENTRAL WORLD-CDS/EASTVILLE ถูกรวมเข้ากับ "ต่อ Endeavors (EDV)" ตั้งแต่เดือนสิงหาคม 2026 (ดูด้านล่าง) เหลือเพียง LARDPRAO ที่ยังคงมาจากไฟล์นี้</li><li><b>Siam Discovery เดือนมกราคม 2024</b> — ไม่มีชีทของเดือนนี้ในไฟล์ต้นฉบับ จึงถือว่าเป็นข้อมูลที่ขาดหายจริง</li><li><b>วิธีชำระเงิน (Cash/Credit Card/QR)</b> — บันทึกจากบัญชีระดับร้านของ Paradise Park เท่านั้น (ข้อมูลวิธีชำระเงินของหมวด "Events" ไม่รวมอยู่ในฟีเจอร์นี้) ร้าน/หมวดอื่นไม่มีข้อมูลนี้ บัญชีของ Central Ladprao 3F (Coollabo), Thaniya, K Village และ VFF Cart LP ถูกตัดออกจากการรวมนี้ตั้งแต่เดือนสิงหาคม 2026 พร้อมกับร้านเหล่านั้นเอง (ดูหมายเหตุ "ต่อ Endeavors" ด้านล่าง)</li><li><b>VFF Cart LP (Cart Central LP) เดือนพฤษภาคม 2026</b> — ออเดอร์ RV-202605003 (2,560.00 บาท, 22 พ.ค.) ไม่ได้รวมอยู่ในยอดรวมตามบัญชีของร้านสำหรับเดือนนั้น เดือนอื่น ๆ (มี.ค., เม.ย., มิ.ย., ก.ค.) ตรงกับบัญชีทุกประการ กรุณายืนยันลักษณะของออเดอร์นี้ (คืนสินค้า/โอนย้าย ฯลฯ) ร้านนี้เองถูกรวมเข้ากับ "ต่อ Endeavors (EDV)" ตั้งแต่เดือนสิงหาคม 2026 และไม่ปรากฏในแดชบอร์ดอีกต่อไป</li><li><b>Coollabo MEGA Bang-na</b> — ร้านนี้ปรากฏในบัญชีชำระเงินระดับร้านปี 2025 (ยืนยันแล้วว่าเปิดดำเนินการเฉพาะปี 2025 ไม่อยู่ในขอบเขตปี 2026) ยังไม่ได้รับไฟล์ข้อมูลยอดขายของร้านนี้ จึงไม่มีข้อมูลจริงอยู่ในแดชบอร์ด และได้รับการยืนยันให้ไม่รวมอยู่ในการรวมข้อมูลวิธีชำระเงินด้วยเช่นกัน</li><li><b>การรวมเข้ากับ "ต่อ Endeavors" (สิงหาคม 2026)</b> — Central Ladprao 3F (Coollabo), VFF Cart LP, Thaniya, K Village, Central Chidlom, Central Chidlom Online, Central World (CDS), Central Eastville, EDV Consignment, Online (EDV) และ EDV_EVENT_1 ถูกแทนที่ด้วยรายการเดียวคือ "ต่อ Endeavors" ซึ่งมาจากใบแจ้งหนี้ขายส่งของ Barefoot ถึง Endeavors (EDV) เอง (Barefootinc_to_Endeavors_JanJul_2026.xlsx — 16 ใบแจ้งหนี้ ม.ค.-ก.ค. จำนวน 2,782 ชิ้น รวม 5,392,746 บาท) นี่คือฐานราคาขายส่ง (ตามใบแจ้งหนี้) ไม่ใช่ราคาขายปลีก จึงไม่สามารถเทียบเคียงโดยตรงกับร้าน/ช่องทางอื่น ๆ ได้ ข้อมูลปี 2025/2024 ของร้านชื่อเดียวกันก็ถูกตัดออกด้วยเพื่อให้การเทียบเทียบปีต่อปีสอดคล้องกัน (ผลคือ "ต่อ Endeavors" เองไม่มีข้อมูลเทียบปีก่อนหลังการเปลี่ยนแปลงนี้) หมายเลขเอกสารเป็นใบแจ้งหนี้ขายส่ง ไม่ใช่รายการขายปลีกแต่ละรายการ จึงไม่รวมอยู่ในการคำนวณจำนวนลูกค้า (บิล) และยอดเฉลี่ยต่อบิลด้วยเช่นกัน *เนื่องจากยังไม่ได้ยืนยันข้อมูลของต่อ EDV อย่างสมบูรณ์ จึงซ่อนตัวเลขปี 2025/2024 และการเปรียบเทียบ YoY ทั้งหมดในแดชบอร์ดไว้ชั่วคราว (จะเปิดแสดงอีกครั้งหลังยืนยันข้อมูลแล้ว)</li>',
     rulesTitle: 'กฎการรวมข้อมูล',
     rulesList: '<li>การจัดกลุ่มแบรนด์: VFF=Vibram FiveFingers / BFJ=BFJ Socks / Coolcore=รวมรหัส CP+CC / Oleno=OLN / TabiRela=MTB(Marugo) / Tabio=รวมรหัส KC+TBO (แบรนด์ถุงเท้าจากบุคคลที่สาม เพิ่มเข้ามาจากข้อมูลเดือนกรกฎาคม 2026) / Others=รวม Klean Kanteen(KK)+Swans(SW)+Knockaround(KA)+LUNA(LN)+Tube(TUB)+KEEN(KE)+Pet House(ST) และอื่น ๆ</li><li>รายการส่วนลด (รหัส DC) และรายการที่ไม่ใช่สินค้า เช่น รายได้จากการขายทรัพย์สิน (รหัส P, CON) ไม่รวมอยู่ในยอดขาย/จำนวนรวม</li><li>ตรวจสอบแล้วว่าทุกไฟล์ใช้รูปแบบวันที่ D/M/YYYY (วันขึ้นก่อน) ก่อนนำไปประมวลผล เนื่องจากรูปแบบไม่สอดคล้องกันในแต่ละไฟล์</li><li>ยอดขายออนไลน์จากทั้งนิติบุคคล BFT และ EDV ถูกรวมเป็นหมวด "Online" เดียว ส่วนรายละเอียดตามช่องทาง (Shopee/Lazada/LINE/Facebook/Instagram/Website) จะติดตามแยกต่างหาก</li><li>ไฟล์อีเวนต์ทั้ง 4 ไฟล์ (EDV_EVENT_1, BFT_EVENT_1/2/3) ถูกรวมเป็นหมวด "Events" เดียว</li><li>ยอดขายฝากขายติดตามแยกเป็น 2 หมวด คือ BFT และ EDV</li><li>ไฟล์ที่ซ้ำซ้อน BFT_Shopee_Lazada_Facebook_Paradise_Event ถูกตรวจสอบไขว้กับ 5 ไฟล์ที่มีอยู่แล้วโดยใช้หมายเลขออเดอร์ มีเพียง 13 ออเดอร์ที่ไม่ซ้ำซึ่งถูกเพิ่มเข้ามา เพื่อป้องกันการนับซ้ำ</li><li>Central Total Department (CHIDLOM และอีก 4 สาขา) รายงานเฉพาะยอดรวมรายเดือน จึงไม่สามารถคำนวณจำนวนบิลและยอดเฉลี่ยต่อบิลได้</li><li>ชื่อรุ่นที่เขียนตัวพิมพ์ต่างกัน (เช่น "VFF KSO EVO" กับ "VFF Kso Evo") ถูกรวมเป็นรูปแบบเดียวโดยใช้การเขียนที่มียอดขายสูงสุดในแบรนด์นั้น</li><li>แท็บ "VFF Shoes" นับเฉพาะรองเท้า VFF เท่านั้น — ถุงเท้า ผ้าห่อ Furoshiki และสินค้าอื่นที่ใช้ไซส์เป็นตัวอักษรเท่านั้น (S/M/L/XL) ไม่รวมอยู่ด้วย รองเท้าจะระบุจากรหัสไซส์ตัวเลข เช่น W37/M43</li><li>เพศ (หญิง/ชาย/ยูนิเซ็กซ์) ประมาณการจากตัวอักษรแรกของรหัสไซส์รองเท้า (W=หญิง/M=ชาย/ไม่มีตัวอักษรหรือ U=ยูนิเซ็กซ์) — เป็นการประมาณการ ไม่ใช่ข้อมูลลูกค้าที่บันทึกจริง</li><li>หมวดร้าน/ช่องทางทั้ง 8 หมวด (ร้านที่บริหารเอง / ห้างเซ็นทรัล / Online / Events / ฝากขาย / Siam Discovery / Thaniya / ต่อ Endeavors) ใช้ร่วมกันในแท็บ ภาพรวม, แยกตามร้าน และ VFF Shoes โดยร้านที่บริหารเอง = Paradise Park / ห้างเซ็นทรัล = Central Lardprao (Dept.) / ฝากขาย = ฝากขาย BFT / ต่อ Endeavors = ใบแจ้งหนี้ขายส่งของ Barefoot ถึง Endeavors (เพิ่มเข้ามาสิงหาคม 2026 ดู "ข้อมูลที่ยังไม่ครอบคลุม" ด้านบน) (Thaniya ไม่มียอดขายรองเท้า VFF และร้านนี้เองถูกรวมเข้ากับต่อ Endeavors ตั้งแต่สิงหาคม 2026 จึงไม่ปรากฏในรายละเอียดช่องทางของแท็บ VFF Shoes)</li><li>กราฟรายเดือนแยกตามร้านในแท็บ VFF Shoes ใช้สีตามหมวดเดียวกับแท็บภาพรวม (ร้านที่บริหารเอง / ห้างเซ็นทรัล / Online / Events / ฝากขาย / Siam Discovery) ไม่ใช่แยกตามร้านแต่ละร้าน โดย Thaniya ไม่รวมอยู่ในรายละเอียดนี้เนื่องจากไม่มียอดขายรองเท้า VFF</li><li>สรุปในแท็บภาพรวมให้เลือกเดือน / Q1 / Q2 / ครึ่งปี จากเมนูในหัวข้อ โดยแสดงยอดขายรวม จำนวนรวม และจำนวนลูกค้า พร้อมกราฟโดนัทแยกตามกลุ่มช่องทางในบล็อกเดียวกัน แต่ละการ์ดแสดงป้ายเทียบปีก่อน (YoY) เปรียบเทียบช่วงเวลาที่เลือกกับช่วงเวลาเดียวกันในปี 2025</li><li>ตาราง "แสดงรายละเอียด" ของสรุปภาพรวม จะแสดงรายละเอียดรายเดือนของทุกเดือนที่มีข้อมูลอยู่เสมอ พร้อมยอดรวมครึ่งปีแรก (H1, ม.ค.-มิ.ย.) โดยไม่ขึ้นกับตัวเลือกช่วงเวลาด้านบน รวมถึงคอลัมน์อ้างอิงของช่วง H1 เดียวกันในปี 2025 และ 2024 และคอลัมน์ YoY</li><li>ตาราง "แสดงรายละเอียด" ของหัวข้อ "แนวโน้มรายเดือน (ตามช่องทาง)" มีรายละเอียดรายเดือนและยอดรวม H1 ของแต่ละช่องทาง พร้อมคอลัมน์อ้างอิงของช่วง H1 เดียวกันในปี 2025 และ 2024</li><li>"จำนวนรวม" ครอบคลุมสินค้าทุกประเภทรวมถึงที่ไม่ใช่รองเท้า (ถุงเท้า ผ้าเช็ดตัว แว่นกันแดด ฯลฯ) สำหรับจำนวนคู่รองเท้า VFF และรายละเอียด ดูที่แท็บ "VFF Shoes"</li><li>กราฟแนวโน้มรายเดือนในแท็บภาพรวม และกราฟรายเดือนแยกตามร้านกับอันดับรุ่นในแท็บ VFF Shoes แต่ละอันมีปุ่ม "แสดงรายละเอียด" ใต้กราฟ เพื่อแสดงตารางรายละเอียดรายเดือน</li><li>จำนวนคู่รวมที่ขายและยอดขายรวมของแท็บ VFF Shoes ดูได้ในตาราง "แสดงรายละเอียด" ของกราฟรายเดือนแยกตามร้าน ซึ่งมีคอลัมน์ Q1/Q2/ครึ่งปี เพิ่มต่อจากรายละเอียดรายเดือน และมีแถวยอดขายใต้แถวยอดรวม ทั้งตารางนี้และตาราง "แสดงรายละเอียด" ของอันดับรุ่น ยังมีคอลัมน์อ้างอิงของช่วง H1 เดียวกันในปี 2025 และ 2024 ต่อจากยอดรวม H1 ด้วย</li><li>ตาราง "แสดงรายละเอียด" ของกราฟรายเดือนแยกตามร้าน จะแสดงร้านแต่ละร้านในหมวดนั้น ๆ (ร้านที่บริหารเอง / ห้างเซ็นทรัล ฯลฯ) เป็นแถวย่อยใต้แถวหลัก (ไม่แสดงหากหมวดนั้นมีเพียงร้านเดียว)</li><li>ช่วงเวลา (รายเดือน / Q1 / Q2 / ครึ่งปี) เลือกได้อิสระจากเมนูในหัวข้อของแต่ละส่วน โดยรวมข้อมูลรายเดือนที่ประมวลผลไว้ล่วงหน้าในฝั่งไคลเอนต์</li>',
     sourceFilesTitle: 'ไฟล์ต้นฉบับที่โหลด (17 ไฟล์)',
@@ -1146,6 +1156,7 @@ function twoYearsAgoMonthsFor(key){
 // yoyBadge's card-style output) -- "no prior-year data" when prevVal is null,
 // "--" when the prior-year baseline is zero (percent change is undefined).
 function yoyCellHtml(curVal, prevVal){
+  if (!SHOW_PRIOR_YEAR) return '—';
   if (prevVal == null) return `<span class="summary-yoy">${esc(t('yoyNA'))}</span>`;
   if (!prevVal) return `<span class="summary-yoy">--</span>`;
   const diff = (curVal - prevVal) / prevVal;
@@ -1156,6 +1167,7 @@ function yoyCellHtml(curVal, prevVal){
 // Plain-text (no markup) version of the YoY diff, for use inside tooltip
 // strings built via showTip() where HTML badges would be visually noisy.
 function yoyPlainText(curVal, prevVal){
+  if (!SHOW_PRIOR_YEAR) return '—';
   if (prevVal == null) return t('yoyPending');
   if (!prevVal) return '--';
   const diff = (curVal - prevVal) / prevVal;
@@ -1173,6 +1185,7 @@ function metricUnitLabel(metricKey){
 // prior-year baseline is zero (e.g. a store/brand with no 2025 sales at all),
 // since a percent change against zero is undefined rather than meaningfully huge.
 function yoyBadge(curVal, prevVal){
+  if (!SHOW_PRIOR_YEAR) return '';
   if (prevVal == null) return `<span class="summary-yoy">${esc(t('yoyCap'))}: ${esc(t('yoyPending'))}</span>`;
   if (!prevVal) return `<span class="summary-yoy">${esc(t('yoyCap'))}: --</span>`;
   const diff = (curVal - prevVal) / prevVal;
@@ -1288,7 +1301,8 @@ function renderSummaryMonthlyChart(){
     {label: '2024', months: DATA.monthly_overall_2024h1 || [], color: '#3A5147'},
     {label: '2025', months: DATA.monthly_overall_prev || [], color: '#5FA88A'},
     {label: '2026', months: DATA.monthly_overall, color: '#E8A33D'},
-  ].map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}))
+  ].filter(ys => SHOW_PRIOR_YEAR || ys.label === '2026')
+   .map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}))
    .filter(ys => ys.monthKeys.length > 0);
 
   const n = MONTHS.length;
@@ -1364,17 +1378,23 @@ function buildSummaryDetailTable(){
     const h1Total = sumMonthly(OVERALL_MAP, monthsFor('H1'))[m.key];
     const h1Prev = sumMonthly(PREV_MAP, prevMonths)[m.key];
     const h1TwoAgo = sumMonthly(MAP_2024, twoYearsAgoMonthsFor('H1'))[m.key];
+    const priorCols = SHOW_PRIOR_YEAR
+      ? `<td class="num" style="border-left:2px solid var(--line)">${fmt(h1Prev)}</td>
+         <td class="num">${fmt(h1TwoAgo)}</td>
+         <td style="border-left:2px solid var(--line)">${yoyCellHtml(h1Total, h1Prev)}</td>`
+      : '';
     return `<tr><td>${esc(t(m.labelKey))}</td>${monthCells}
       <td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(h1Total)}</td>
-      <td class="num" style="border-left:2px solid var(--line)">${fmt(h1Prev)}</td>
-      <td class="num">${fmt(h1TwoAgo)}</td>
-      <td style="border-left:2px solid var(--line)">${yoyCellHtml(h1Total, h1Prev)}</td></tr>`;
+      ${priorCols}</tr>`;
   }).join('');
+  const priorHead = SHOW_PRIOR_YEAR
+    ? `<th style="text-align:right;border-left:2px solid var(--line)">${esc(yr2025)}</th>`
+      + `<th style="text-align:right">${esc(yr2024)}</th>`
+      + `<th style="border-left:2px solid var(--line)">${esc(t('yoyCap'))}</th>`
+    : '';
   const head = `<th>${esc(t('thMetric'))}</th>` + MONTHS.map(mo => `<th style="text-align:right">${esc(monthLabel(mo))}</th>`).join('')
     + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(t('periodLabels').H1)}</th>`
-    + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(yr2025)}</th>`
-    + `<th style="text-align:right">${esc(yr2024)}</th>`
-    + `<th style="border-left:2px solid var(--line)">${esc(t('yoyCap'))}</th>`;
+    + priorHead;
   return `<table><tr>${head}</tr>${rows}</table>`;
 }
 const summaryDetailHandle = makeDetailToggle('summaryDetailBtn', 'summaryDetailWrap', buildSummaryDetailTable);
@@ -1427,11 +1447,15 @@ const avgTicketDetailHandle = makeDetailToggle('avgTicketDetailBtn', 'avgTicketD
 // 2025) -- 2024 has no prior-year baseline in this dataset, so its YoY cell
 // is left blank.
 function buildSummaryMonthlyDetailTable(){
-  const YEAR_SERIES = [
+  // 2024/2025 rows and the YoY column are dropped entirely while
+  // SHOW_PRIOR_YEAR is off (not just blanked) -- only 2026 remains.
+  const YEAR_SERIES = (SHOW_PRIOR_YEAR ? [
     {label: '2024', months: DATA.monthly_overall_2024h1 || []},
     {label: '2025', months: DATA.monthly_overall_prev || []},
     {label: '2026', months: DATA.monthly_overall},
-  ].map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}));
+  ] : [
+    {label: '2026', months: DATA.monthly_overall},
+  ]).map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}));
   const rows = YEAR_SERIES.map((ys, yi) => {
     const cells = MONTHS.map((_, i) => {
       const mk = ys.monthKeys[i];
@@ -1439,17 +1463,20 @@ function buildSummaryMonthlyDetailTable(){
       return `<td class="num">${rec ? fmt(rec.amount) : '—'}</td>`;
     }).join('');
     const total = ys.monthKeys.reduce((sum, mk) => sum + (ys.map[mk] ? ys.map[mk].amount : 0), 0);
-    let yoyCell = `<td style="border-left:2px solid var(--line)">—</td>`;
-    if (yi > 0) {
-      const prevYs = YEAR_SERIES[yi-1];
-      const prevTotal = prevYs.monthKeys.reduce((sum, mk) => sum + (prevYs.map[mk] ? prevYs.map[mk].amount : 0), 0);
-      yoyCell = `<td style="border-left:2px solid var(--line)">${yoyCellHtml(total, prevTotal)}</td>`;
+    let yoyCell = '';
+    if (SHOW_PRIOR_YEAR) {
+      yoyCell = `<td style="border-left:2px solid var(--line)">—</td>`;
+      if (yi > 0) {
+        const prevYs = YEAR_SERIES[yi-1];
+        const prevTotal = prevYs.monthKeys.reduce((sum, mk) => sum + (prevYs.map[mk] ? prevYs.map[mk].amount : 0), 0);
+        yoyCell = `<td style="border-left:2px solid var(--line)">${yoyCellHtml(total, prevTotal)}</td>`;
+      }
     }
     return `<tr><td style="font-weight:700">${esc(ys.label)}</td>${cells}<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(total)}</td>${yoyCell}</tr>`;
   }).join('');
   const head = `<th>${esc(t('thYear'))}</th>` + MONTHS.map(m => `<th style="text-align:right">${esc(monthLabel(m))}</th>`).join('')
     + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(t('thTotal'))}</th>`
-    + `<th style="border-left:2px solid var(--line)">${esc(t('yoyCap'))}</th>`;
+    + (SHOW_PRIOR_YEAR ? `<th style="border-left:2px solid var(--line)">${esc(t('yoyCap'))}</th>` : '');
   return `<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 const summaryMonthlyDetailHandle = makeDetailToggle('summaryMonthlyDetailBtn', 'summaryMonthlyDetailWrap', buildSummaryMonthlyDetailTable);
@@ -1621,33 +1648,41 @@ function buildComboDetailTable(){
       ? `<td><span class="grp-dot" style="background:${e.dot};margin-right:6px"></span>${esc(e.label)}</td>`
       : `<td style="padding-left:26px;color:var(--ink-dim)">${esc(e.label)}</td>`;
     const totalW = e.isGroup ? ';font-weight:700' : '';
+    const priorCols = SHOW_PRIOR_YEAR
+      ? `<td class="num" style="border-left:2px solid var(--line)">${fmt(e.prev)}</td><td class="num">${fmt(e.twoAgo)}</td>`
+      : '';
     return `<tr>${labelCell}${cells}<td class="num" style="border-left:2px solid var(--line)${totalW}">${fmt(e.total)}</td>`
       + `<td class="num" style="border-left:2px solid var(--line)">${fmt(e.q1)}</td><td class="num">${fmt(e.q2)}</td>`
       + `<td class="num combo-h1-cell" data-ei="${ei}" style="border-left:2px solid var(--line);cursor:default">${fmt(e.h1)}</td>`
-      + `<td class="num" style="border-left:2px solid var(--line)">${fmt(e.prev)}</td><td class="num">${fmt(e.twoAgo)}</td><td class="num" style="border-left:2px solid var(--line)">${pct}</td></tr>`;
+      + priorCols + `<td class="num" style="border-left:2px solid var(--line)">${pct}</td></tr>`;
   }).join('');
   const yr2025 = yearH1Label(2025);
   const yr2024 = yearH1Label(2024);
+  const priorHead = SHOW_PRIOR_YEAR
+    ? `<th style="text-align:right;border-left:2px solid var(--line)">${esc(yr2025)}</th><th style="text-align:right">${esc(yr2024)}</th>`
+    : '';
   const head = `<th>${esc(t('thChannel'))}</th>` + MONTHS.map(m => `<th style="text-align:right">${esc(monthLabel(m))}</th>`).join('')
     + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(t('thTotal'))}</th>`
     + `<th style="text-align:right;border-left:2px solid var(--line)">Q1</th><th style="text-align:right">Q2</th>`
     + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(t('periodLabels').H1)}</th>`
-    + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(yr2025)}</th>`
-    + `<th style="text-align:right">${esc(yr2024)}</th>`
+    + priorHead
     + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(t('thShare'))}</th>`;
+  const priorFooter = SHOW_PRIOR_YEAR
+    ? `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(prevGrand)}</td><td class="num" style="font-weight:700">${fmt(twoAgoGrand)}</td>`
+    : '';
   const footer = `<tr><td style="font-weight:700">${esc(t('thTotal'))}</td>` + colTotals.map(v => `<td class="num" style="font-weight:700">${fmt(v)}</td>`).join('')
     + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(grand)}</td>`
     + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(q1Grand)}</td><td class="num" style="font-weight:700">${fmt(q2Grand)}</td>`
     + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(h1Grand)}</td>`
-    + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(prevGrand)}</td>`
-    + `<td class="num" style="font-weight:700">${fmt(twoAgoGrand)}</td>`
+    + priorFooter
     + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmtPct(1)}</td></tr>`;
   return {html: `<table><thead><tr>${head}</tr></thead><tbody>${rows}${footer}</tbody></table>`, entries};
 }
 const comboDetailHandle = makeDetailToggle('comboDetailBtn', 'comboDetailWrap', buildComboDetailTable, (wrap, entries) => {
   wrap.querySelectorAll('.combo-h1-cell').forEach(el => {
     const e = entries[+el.dataset.ei];
-    el.addEventListener('mousemove', ev => showTip(ev, `<b>${esc(e.label)}</b> ・ ${esc(t('periodLabels').H1)}<br>${fmt(e.h1)} ${metricUnitLabel(stackMetric)}<br>${t('yoyCap')}: ${yoyPlainText(e.h1, e.prev)}`));
+    const yoyLine = SHOW_PRIOR_YEAR ? `<br>${t('yoyCap')}: ${yoyPlainText(e.h1, e.prev)}` : '';
+    el.addEventListener('mousemove', ev => showTip(ev, `<b>${esc(e.label)}</b> ・ ${esc(t('periodLabels').H1)}<br>${fmt(e.h1)} ${metricUnitLabel(stackMetric)}${yoyLine}`));
     el.addEventListener('mouseleave', hideTip);
   });
 });
@@ -2116,7 +2151,7 @@ function renderVffStoreStackChart(){
 // for a 2-year-back comparison -- store_monthly/vff_shoes.monthly already
 // carry those years' data (aggregate.py's ALL_MONTHS), so this is a pure
 // column extension.
-const VFF_DETAIL_COLS = MONTHS.concat(['Q1','Q2','H1','2025H1','2024H1']);
+const VFF_DETAIL_COLS = MONTHS.concat(SHOW_PRIOR_YEAR ? ['Q1','Q2','H1','2025H1','2024H1'] : ['Q1','Q2','H1']);
 function vffDetailColMonths(key){
   if (key === '2025H1') return prevMonthsFor('H1');
   if (key === '2024H1') return twoYearsAgoMonthsFor('H1');
@@ -2166,23 +2201,28 @@ function buildVffStoreDetailTable(){
     const gAnnual25 = storesByGroup[g].reduce((s,st) => s + annualQty(st.store, 2025), 0);
     const gAnnual24 = storesByGroup[g].reduce((s,st) => s + annualQty(st.store, 2024), 0);
     annualTotal2025 += gAnnual25; annualTotal2024 += gAnnual24;
-    const cells = vals.map((v,i) => `<td class="num" style="font-weight:700"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')
-      + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(gAnnual25)}</td>`
-      + `<td class="num" style="font-weight:700">${fmt(gAnnual24)}</td>`;
+    const annualCols = SHOW_PRIOR_YEAR
+      ? `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(gAnnual25)}</td><td class="num" style="font-weight:700">${fmt(gAnnual24)}</td>`
+      : '';
+    const cells = vals.map((v,i) => `<td class="num" style="font-weight:700"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('') + annualCols;
     const groupRow = `<tr><td style="font-weight:700"><span class="grp-dot" style="background:${GROUP_HEX[g]};margin-right:6px"></span>${esc(trLabel(DATA.group_label[g]))}</td>${cells}</tr>`;
     const subs = g === 'online' ? onlineChannels.map(c => ({name: c.name, monthly: c.monthly, annual25: null, annual24: null}))
       : (storesByGroup[g].length > 1 ? storesByGroup[g].map(s => ({name: storeDisplay(s.store), monthly: sm[s.store], annual25: annualQty(s.store,2025), annual24: annualQty(s.store,2024)})) : []);
     const subRows = subs.map(sub => {
       const sVals = qtyRowFromMap(sub.monthly);
-      const sCells = sVals.map((v,i) => `<td class="num"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')
-        + `<td class="num" style="border-left:2px solid var(--line)">${sub.annual25 != null ? fmt(sub.annual25) : '—'}</td>`
-        + `<td class="num">${sub.annual24 != null ? fmt(sub.annual24) : '—'}</td>`;
+      const sAnnualCols = SHOW_PRIOR_YEAR
+        ? `<td class="num" style="border-left:2px solid var(--line)">${sub.annual25 != null ? fmt(sub.annual25) : '—'}</td><td class="num">${sub.annual24 != null ? fmt(sub.annual24) : '—'}</td>`
+        : '';
+      const sCells = sVals.map((v,i) => `<td class="num"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('') + sAnnualCols;
       return `<tr><td style="padding-left:26px;color:var(--ink-dim)">${esc(sub.name)}</td>${sCells}</tr>`;
     }).join('');
     return groupRow + subRows;
   }).join('');
 
-  const totalRow = `<tr><td style="font-weight:700">${esc(t('thTotal'))}</td>${colTotals.map((v,i) => `<td class="num" style="font-weight:700"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')}<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(annualTotal2025)}</td><td class="num" style="font-weight:700">${fmt(annualTotal2024)}</td></tr>`;
+  const totalAnnualCols = SHOW_PRIOR_YEAR
+    ? `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(annualTotal2025)}</td><td class="num" style="font-weight:700">${fmt(annualTotal2024)}</td>`
+    : '';
+  const totalRow = `<tr><td style="font-weight:700">${esc(t('thTotal'))}</td>${colTotals.map((v,i) => `<td class="num" style="font-weight:700"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')}${totalAnnualCols}</tr>`;
 
   // 売上金額 summary row -- overall total (not per-store), from vff_shoes.monthly
   // (+ its H1-2025/H1-2024 counterparts for the two extra reference columns).
@@ -2190,11 +2230,14 @@ function buildVffStoreDetailTable(){
   const VFF_MONTH_MAP = Object.fromEntries(
     DATA.vff_shoes.monthly.concat(DATA.vff_shoes.monthly_prev || []).concat(DATA.vff_shoes.monthly_2024h1 || []).map(m => [m.month, m]));
   const amountVals = VFF_DETAIL_COLS.map(key => sumMonthly(VFF_MONTH_MAP, vffDetailColMonths(key)).amount);
-  const amountRow = `<tr><td style="font-weight:700">${esc(t('thAmountPlain2'))}</td>${amountVals.map((v,i) => `<td class="num" style="font-weight:700"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')}<td class="num" style="border-left:2px solid var(--line)">—</td><td class="num">—</td></tr>`;
+  const amountBlankAnnualCols = SHOW_PRIOR_YEAR ? `<td class="num" style="border-left:2px solid var(--line)">—</td><td class="num">—</td>` : '';
+  const amountRow = `<tr><td style="font-weight:700">${esc(t('thAmountPlain2'))}</td>${amountVals.map((v,i) => `<td class="num" style="font-weight:700"${vffDetailAggClass(VFF_DETAIL_COLS[i])}>${fmt(v)}</td>`).join('')}${amountBlankAnnualCols}</tr>`;
 
+  const annualHead = SHOW_PRIOR_YEAR
+    ? `<th style="text-align:right;border-left:2px solid var(--line)">${esc(yearAnnualLabel(2025))}</th><th style="text-align:right">${esc(yearAnnualLabel(2024))}</th>`
+    : '';
   const head = `<th>${esc(t('thStoreChannel'))}</th>` + VFF_DETAIL_COLS.map(key => `<th style="text-align:right"${vffDetailAggClass(key)}>${esc(vffDetailColLabel(key))}</th>`).join('')
-    + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(yearAnnualLabel(2025))}</th>`
-    + `<th style="text-align:right">${esc(yearAnnualLabel(2024))}</th>`;
+    + annualHead;
   return `<table><thead><tr>${head}</tr></thead><tbody>${rows}${totalRow}${amountRow}</tbody></table>`;
 }
 const vffStoreDetailHandle = makeDetailToggle('vffStoreDetailBtn', 'vffStoreDetailWrap', buildVffStoreDetailTable);
@@ -2337,18 +2380,25 @@ function buildVffModelDetailTable(){
     const prevV = prevMonths.reduce((sum,m) => sum + (seriesMonthly[s][m] || 0), 0);
     const twoAgoV = twoYearsAgoMonthsFor('H1').reduce((sum,m) => sum + (seriesMonthly[s][m] || 0), 0);
     prevGrand += prevV; twoAgoGrand += twoAgoV;
-    return `<tr><td>${esc(s)}</td>${cells}<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(rowTotal)}</td><td class="num" style="border-left:2px solid var(--line)">${fmt(prevV)}</td><td class="num">${fmt(twoAgoV)}</td></tr>`;
+    const priorCols = SHOW_PRIOR_YEAR
+      ? `<td class="num" style="border-left:2px solid var(--line)">${fmt(prevV)}</td><td class="num">${fmt(twoAgoV)}</td>`
+      : '';
+    return `<tr><td>${esc(s)}</td>${cells}<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(rowTotal)}</td>${priorCols}</tr>`;
   }).join('');
   const yr2025 = yearH1Label(2025);
   const yr2024 = yearH1Label(2024);
+  const priorHead = SHOW_PRIOR_YEAR
+    ? `<th style="text-align:right;border-left:2px solid var(--line)">${esc(yr2025)}</th><th style="text-align:right">${esc(yr2024)}</th>`
+    : '';
   const head = `<th>${esc(t('thModel'))}</th>` + MONTHS.map(m => `<th style="text-align:right">${esc(monthLabel(m))}</th>`).join('')
     + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(t('thTotal'))}</th>`
-    + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(yr2025)}</th>`
-    + `<th style="text-align:right">${esc(yr2024)}</th>`;
+    + priorHead;
+  const priorFooter = SHOW_PRIOR_YEAR
+    ? `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(prevGrand)}</td><td class="num" style="font-weight:700">${fmt(twoAgoGrand)}</td>`
+    : '';
   const footer = `<tr><td style="font-weight:700">${esc(t('thTotal'))}</td>` + colTotals.map(v => `<td class="num" style="font-weight:700">${fmt(v)}</td>`).join('')
     + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(grand)}</td>`
-    + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(prevGrand)}</td>`
-    + `<td class="num" style="font-weight:700">${fmt(twoAgoGrand)}</td></tr>`;
+    + priorFooter + `</tr>`;
   return `<table><thead><tr>${head}</tr></thead><tbody>${rows}${footer}</tbody></table>`;
 }
 const vffModelDetailHandle = makeDetailToggle('vffModelDetailBtn', 'vffModelDetailWrap', buildVffModelDetailTable);
