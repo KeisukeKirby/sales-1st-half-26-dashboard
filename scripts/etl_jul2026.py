@@ -483,8 +483,16 @@ EDV_BRANCH_MAP_JUL2026 = {
     # file), rolls up to the existing "VFF Cart LP" store per etl.py.
     'CART Central LP': ('VFF Cart LP', 'store'),
 }
-load_flat_branch_file(SRC + '9b9ca070-EDV_Sales_Online_Shopee_Lazada_Kvillage_Central_LP_Cart_Central_LP_Thaniya_Consignment_Event__072026.xlsx',
-                       'Orders', EDV_BRANCH_MAP_JUL2026, 'EDV Multi-store July 2026')
+# Disabled 2026-08 per user request: every store this file maps to (Thaniya,
+# Central Ladprao 3F (Coollabo), K Village, Event, EDV Consignment, Online,
+# VFF Cart LP) is an Endeavors-operated corner, now represented instead by
+# the consolidated 対EDV wholesale-invoice loader in etl.py -- kept here, not
+# deleted, in case this is reverted ("一旦" -- for now). Barefoot's own July
+# Event/Online/Paradise Park contributions still come through separately via
+# load_flat_branch_file(... '6f88dd25-BFT_Shopee_Lazada_Event_Paradise_072026.xlsx' ...)
+# above, unaffected by this.
+# load_flat_branch_file(SRC + '9b9ca070-EDV_Sales_Online_Shopee_Lazada_Kvillage_Central_LP_Cart_Central_LP_Thaniya_Consignment_Event__072026.xlsx',
+#                        'Orders', EDV_BRANCH_MAP_JUL2026, 'EDV Multi-store July 2026')
 
 
 
@@ -507,7 +515,12 @@ def load_central_total_department_jul2026():
         'LARDPRAO': 'Central Lardprao (Dept.)',
         'EASTVILLE': 'Central Eastville',
     }
-    n = 0
+    # Disabled 2026-08 per user request -- see the JanJun26 version of this
+    # loader in etl.py for the full rationale. Central Lardprao (Dept.) keeps
+    # loading from this file; the other 4 stores are skipped (now covered by
+    # 対EDV).
+    EXCLUDED_STORES = {'Central Chidlom', 'Central Chidlom Online', 'Central World (CDS)', 'Central Eastville'}
+    n, skipped = 0, 0
     for r in data:
         if not any(r):
             continue
@@ -526,6 +539,9 @@ def load_central_total_department_jul2026():
         if mcode:
             model = CODE_TO_MODEL.get((mcode.group(1), int(mcode.group(2))), 'Other')
         store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
+        if store_label in EXCLUDED_STORES:
+            skipped += 1
+            continue
         # unlike the JanJun26 file, this month's export also carries 'SKU
         # Name' (name-style, e.g. "V-Soul(W40, Fuchsia)") -- prefer it for
         # color/size over the code-style Catalogue No. when present.
@@ -534,7 +550,7 @@ def load_central_total_department_jul2026():
                    order_id=None, vff_source_text=cat, vff_name_text=sku_name or cat)
         n += 1
     stores_seen = len(set(r[idx['Store Name']] for r in data if r[idx['Store Name']]))
-    print(f"loaded {n} rows -> Central Total Department July 2026 ({stores_seen} of 5 stores; no Eastville data this month)")
+    print(f"loaded {n} rows -> Central Total Department July 2026 (Lardprao (Dept.) only; {skipped} rows skipped for the other stores, now covered by 対EDV)")
 load_central_total_department_jul2026()
 
 # ================================================================== Siam Discovery July 2026

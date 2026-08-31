@@ -22,6 +22,24 @@ records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/
 # future monthly batches extend cleanly without redefining what H1 means.
 records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records_jul2026.json'))
 
+# Removed 2026-08 per user request, ALL years (not just 2026): these stores
+# are Endeavors-operated, now represented instead by the consolidated 対EDV
+# wholesale-invoice figure (load_edv_invoice_report() in etl.py, 2026 only).
+# The corresponding 2026 loaders were already disabled at the ETL layer
+# (etl.py/etl_jul2026.py); this additionally drops their still-loaded
+# 2025/2024 records (records_2025.json/records_2024.json still call their
+# loaders unchanged) so these stores don't linger as "zero this year, real
+# revenue last year" ghost entries in the store selector/detail tables, and
+# so the overall YoY comparison (総売上金額 etc.) stays apples-to-apples --
+# comparing the SAME reduced set of stores in both years, rather than a
+# reduced 2026 lineup against a full 2025 lineup that still included them.
+EXCLUDED_STORES_ALL_YEARS = {
+    'Central Ladprao 3F (Coollabo)', 'VFF Cart LP', 'Thaniya', 'K Village',
+    'Central Chidlom', 'Central Chidlom Online', 'Central World (CDS)', 'Central Eastville',
+    'EDV Consignment',
+}
+records = [r for r in records if r['store'] not in EXCLUDED_STORES_ALL_YEARS]
+
 MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07']
 PREV_MONTHS = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07']  # same calendar months, prior year
 H1_2024 = [f'2024-{m:02d}' for m in range(1, 8)]  # same calendar months, two years prior
@@ -55,10 +73,17 @@ STORE_GROUP = {
     'Thaniya': 'thaniya',
     'Online': 'online', 'Event': 'event',
     'BFT Consignment': 'consignment', 'EDV Consignment': 'consignment',
+    # 対EDV: Barefoot's wholesale invoices to Endeavors (added 2026-08,
+    # replacing the individual Endeavors-operated stores/channels above --
+    # see load_edv_invoice_report() in etl.py). Genuinely its own category:
+    # not a store/channel grouping like the others, and not directly
+    # comparable to them (wholesale price, not retail).
+    '対EDV': 'edv',
 }
 GROUP_LABEL = {
     'directly_operated': '直営実店舗', 'central_dept': 'Central百貨店内', 'online': 'オンライン',
     'event': 'イベント', 'consignment': '委託販売', 'siam_discovery': 'Siam Discovery', 'thaniya': 'Thaniya',
+    'edv': '対EDV',
 }
 GENDER_LABEL = {'Women': '女性', 'Men': '男性', 'Unisex': 'ユニセックス'}
 
@@ -97,6 +122,17 @@ store_brand_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)
 store_payment_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc))) # store -> method -> month
 
 overall_month = defaultdict(new_acc)                                       # month
+# Amount/qty/orders from order-bearing records only (i.e. excluding 対EDV and
+# Central Lardprao (Dept.) -- both have order_id=None, no per-transaction
+# receipt data; see load_edv_invoice_report()/load_central_total_department()
+# in etl.py). Feeds the client's blended "全体合計客単価" (avg ticket = total
+# amount / total orders): dividing the FULL amount total (which includes
+# 対EDV's wholesale revenue, ~27% of it) by only the RETAIL order count would
+# overstate avg spend-per-visit by a lot, since that revenue was never a
+# customer transaction to begin with. overall_month itself is untouched and
+# still the true total (used for the 総売上金額/総点数 cards, which SHOULD
+# include 対EDV).
+overall_orders_basis_month = defaultdict(new_acc)                          # month
 brand_month = defaultdict(lambda: defaultdict(new_acc))                    # brand -> month
 model_month = defaultdict(lambda: defaultdict(new_acc))                    # model (all brands) -> month
 brand_model_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))   # brand -> model -> month
@@ -130,6 +166,8 @@ for r in records:
     add(store_brand_month[store][brand][month])
     add(overall_month[month])
     add(brand_month[brand][month])
+    if oid:
+        add(overall_orders_basis_month[month])
 
     model_c = canon_model(r['model'])
     if model_c:
@@ -271,6 +309,13 @@ out['monthly_overall_prev'] = [
 out['monthly_overall_2024h1'] = [
     {'month': m, **ser(overall_month[m])} for m in H1_2024
 ]
+# Order-bearing-only equivalent of monthly_overall (see
+# overall_orders_basis_month above) -- current year only, since 対EDV (the
+# only order-less contributor material enough to matter) has no prior-year
+# data at all.
+out['monthly_overall_ordersbasis'] = [
+    {'month': m, **ser(overall_orders_basis_month[m])} for m in MONTHS
+]
 _h1_total = sum_months(overall_month)
 _h1_prev_total = sum_months(overall_month, PREV_MONTHS)
 out['kpi'] = {
@@ -358,13 +403,22 @@ out['vff_shoes'] = {
 
 # ---- payment (the store-level ledgers seeded above only; per user confirmation
 # 2026-08, Event's own payment-method data is excluded from this feature)
+# Central Ladprao 3F/Thaniya/K Village/VFF Cart LP's ledgers stay in
+# PAYMENT_LEDGER (harmless, and useful if the 対EDV swap above is reverted --
+# "一旦") but are skipped here since those stores no longer produce any
+# records (removed 2026-08, see load_edv_invoice_report() in etl.py) -- their
+# payment-method data would otherwise reference stores that appear nowhere
+# else in the dashboard. store_month (populated only from real records) is
+# the source of truth for which stores are still actually live.
 payment_overall_month = defaultdict(lambda: defaultdict(new_acc))  # method -> month
 for _store in PAYMENT_LEDGER:
+    if _store not in store_month:
+        continue
     for _method, _months in store_payment_month[_store].items():
         for _month, _acc in _months.items():
             payment_overall_month[_method][_month]['amount'] += _acc['amount']
 out['payment_overall'] = {
-    'note': '決済方法データがあるのはCentral Ladprao 3F・Thaniya・K Villageの店舗別台帳のみ（他の店舗・チャネルには決済方法の記録がありません）',
+    'note': '決済方法データがあるのはParadise Parkの店舗別台帳のみ（他の店舗・チャネルには決済方法の記録がありません）',
     'monthly': monthly_out(payment_overall_month),
 }
 

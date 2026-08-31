@@ -389,7 +389,11 @@ def load_vff_cart_lp():
         add_record('VFF Cart LP', 'store', d, brand, model, sub, qty, amt, order_id, vff_source_text=pc, vff_name_text=pname)
         n += 1
     print(f"loaded {n} rows -> VFF Cart LP (Mar-Jun 2026; {skipped_july} July rows skipped, already covered)")
-load_vff_cart_lp()
+# Disabled 2026-08 per user request: VFF Cart LP is an Endeavors-operated
+# corner, now represented instead by the consolidated 対EDV wholesale-invoice
+# loader below (load_edv_invoice_report()) -- kept here, not deleted, in case
+# this is reverted ("一旦" -- for now).
+# load_vff_cart_lp()
 
 # ================================================================== generic "Orders" schema loader
 def load_orders_style(fn, sheet, store_label, category, header_row_idx=1,
@@ -478,13 +482,15 @@ load_orders_style(SRC + '2514cf15-BFT_EVENT_3.xlsx', 'Orders (2)', 'Event', 'eve
 # 4. Paradise Park
 load_orders_style(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders',
                    'Paradise Park', 'store', has_channel=True)
-# 5. Thaniya
-load_orders_style(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 'Thaniya', 'store')
-# 6. K Village
-load_orders_style(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 'K Village', 'store')
-# 7-9. Event files with payment channel (47-col schema); reuse loader (Product code / Date / etc. keys match)
-load_orders_style(SRC + '9c5663cd-EDV_EVENT_1.xlsx', 'Orders', 'Event', 'event',
-                   has_channel=True, has_payment_channel=True)
+# 5. Thaniya -- disabled 2026-08, see load_vff_cart_lp() note above.
+# load_orders_style(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 'Thaniya', 'store')
+# 6. K Village -- disabled 2026-08, see load_vff_cart_lp() note above.
+# load_orders_style(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 'K Village', 'store')
+# 7-9. Event files with payment channel (47-col schema); reuse loader (Product code / Date / etc. keys match).
+# EDV_EVENT_1 (Endeavors-run event) disabled 2026-08, see load_vff_cart_lp()
+# note above; BFT_EVENT_2/1 (Barefoot's own events) are kept.
+# load_orders_style(SRC + '9c5663cd-EDV_EVENT_1.xlsx', 'Orders', 'Event', 'event',
+#                    has_channel=True, has_payment_channel=True)
 load_orders_style(SRC + '7abc0f65-BFT_EVENT_2.xlsx', 'Orders', 'Event', 'event',
                    has_channel=True, has_payment_channel=True)
 load_orders_style(SRC + '0165b670-BFT_EVENT_1.xlsx', 'Orders', 'Event', 'event',
@@ -547,7 +553,8 @@ def load_central_lp3f():
     print(f"loaded {n} rows -> Central Ladprao 3F "
           f"(prorated {len(order_paid)}/{len(order_line_total)} orders to actual amount paid, "
           f"{overridden} Payment-amount overridden as unreliable)")
-load_central_lp3f()
+# Disabled 2026-08 -- see load_vff_cart_lp() note above; same reasoning.
+# load_central_lp3f()
 
 # ================================================================== BFT consignment (with trap-row guard)
 def load_consignment(fn, sheet, store_label):
@@ -608,7 +615,8 @@ def load_edv_consignment():
         add_record('EDV Consignment', 'consignment', d, brand, model, sub, qty, amt, order, vff_source_text=pc, vff_name_text=pname)
         n += 1
     print(f"loaded {n} rows -> EDV Consignment")
-load_edv_consignment()
+# Disabled 2026-08 -- see load_vff_cart_lp() note above; same reasoning.
+# load_edv_consignment()
 
 # ================================================================== Siam Discovery (name-based classification)
 def load_siam_discovery():
@@ -663,8 +671,9 @@ def load_simple_online(fn, store_label, category, entity=None):
     print(f"loaded {n} rows -> {store_label}")
     return set(str(r[idx['No.']]).strip() for r in data if any(r) and r[idx.get('No.')])
 
-edv_online_orders = load_simple_online(SRC + 'a024894a-EDV_Shopee_Lazada_Facebook_JanJun_26.xlsx',
-                                        'Online', 'online', entity='EDV')
+# Disabled 2026-08 -- see load_vff_cart_lp() note above; same reasoning.
+# edv_online_orders = load_simple_online(SRC + 'a024894a-EDV_Shopee_Lazada_Facebook_JanJun_26.xlsx',
+#                                         'Online', 'online', entity='EDV')
 
 # ================================================================== BFT merged file: only non-overlapping 13 orders
 def load_bft_merged_new_only():
@@ -752,7 +761,13 @@ def load_central_total_department():
         'LARDPRAO': 'Central Lardprao (Dept.)',
         'EASTVILLE': 'Central Eastville',
     }
-    n = 0
+    # Disabled 2026-08 per user request: these 4 of the 5 stores in this
+    # report are Endeavors-operated corners, now represented instead by the
+    # consolidated 対EDV wholesale-invoice loader below -- Central Lardprao
+    # (Dept.) is explicitly NOT in that list (confirmed with the user) and
+    # keeps loading from this file as before.
+    EXCLUDED_STORES = {'Central Chidlom', 'Central Chidlom Online', 'Central World (CDS)', 'Central Eastville'}
+    n, skipped = 0, 0
     for r in data:
         if not any(r):
             continue
@@ -771,11 +786,88 @@ def load_central_total_department():
         if mcode:
             model = CODE_TO_MODEL.get((mcode.group(1), int(mcode.group(2))), 'Other')
         store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
+        if store_label in EXCLUDED_STORES:
+            skipped += 1
+            continue
         add_record(store_label, 'central_dept', d, brand, model, sub, qty, amt,
                    order_id=None, vff_source_text=cat, vff_name_text=cat)
         n += 1
-    print(f"loaded {n} rows -> Central Total Department (5 stores)")
+    print(f"loaded {n} rows -> Central Total Department (Lardprao (Dept.) only; {skipped} rows skipped for the other 4 stores, now covered by 対EDV)")
 load_central_total_department()
+
+# ================================================================== 対EDV: Barefoot -> Endeavors wholesale invoices (Jan-Jul 2026)
+# New source added 2026-08, replacing the individual Endeavors-operated
+# store/channel feeds above (VFF Cart LP, Central Ladprao 3F, Thaniya,
+# K Village, Central Chidlom/Chidlom Online/World (CDS)/Eastville, EDV
+# online, EDV_EVENT_1, EDV Consignment -- all disabled above/in
+# etl_jul2026.py) with a single consolidated line: what Barefoot actually
+# invoiced Endeavors for, at wholesale price. Confirmed with the user
+# 2026-08: this is a genuinely different revenue basis from every other
+# store in this dashboard (wholesale/transfer price, not retail POS price)
+# -- roughly a third of the combined retail-equivalent total for the stores
+# it replaces -- not a more granular replacement, and intentional. Every row
+# bills the same customer ("เอ็นเดเวอร์ซ Company Limited" / Endeavors) from
+# Barefoot's single HeadQuarter branch, so there is no store/branch
+# breakdown to preserve -- this can only ever be one combined line ('対EDV'
+# store, its own new 'edv' channel-group). Spans the full Jan-Jul 2026 range
+# in one file (unlike the etl.py/etl_jul2026.py H1/July split used
+# elsewhere), so it's loaded here in full; aggregate.py buckets every record
+# by its own date field regardless of which script loaded it, so this
+# doesn't need to be duplicated across the two scripts. Has no 2025/2024
+# data at all -- per user request, no prior-year comparison is expected for
+# this store (the existing null/zero-baseline handling in yoyBadge/
+# yoyCellHtml already renders that as "--"/pending automatically).
+def load_edv_invoice_report():
+    fn = SRC + 'e310e8c5-Barefootinc_to_Endeavors_JanJul_2026.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Invoice Report']
+    rows = list(ws.iter_rows(values_only=True))
+    header = rows[11]  # rows 0-10 are a report-info banner (merchant/export date/etc.)
+    idx = {h: i for i, h in enumerate(header) if h}
+    data = rows[12:]
+    data = [r for r in data if any(r) and r[idx.get('Document No.')] and r[idx.get('Product/Service  Code')]]
+
+    # 'Grand Total' (the actual VAT-inclusive amount invoiced, after whatever
+    # wholesale discount applies to that invoice -- seen ranging 40%-80% off
+    # list price across the 16 invoices here) is only populated once per
+    # invoice, on its first product line; prorate every line to its share of
+    # the invoice's Pre-VAT Amount, same pattern as every other loader here.
+    inv_pretax = defaultdict(float)
+    inv_grand = {}
+    for r in data:
+        doc = r[idx['Document No.']]
+        inv_pretax[doc] += num(r[idx['Pre-VAT Amount']])
+        gt = r[idx.get('Grand Total')]
+        if gt not in (None, ''):
+            inv_grand[doc] = num(gt)
+
+    n = 0
+    for r in data:
+        doc = r[idx['Document No.']]
+        d = parse_dmy(r[idx['Issue Date']])
+        if d is None:
+            continue
+        pc = r[idx['Product/Service  Code']]
+        pname = r[idx['Product/Service Name']]
+        qty = num(r[idx['Quantity']])
+        line_pretax = num(r[idx['Pre-VAT Amount']])
+        total_pretax = inv_pretax.get(doc, 0.0)
+        grand = inv_grand.get(doc, total_pretax)
+        amt = (line_pretax / total_pretax * grand) if total_pretax else 0.0
+        brand, sub = classify_by_code(pc)
+        model = model_from_name(pname)
+        # order_id intentionally omitted (None): the 16 wholesale invoices
+        # here are batch billing documents to a single distributor, not
+        # individual retail customer receipts -- counting them as "orders"
+        # would pollute 客数（伝票数）/客単価 with a number that doesn't mean
+        # the same thing as everywhere else in this dashboard. Same
+        # order_id=None convention already used for Central Total
+        # Department, which has the identical no-per-transaction-granularity
+        # issue.
+        add_record('対EDV', 'edv', d, brand, model, sub, qty, amt, order_id=None, vff_source_text=pc, vff_name_text=pname)
+        n += 1
+    print(f"loaded {n} rows -> 対EDV ({len(inv_grand)} invoices, sum Grand Total = {sum(inv_grand.values()):,.2f})")
+load_edv_invoice_report()
 
 # ================================================================== summary / sanity checks
 print()
