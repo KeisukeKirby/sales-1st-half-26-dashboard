@@ -507,13 +507,14 @@ def load_siam_discovery_2024():
             if not nums:
                 month_fail += 1
                 continue
-            # nums is [NetSales, Price, ...(GP32%, sometimes a raw 0.32 rate
-            # too)] in that order -- NetSales is always the FIRST trailing
-            # numeric column right after qty, not the last. The last one is
-            # GP32% (always exactly Price*0.68, a reference profit
-            # calculation, not an actual transaction amount) -- confirmed
-            # 2026-08 against raw values across every sheet's layout variant.
-            net = nums[0]
+            # nums is [NetSales, Price, ...(sometimes a raw 0.32 rate too),
+            # GP32%] in that order -- GP32% (always exactly Price*0.68) is
+            # always the LAST trailing numeric column, regardless of how
+            # many columns come before it in a given sheet's layout. Per
+            # user confirmation 2026-08, Siam Discovery's recognized revenue
+            # is net of their 32% consignment fee, so GP32% is the correct
+            # "amount" here, not the gross NetSales column.
+            net = nums[-1]
             brand, sub, model = classify_by_name(item)
             add_record('Siam Discovery', 'store', d, brand, model, sub,
                         qty, net, f'SIAMDIS24-{sn}-{i}', vff_source_text=item)

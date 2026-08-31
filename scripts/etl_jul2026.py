@@ -586,11 +586,12 @@ def load_siam_discovery_jul2026():
     if name_idx is None:
         note("Siam Discovery July 2026: could not detect column layout, skipped entirely")
         return
-    # net_idx: column layout is Date/[ID]/Name/Qty/NetSales/Price/GP32%
-    # (the GP32% column, always exactly Price*0.68, is a reference profit
-    # calculation, not an actual transaction amount) -- NetSales sits 2
-    # columns after Name, not 4. Confirmed 2026-08 against raw values.
-    qty_idx, net_idx = name_idx + 1, name_idx + 2
+    # net_idx: column layout is Date/[ID]/Name/Qty/NetSales/Price/GP32%.
+    # Per user confirmation 2026-08, Siam Discovery's recognized revenue is
+    # net of their 32% consignment fee -- GP32% (always exactly Price*0.68)
+    # is the correct "amount" here, 4 columns after Name, not the gross
+    # NetSales/Price columns in between.
+    qty_idx, net_idx = name_idx + 1, name_idx + 4
     n = 0
     for i, r in enumerate(rows):
         if not r:

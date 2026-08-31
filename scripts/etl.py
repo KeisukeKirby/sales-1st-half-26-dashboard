@@ -619,6 +619,13 @@ def load_edv_consignment():
 # load_edv_consignment()
 
 # ================================================================== Siam Discovery (name-based classification)
+# Columns: Sale Date(0), Item(1), Sales Quantity(2), Net Sales (Sales
+# Amount)(3), Price(4), GP 32%(5). Per user confirmation 2026-08, Siam
+# Discovery's recognized revenue is net of their 32% consignment fee -- GP
+# 32% (always exactly Price*0.68) is the correct "amount", not the gross
+# Net Sales (Sales Amount) column. Matches the convention used for every
+# other year's Siam Discovery batch (etl_2025.py/etl_2024.py/
+# etl_jul2026.py), which already read the equivalent GP32% column.
 def load_siam_discovery():
     fn = SRC + 'd7e7cac8-Sales_Siam_Dis_JanJun_26.xlsx'
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
@@ -632,7 +639,7 @@ def load_siam_discovery():
         d = to_date(r[0])
         item = r[1]
         qty = num(r[2])
-        net = num(r[3])
+        net = num(r[5])
         brand, sub, model = classify_by_name(item)
         add_record('Siam Discovery', 'store', d, brand, model, sub,
                     qty, net, f'SIAMDIS-{i}', vff_source_text=item, vff_name_text=item)
