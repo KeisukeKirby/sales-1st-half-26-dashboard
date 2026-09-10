@@ -585,7 +585,7 @@ def load_consignment(fn, sheet, store_label):
         add_record(store_label, 'consignment', d, brand, model, sub, qty, amt, doc, vff_source_text=pc, vff_name_text=pname)
         n += 1
     print(f"loaded {n} rows -> {store_label}")
-load_consignment(SRC + 'c49fbb57-BFT_consignment__JanJun_26.xlsx', 'รายงานใบแจ้งหนี้', 'BFT Consignment')
+load_consignment(SRC + '2ded23fc-BFT_consignment__JanJun_26_new.xlsx', 'รายงานใบแจ้งหนี้', 'BFT Consignment')
 
 # ================================================================== EDV consignment (no header row, positional)
 def load_edv_consignment():
