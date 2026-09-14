@@ -626,8 +626,16 @@ def load_edv_consignment():
 # Net Sales (Sales Amount) column. Matches the convention used for every
 # other year's Siam Discovery batch (etl_2025.py/etl_2024.py/
 # etl_jul2026.py), which already read the equivalent GP32% column.
+# 2026-09: swapped to fa90b27f-Sales_Siam_Dis_Jan-Jun_26.xlsx (replacing
+# d7e7cac8-Sales_Siam_Dis_JanJun_26.xlsx) -- per-user reconciliation against
+# the "Jan-Jun_final_without_tax.xlsx" BFT-tab reference showed a handful of
+# transactions dated a month later/earlier than in the old file (net H1 total
+# barely moves, 977,522.25->977,522.24, but Feb/Mar and Apr/May each shift by
+# ~3,050 THB); this new file's GP32%/1.07 monthly totals now match the BFT
+# tab's Siam Discovery column exactly, to the cent, for every one of the 6
+# months.
 def load_siam_discovery():
-    fn = SRC + 'd7e7cac8-Sales_Siam_Dis_JanJun_26.xlsx'
+    fn = SRC + 'fa90b27f-Sales_Siam_Dis_Jan-Jun_26.xlsx'
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
     ws = wb['Sheet1']
     rows = list(ws.iter_rows(values_only=True))
