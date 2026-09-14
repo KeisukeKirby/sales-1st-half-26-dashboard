@@ -87,11 +87,24 @@ GROUP_LABEL = {
 }
 GENDER_LABEL = {'Women': '女性', 'Men': '男性', 'Unisex': 'ユニセックス'}
 
+# Every 'amount' value flowing into this pipeline (records[]'s r['amount'],
+# ultimately from each ETL script's add_record calls) is VAT-inclusive --
+# confirmed against every source that carries an explicit VAT breakdown
+# (BFT Consignment and 対EDV's invoices both show Pre-VAT Amount + VAT
+# Amount = the recorded total; retail POS 'Payment amount'/'จำนวนเงินที่ชำระ'
+# is, by Thai law/convention, what the customer paid at the register,
+# already VAT-inclusive). Per user request 2026-09, the dashboard now
+# displays VAT-EXCLUSIVE figures throughout -- rather than touching every
+# ETL script's records, this single division happens at the one place every
+# amount passes through on its way into the output JSON: ser(). qty/orders
+# are untouched (VAT has no bearing on units sold or transaction counts).
+VAT_RATE = 0.07
+
 def new_acc():
     return {'amount': 0.0, 'qty': 0.0, 'orders': set()}
 
 def ser(acc):
-    return {'amount': round(acc['amount'], 2), 'qty': round(acc['qty'], 1),
+    return {'amount': round(acc['amount'] / (1 + VAT_RATE), 2), 'qty': round(acc['qty'], 1),
             'orders': len(acc['orders']) if isinstance(acc['orders'], set) else acc['orders']}
 
 def monthly_out(acc_by_key_month):
@@ -318,17 +331,23 @@ out['monthly_overall_ordersbasis'] = [
 ]
 _h1_total = sum_months(overall_month)
 _h1_prev_total = sum_months(overall_month, PREV_MONTHS)
+# Not consumed by dashboard.html (it recomputes every figure client-side
+# from monthly_overall/monthly_overall_ordersbasis), but kept correct here
+# too -- ser() isn't used for this block since it also needs avg_ticket
+# derived from the already-VAT-exclusive amount, not ser()'s per-key shape.
+_h1_amount_ex = _h1_total['amount'] / (1 + VAT_RATE)
+_h1_prev_amount_ex = _h1_prev_total['amount'] / (1 + VAT_RATE)
 out['kpi'] = {
-    'total_amount': round(_h1_total['amount'], 2),
+    'total_amount': round(_h1_amount_ex, 2),
     'total_qty': round(_h1_total['qty'], 1),
     'total_orders': len(_h1_total['orders']),
-    'avg_ticket': round(_h1_total['amount'] / len(_h1_total['orders']), 2) if _h1_total['orders'] else None,
+    'avg_ticket': round(_h1_amount_ex / len(_h1_total['orders']), 2) if _h1_total['orders'] else None,
     'period': '2026-01-01 ~ 2026-07-31',
     'last_year': {
-        'total_amount': round(_h1_prev_total['amount'], 2),
+        'total_amount': round(_h1_prev_amount_ex, 2),
         'total_qty': round(_h1_prev_total['qty'], 1),
         'total_orders': len(_h1_prev_total['orders']),
-        'avg_ticket': round(_h1_prev_total['amount'] / len(_h1_prev_total['orders']), 2) if _h1_prev_total['orders'] else None,
+        'avg_ticket': round(_h1_prev_amount_ex / len(_h1_prev_total['orders']), 2) if _h1_prev_total['orders'] else None,
         'period': '2025-01-01 ~ 2025-07-31',
     },
 }
@@ -340,7 +359,7 @@ for store in store_month.keys():
     s = ser(h1)
     s['store'] = store
     s['group'] = STORE_GROUP.get(store, 'other')
-    s['avg_ticket'] = round(h1['amount'] / len(h1['orders']), 2) if h1['orders'] else None
+    s['avg_ticket'] = round(s['amount'] / len(h1['orders']), 2) if h1['orders'] else None  # s['amount'] is already VAT-exclusive (via ser() above)
     s['monthly'] = {m: ser(store_month[store].get(m, new_acc())) for m in ALL_MONTHS}
     s['brand_monthly'] = monthly_out(store_brand_month[store])
     if store_payment_month[store]:
