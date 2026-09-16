@@ -810,17 +810,35 @@ def load_simple_online(fn, store_label, category, entity=None):
 # January to the cent (Lazada 97,084.11 exact; Shopee/Online within a few
 # cents, pure rounding).
 #
-# Feb/Apr/Jun do NOT share January's clean block layout (their named-
+# Feb/Jun do NOT share January's clean block layout (their named-
 # individual/company orders are scattered day-by-day, interleaved with
 # ordinary Shopee/Lazada rows -- confirmed by inspection, not yet resolved
 # into a reliable per-month rule), so they still use the customer-name
 # heuristic below, and still carry the same Shopee-too-low/Online-too-high
 # gap vs the BFT-tab reference that the H1 reconciliation earlier in this
-# thread found. Whoever revisits this: the fix for Jan/Mar/May (exact row
+# thread found. Whoever revisits this: the fix for Jan/Mar/May/Apr (exact row
 # indices, sometimes needing one-off user disambiguation for a handful of
 # named-customer rows with no name-based signal -- see March below) took
 # targeted, month-specific row inspection; the same is needed per month for
-# Feb/Apr/Jun before extending the row-position approach.
+# Feb/Jun before extending the row-position approach.
+#
+# April 2026 was verified against a fourth re-uploaded file (5b81a74c-BFT_
+# Online_Shopee_Lazada_Jan-Jun_new.xlsx -- loaded in
+# load_online_receipts_april() below). Unlike Jan/Mar/May, this file's sheet
+# '(3)' contains ALL SIX months of data (not just April's), and within
+# April's own date range the Shopee/Lazada/anonymous rows are already
+# interleaved day-by-day rather than laid out in a clean per-channel block
+# (same pattern as Feb/Jun above) -- so no row-position override was needed
+# or applied; the plain customer-name rule (channel_for below) reproduces the
+# reference almost exactly on its own (Lazada 57,233.66 vs ref 57,233.65,
+# Shopee 580,629.18 vs 580,628.97, Online 23,805.61 vs 23,805.61 -- all
+# within a few cents, pure rounding). User separately flagged "rows up to
+# 2170 are Shopee" as a row-position hint; row 2170 in this file's sheet '(3)'
+# falls in JUNE's date block (2026-06-28) and is already a
+# 'Shopee VFF Customer'-named row there, so it's consistent with (not a
+# correction to) the current classification -- it appears to be guidance for
+# a future June fix, not an April override. Leaving as a note for whoever
+# revisits June.
 #
 # May 2026 was verified the same way as January, but against a second,
 # separately re-uploaded file (5379d845-BFT_Online_Shopee_Lazada_Jan-Jun_
@@ -852,8 +870,8 @@ def load_online_receipts():
         d = to_date(r[1])
         if d is None:
             continue
-        if d.year == 2026 and d.month in (3, 5):
-            continue  # March/May are loaded from separate, dedicated files -- see load_online_receipts_march()/_may() below
+        if d.year == 2026 and d.month in (3, 4, 5):
+            continue  # March/April/May are loaded from separate, dedicated files -- see load_online_receipts_march()/_april()/_may() below
         if d.year == 2026 and d.month == 1:
             channel = 'Lazada' if i <= 24 else ('Shopee' if i <= 365 else 'Online')
         else:
@@ -869,7 +887,7 @@ def load_online_receipts():
         add_record('Online', 'online', d, brand, model, sub, qty, amt, r[0], channel=channel,
                     vff_source_text=product_code, vff_name_text=product_name)
         n += 1
-    print(f"loaded {n} rows -> Online (Shopee/Lazada/Online, receipt-level; January uses the verified row-position split, Apr/Jun the customer-name heuristic, Mar/May excluded -- see load_online_receipts_march()/_may())")
+    print(f"loaded {n} rows -> Online (Shopee/Lazada/Online, receipt-level; January uses the verified row-position split, Feb/Jun the customer-name heuristic, Mar/Apr/May excluded -- see load_online_receipts_march()/_april()/_may())")
 load_online_receipts()
 
 # March 2026: verified against a third re-uploaded file (26bdd1b3-BFT_Online_
@@ -952,6 +970,45 @@ def load_online_receipts_may():
         n += 1
     print(f"loaded {n} rows -> Online, May only (verified row-position split)")
 load_online_receipts_may()
+
+def load_online_receipts_april():
+    fn = SRC + '5b81a74c-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['รายงานใบเสร็จรับเงิน (3)']
+    rows = list(ws.iter_rows(values_only=True))
+    data = rows[1:]
+
+    def channel_for(customer):
+        if not customer:
+            return 'Online'
+        c = str(customer)
+        if c.startswith('Shopee'):
+            return 'Shopee'
+        if c.startswith('Lazada'):
+            return 'Lazada'
+        return 'Online'
+
+    n = 0
+    for i, r in enumerate(data):
+        if not r or not r[0]:
+            continue
+        d = to_date(r[1])
+        if d is None or not (d.year == 2026 and d.month == 4):
+            continue
+        channel = channel_for(r[3])
+        product_code, product_name, desc = r[4], r[5], r[6]
+        qty = num(r[8])
+        before_vat = num(r[7])
+        amt = before_vat * 1.07
+        brand, sub = classify_by_code(product_code)
+        if brand == 'EXCLUDE':
+            continue
+        model = model_from_name(product_name) if product_name else ('Shipping Fee' if desc == 'Shipping fee' else 'Other')
+        add_record('Online', 'online', d, brand, model, sub, qty, amt, r[0], channel=channel,
+                    vff_source_text=product_code, vff_name_text=product_name)
+        n += 1
+    print(f"loaded {n} rows -> Online, April only (verified customer-name split)")
+load_online_receipts_april()
 
 # ================================================================== BFT_Central_Total_Department (line-item detail, split by Store Name)
 # 2026-09: swapped to a76e3d0e-BFT_Central_Total_Department_Jan-Jun_26_new.xlsx
