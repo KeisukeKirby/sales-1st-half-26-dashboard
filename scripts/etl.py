@@ -498,11 +498,15 @@ load_orders_style(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders',
 # note above; BFT_EVENT_2/1 (Barefoot's own events) are kept.
 # load_orders_style(SRC + '9c5663cd-EDV_EVENT_1.xlsx', 'Orders', 'Event', 'event',
 #                    has_channel=True, has_payment_channel=True)
-# 2026-09: 7abc0f65-BFT_EVENT_2.xlsx + 0165b670-BFT_EVENT_1.xlsx replaced by a
-# single consolidated file, 95bfee20-BFT_EVENT_1.xlsx, which despite its name
-# contains BOTH Event 1 and Event 2 warehouse rows (Warehouse/Branch: 419
-# 'Event 2' + 345 'Event 1' of 778 total) -- one loader call now replaces
-# both old ones.
+# 2026-09: 7abc0f65-BFT_EVENT_2.xlsx + 0165b670-BFT_EVENT_1.xlsx replaced by
+# 95bfee20-BFT_EVENT_1.xlsx -- per user confirmation, this is a corrected
+# version of the original EVENT_1 file (the original no longer exists to
+# compare against), and despite its name it already carries BOTH Event 1 and
+# Event 2 warehouse rows (Warehouse/Branch: 419 'Event 2' + 345 'Event 1' of
+# 778 total), so one loader call replaces both old ones. Confirmed via a
+# separately re-supplied e3662139-BFT_EVENT_2.xlsx: every one of its 300
+# order numbers already appears in 95bfee20, so it adds nothing and is
+# deliberately not loaded here (would only risk double-counting).
 # load_orders_style(SRC + '7abc0f65-BFT_EVENT_2.xlsx', 'Orders', 'Event', 'event',
 #                    has_channel=True, has_payment_channel=True)
 # load_orders_style(SRC + '0165b670-BFT_EVENT_1.xlsx', 'Orders', 'Event', 'event',
