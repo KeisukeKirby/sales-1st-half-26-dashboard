@@ -167,6 +167,30 @@ MODEL_CANON = {
     for (brand, _key), variants_amount in _casing_amount.items()
     for v in variants_amount
 }
+# Oleno-specific aliases the automatic (brand, prefix-stripped-upper) grouping
+# above can't catch: "Oln" is a genuinely different string from "Oleno" (not
+# a case/prefix variant), and some receipts drop the shared "Ultimate" model-
+# line word entirely (e.g. "Oln Aso" for "Oleno Ultimate ASO") or typo
+# "Supporten" for "Supporter". Confirmed by user 2026-09; each bare/Oln-
+# prefixed variant here should read as the same product as its "Oleno
+# Ultimate ..." (or corrected-spelling) counterpart.
+_OLENO_ALIASES = {
+    'OLN ULTIMATE': 'Oleno Ultimate',
+    'OLN ULTIMATE ASO': 'Oleno Ultimate ASO', 'OLN ASO': 'Oleno Ultimate ASO', 'OLENO ASO': 'Oleno Ultimate ASO',
+    'OLN ULTIMATE ASO LONG': 'Oleno Ultimate ASO Long',
+    'OLN ULTIMATE SHR': 'Oleno Ultimate SHR',
+    'OLN ULTIMATE SHR ROUND': 'Oleno Ultimate SHR Round', 'OLENO SHR ROUND': 'Oleno Ultimate SHR Round',
+    'OLN ULTIMATE TNG': 'Oleno Ultimate TNG', 'OLN TNG': 'Oleno Ultimate TNG',
+    'OLENO CALF SUPPORTEN BICOLOR': 'Oleno Calf Supporter Bicolor',
+    'OLENO CALF SUPPORTEN PLAIN': 'Oleno Calf Supporter Plain',
+}
+for (brand, _key), variants_amount in _casing_amount.items():
+    if brand != 'Oleno':
+        continue
+    for v in variants_amount:
+        alias = _OLENO_ALIASES.get(v.strip().upper())
+        if alias:
+            MODEL_CANON[(brand, v.upper())] = alias
 def canon_model(brand, m):
     return MODEL_CANON.get((brand, m.upper()), m) if m else m
 
