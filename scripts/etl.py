@@ -681,7 +681,62 @@ def load_consignment(fn, sheet, store_label):
         add_record(store_label, 'consignment', d, brand, model, sub, qty, amt, doc, vff_source_text=pc, vff_name_text=pname)
         n += 1
     print(f"loaded {n} rows -> {store_label}")
+# Note: 'BFT consignment...' (Thai schema, above) covers Jan-Jun. July-August
+# comes from a different, English-schema "Invoice Report" export -- see
+# load_bft_consignment_jul2026() in etl_jul2026.py (July) and
+# load_bft_consignment_aug2026() below (August).
 load_consignment(SRC + '2ded23fc-BFT_consignment__JanJun_26_new.xlsx', 'รายงานใบแจ้งหนี้', 'BFT Consignment')
+
+# 2026-09: August-only follow-up (33610632-BFT_Consignment_Jul-Aug_26.xlsx)
+# -- July is already covered by etl_jul2026.py's load_bft_consignment_jul2026()
+# (confirmed: this file's July total, 86,420.51 THB net, matches the already-
+# loaded figure to a few cents -- same underlying data, just a different
+# monthly export). Per user instruction: each order's per-product amount is
+# column I ('Pre-VAT Amount'), scaled by the order-level discount/fee
+# percentage in column K ('Total Discount', stored as e.g. '20.00%' -- only
+# present on an order's first line, forward-filled to its other lines here).
+# Column L ('VAT 7%', despite the header -- actually the order-level total
+# AFTER that discount, still pre-VAT) is the reference total this reproduces:
+# verified line_amount = I * (1 - K%) sums to L exactly for a multi-line
+# order. Mathematically equivalent to load_bft_consignment_jul2026()'s
+# line/total-ratio proration (same result, different derivation) -- this
+# loader follows the user's stated column-based method directly instead.
+def load_bft_consignment_aug2026():
+    fn = SRC + '33610632-BFT_Consignment_Jul-Aug_26.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Invoice Report']
+    rows = list(ws.iter_rows(values_only=True))
+    data = rows[1:]
+
+    n = 0
+    cur_doc, cur_pct = None, None
+    for r in data:
+        if not r or not any(r):
+            continue
+        doc, pc, pname = r[0], r[3], r[4]
+        k_val = r[10]
+        if doc:
+            cur_doc = doc
+            if k_val not in (None, ''):
+                cur_pct = float(str(k_val).replace('%', '')) / 100.0
+        if not cur_doc or not pc:
+            continue
+        d = parse_dmy(r[1])
+        if d is None or not (d.year == 2026 and d.month == 8):
+            continue  # July skipped -- already loaded, see note above
+        qty = num(r[5])
+        i_val = r[8]
+        if i_val is None:
+            continue
+        amt_net = num(i_val) * (1 - (cur_pct or 0.0))
+        amt = amt_net * 1.07
+        brand, sub = classify_by_code(pc)
+        model = model_from_name(pname)
+        add_record('BFT Consignment', 'consignment', d, brand, model, sub, qty, amt, cur_doc,
+                    vff_source_text=pc, vff_name_text=pname)
+        n += 1
+    print(f"loaded {n} rows -> BFT Consignment, August only (July already covered by etl_jul2026.py)")
+load_bft_consignment_aug2026()
 
 # ================================================================== EDV consignment (no header row, positional)
 def load_edv_consignment():
