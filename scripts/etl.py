@@ -1485,6 +1485,57 @@ def load_edv_invoice_report():
     print(f"loaded {n} rows -> 対EDV ({len(inv_grand)} invoices, sum Grand Total = {sum(inv_grand.values()):,.2f})")
 load_edv_invoice_report()
 
+# 2026-09: August-only follow-up (0d28b573-BFT_Inter-company_sales_EDV_Jul-
+# Aug_26.xlsx) -- July is already covered by the file above (confirmed:
+# this file's July total, 981,712.33 THB net, matches the already-loaded
+# figure to a few cents -- same underlying data, just a different monthly
+# export). Same "Invoice Report"-style schema as BFT Consignment's Jul-Aug
+# follow-up (load_bft_consignment_aug2026() above): per user instruction,
+# each line's amount is column I ('Pre-VAT Amount') scaled by the order-
+# level discount/fee percentage in column K ('Total Discount', e.g.
+# '70.00%', present only on an order's first line -- forward-filled to its
+# other lines here). Mathematically equivalent to load_edv_invoice_report()'s
+# line/invoice-total ratio proration; this loader follows the user's stated
+# column-based method directly. order_id=None, same batch-invoice
+# convention as load_edv_invoice_report() (these aren't per-transaction
+# retail receipts).
+def load_edv_invoice_report_aug2026():
+    fn = SRC + '0d28b573-BFT_Inter-company_sales_EDV_Jul-Aug_26.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Invoice Report (2)']
+    rows = list(ws.iter_rows(values_only=True))
+    data = rows[1:]
+
+    n = 0
+    cur_doc, cur_pct = None, None
+    for r in data:
+        if not r or not any(r):
+            continue
+        doc, pc, pname = r[0], r[3], r[4]
+        k_val = r[10]
+        if doc:
+            cur_doc = doc
+            if k_val not in (None, ''):
+                cur_pct = float(str(k_val).replace('%', '')) / 100.0
+        if not cur_doc or not pc:
+            continue
+        d = parse_dmy(r[1])
+        if d is None or not (d.year == 2026 and d.month == 8):
+            continue  # July skipped -- already loaded, see note above
+        qty = num(r[5])
+        i_val = r[8]
+        if i_val is None:
+            continue
+        amt_net = num(i_val) * (1 - (cur_pct or 0.0))
+        amt = amt_net * 1.07
+        brand, sub = classify_by_code(pc)
+        model = model_from_name(pname)
+        add_record('対EDV', 'edv', d, brand, model, sub, qty, amt, order_id=None,
+                    vff_source_text=pc, vff_name_text=pname)
+        n += 1
+    print(f"loaded {n} rows -> 対EDV, August only (July already covered by load_edv_invoice_report())")
+load_edv_invoice_report_aug2026()
+
 # ================================================================== Export: VFF shoe overseas wholesale shipment (June 2026)
 # Added 2026-09 from a packing-list image (not a spreadsheet -- transcribed
 # by hand below), a single wholesale export shipment. USD converted to THB
