@@ -751,6 +751,43 @@ def load_siam_discovery():
     print(f"loaded {n} rows -> Siam Discovery")
 load_siam_discovery()
 
+# 2026-09: August-only follow-up (ed45786c-BFT_Siam_Discovery_Jul-Aug_26.xlsx)
+# -- July is already covered by etl_jul2026.py's load_siam_discovery_jul2026()
+# (confirmed: this file's July total, 257,986.91 THB, matches the already-
+# loaded figure to the cent -- same underlying data, just re-exported with
+# an extra 'Gross Sales' column inserted). Same "Item"/SKU-Name-based
+# classify_by_name() classification as both other Siam Discovery loaders --
+# per user question 2026-09, yes, model/color/gender ARE determinable from
+# this data, the same way as always for Siam Discovery (the SKU Name column
+# carries the same 'MODEL (ColorCode,SizeToken)' shape, e.g.
+# 'V-SOUL (BK,W39)'). Amount is column G ('Before Vat', already VAT-
+# exclusive per user instruction) -- multiplied by 1.07 here so add_record's
+# downstream VAT division reproduces it exactly, same treatment as every
+# other VAT-exclusive source column in this file.
+def load_siam_discovery_aug2026():
+    fn = SRC + 'ed45786c-BFT_Siam_Discovery_Jul-Aug_26.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Sheet1']
+    rows = list(ws.iter_rows(values_only=True))
+    data = rows[1:]
+    n = 0
+    for i, r in enumerate(data):
+        if not r or not r[1]:
+            continue
+        d = to_date(r[0])
+        if d is None or not (d.year == 2026 and d.month == 8):
+            continue  # July skipped -- already loaded, see note above
+        item = r[1]
+        qty = num(r[2])
+        before_vat = num(r[6])
+        amt = before_vat * 1.07
+        brand, sub, model = classify_by_name(item)
+        add_record('Siam Discovery', 'store', d, brand, model, sub,
+                    qty, amt, f'SIAMDISAUG-{i}', vff_source_text=item, vff_name_text=item)
+        n += 1
+    print(f"loaded {n} rows -> Siam Discovery, August only (July already covered by etl_jul2026.py)")
+load_siam_discovery_aug2026()
+
 # ================================================================== EDV online (Shopee/Lazada/etc.)
 def load_simple_online(fn, store_label, category, entity=None):
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
