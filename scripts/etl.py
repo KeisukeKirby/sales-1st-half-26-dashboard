@@ -1124,6 +1124,86 @@ def load_online_receipts_june():
     print(f"loaded {n} rows -> Online, June only (verified row-position split, col15 Total)")
 load_online_receipts_june()
 
+# ================================================================== BFT_Online_Event_Shopee_Lazada_Paradise_Jul-Aug_26 (first data beyond H1 2026)
+# 2026-09: single "Orders"-schema file covering Event/Online(Shopee+Lazada+
+# anonymous Online)/Paradise Park for July AND August 2026 -- the first
+# H2-2026 data loaded (Paradise Park/Event previously had NO July/August
+# data at all; Online's July/August were also missing before this). Row
+# position (not the 'Sales channel'/'Warehouse-Branch' columns, which are
+# inconsistent -- e.g. some Online rows show 'Paradise Park' or the Thai
+# main-warehouse label in Warehouse/Branch) determines both store and,
+# within Online, channel, per user-confirmed row ranges:
+#   rows 2-196   -> Event
+#   rows 198-250 -> Online / Lazada
+#   rows 252-661 -> Online / Shopee
+#   rows 663-771 -> Paradise Park
+#   rows 773-828 -> Online / Online (genuinely anonymous/direct)
+# Amount is column S ('Total amount', 19th column) -- a per-LINE total
+# (unit price minus any unit discount, times quantity), VAT-inclusive,
+# reconciles exactly to the order-level 'Amount' column when summed across
+# an order's lines (verified on a sample multi-line order). Used directly as
+# the raw amount; no *1.07 needed since it's already VAT-inclusive, unlike
+# the VAT-exclusive 'Payment amount' columns used elsewhere.
+#
+# July was already represented in the dashboard for these 3 categories
+# (apparently from an earlier/different version of this same underlying
+# data -- Event's July total from this file, 414,045.79 THB, matches the
+# already-loaded figure to the cent), so per user confirmation this file's
+# July rows REPLACE that existing July data rather than adding to it, same
+# as August (fully new). On a from-scratch full pipeline run this
+# replace-vs-add distinction doesn't matter -- every row here simply becomes
+# a record like any other; it only mattered for the direct-JSON-patch used
+# to apply this fix in the running dashboard (see commit history: the
+# patch's model/color/gender-level global breakdowns for July could only be
+# approximated via revenue-proportional scaling of each store's OLD
+# brand-level total, since no per-record archive of the prior July data
+# survives to delta against precisely -- store-level and channel-level
+# figures are exact; deeper model/color/gender splits for July carry a small
+# margin of error as a result. This limitation does not apply to August,
+# which is a pure addition with no prior data to reconcile against, nor
+# to a future full pipeline run of this loader, which has no such gap.
+def load_online_event_paradise_julaug2026():
+    fn = SRC + '38a001d6-BFT_Online_Event_Shopee_Lazada_Paradise_Jul-Aug_26.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Orders']
+    rows = list(ws.iter_rows(values_only=True))
+    data = rows[1:]
+
+    BLOCKS = [
+        (2, 196, 'Event', 'event', None),
+        (198, 250, 'Online', 'online', 'Lazada'),
+        (252, 661, 'Online', 'online', 'Shopee'),
+        (663, 771, 'Paradise Park', 'store', None),
+        (773, 828, 'Online', 'online', 'Online'),
+    ]
+    def block_for(excel_row):
+        for start, end, store, cat, channel in BLOCKS:
+            if start <= excel_row <= end:
+                return store, cat, channel
+        return None, None, None
+
+    n = 0
+    for i, r in enumerate(data):
+        excel_row = i + 2
+        store, cat, channel = block_for(excel_row)
+        if store is None or not r or not r[0]:
+            continue
+        d = to_date(r[3])
+        if d is None or not (d.year == 2026 and d.month in (7, 8)):
+            continue
+        product_code, product_name = r[13], r[14]
+        qty = num(r[15])
+        amt = num(r[18])  # column S ('Total amount') -- per-line, already VAT-inclusive
+        brand, sub = classify_by_code(product_code)
+        if brand == 'EXCLUDE':
+            continue
+        model = model_from_name(product_name) if product_name else 'Other'
+        add_record(store, cat, d, brand, model, sub, qty, amt, r[0], channel=channel,
+                    vff_source_text=product_code, vff_name_text=product_name)
+        n += 1
+    print(f"loaded {n} rows -> Event/Online/Paradise Park, Jul-Aug 2026 (row-position store+channel split, col S Total)")
+load_online_event_paradise_julaug2026()
+
 # ================================================================== BFT_Central_Total_Department (line-item detail, split by Store Name)
 # 2026-09: swapped to a76e3d0e-BFT_Central_Total_Department_Jan-Jun_26_new.xlsx
 # (replacing 026d19bf-BFT_Central_Total_Department_JanJun_26.xlsx), which is a
