@@ -33,9 +33,24 @@ records += json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/
 # so the overall YoY comparison (総売上金額 etc.) stays apples-to-apples --
 # comparing the SAME reduced set of stores in both years, rather than a
 # reduced 2026 lineup against a full 2025 lineup that still included them.
+#
+# 2026-09: Central Chidlom/Central Chidlom Online/Central World (CDS)/
+# Central Eastville removed from this set (reinstated). Unlike the other
+# stores above, these 4 are BFT-operated Central department concessions, not
+# Endeavors-operated -- they were bundled into the same 2026-08 removal
+# alongside the genuinely EDV-operated stores/channels, but the new
+# a76e3d0e-BFT_Central_Total_Department_Jan-Jun_26_new.xlsx file (see
+# load_central_total_department() in etl.py) now ties their combined H1 2026
+# total, together with Central Lardprao (Dept.), to the "Jan-Jun_final_
+# without_tax.xlsx" BFT-tab reference exactly, to the cent, for every month
+# -- so all 5 stores are reinstated with confidence. Caveat for a future full
+# pipeline run: etl_2025.py's load_central_total_department_2025() (Sep-Dec
+# 2025 only, so no H1 YoY impact either way) and etl_jul2026.py's
+# load_central_total_department_jul2026() still read the OLD 'Total Net
+# Sales' column rather than 'GP 30%'/'Before Vat' -- not yet reconciled
+# against an equivalent new-format file for those periods.
 EXCLUDED_STORES_ALL_YEARS = {
     'Central Ladprao 3F (Coollabo)', 'VFF Cart LP', 'Thaniya', 'K Village',
-    'Central Chidlom', 'Central Chidlom Online', 'Central World (CDS)', 'Central Eastville',
     'EDV Consignment',
 }
 records = [r for r in records if r['store'] not in EXCLUDED_STORES_ALL_YEARS]

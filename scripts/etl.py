@@ -759,9 +759,24 @@ def load_bft_merged_new_only():
     print(f"loaded {n} rows (non-duplicate only) -> BFT merged supplemental")
 load_bft_merged_new_only()
 
-# ================================================================== BFT_Central_Total_Department (monthly, split by Store Name)
+# ================================================================== BFT_Central_Total_Department (line-item detail, split by Store Name)
+# 2026-09: swapped to a76e3d0e-BFT_Central_Total_Department_Jan-Jun_26_new.xlsx
+# (replacing 026d19bf-BFT_Central_Total_Department_JanJun_26.xlsx), which is a
+# genuinely different (better) export: line-item detail with an explicit
+# 'GP 30%' column (= Gross Sales * 0.70, the recognized revenue net of
+# Central's 30% concession fee -- confirmed exactly, same pattern as Siam
+# Discovery's 32%-fee GP32% column) and a 'Before Vat' column (= GP 30% /
+# 1.07). Summed across all 5 stores this ties out to the "Jan-Jun_final_
+# without_tax.xlsx" BFT-tab reference's Central column to the cent, for
+# every one of the 6 months -- which resolves the previous discrepancy and
+# means all 5 stores (not just Lardprao) can be reinstated with confidence.
+# The 4 Endeavors-corner stores that were disabled 2026-08 (pending this
+# reconciliation) are re-enabled below. Unlike the old aggregate-only file,
+# SKU Name here spells out colors in full (e.g. "V-SOUL(W39, SILVER)"), so
+# vff_shoe_size_color() resolves them directly -- no COLOR_CODE_TO_NAME
+# lookup needed for this source.
 def load_central_total_department():
-    fn = SRC + '026d19bf-BFT_Central_Total_Department_JanJun_26.xlsx'
+    fn = SRC + 'a76e3d0e-BFT_Central_Total_Department_Jan-Jun_26_new.xlsx'
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
     ws = wb['Export']
     rows = list(ws.iter_rows(values_only=True))
@@ -776,38 +791,28 @@ def load_central_total_department():
         'LARDPRAO': 'Central Lardprao (Dept.)',
         'EASTVILLE': 'Central Eastville',
     }
-    # Disabled 2026-08 per user request: these 4 of the 5 stores in this
-    # report are Endeavors-operated corners, now represented instead by the
-    # consolidated 対EDV wholesale-invoice loader below -- Central Lardprao
-    # (Dept.) is explicitly NOT in that list (confirmed with the user) and
-    # keeps loading from this file as before.
-    EXCLUDED_STORES = {'Central Chidlom', 'Central Chidlom Online', 'Central World (CDS)', 'Central Eastville'}
     n, skipped = 0, 0
     for r in data:
         if not any(r):
             continue
         store = r[idx['Store Name']]
+        sku_name = r[idx['SKU Name']]
         cat = r[idx['Catalogue No.']]
         msd = r[idx['Month Sales Date']]
         if not store or not cat or not msd:
+            skipped += 1  # per-store subtotal marker rows (Store Name/Catalogue No. blank)
             continue
         mo, yr = str(msd).split('-')
         d = date(int(yr), MONTHS[mo], 1)  # first-of-month placeholder (source has no daily granularity)
         qty = num(r[idx['Sales Quantity']])
-        amt = num(r[idx['Total Net Sales (Sales Amount)']])
+        amt = num(r[idx['GP 30%']])  # VAT-inclusive recognized revenue (Gross Sales * 0.70); ser() applies VAT later
         brand, sub = classify_by_code(cat)
-        model = None
-        mcode = re.match(r'^([A-Za-z]+)0*(\d+)', str(cat).upper())
-        if mcode:
-            model = CODE_TO_MODEL.get((mcode.group(1), int(mcode.group(2))), 'Other')
+        model = model_from_name(sku_name)
         store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
-        if store_label in EXCLUDED_STORES:
-            skipped += 1
-            continue
         add_record(store_label, 'central_dept', d, brand, model, sub, qty, amt,
-                   order_id=None, vff_source_text=cat, vff_name_text=cat)
+                   order_id=None, vff_source_text=cat, vff_name_text=sku_name)
         n += 1
-    print(f"loaded {n} rows -> Central Total Department (Lardprao (Dept.) only; {skipped} rows skipped for the other 4 stores, now covered by 対EDV)")
+    print(f"loaded {n} rows -> Central Total Department (all 5 stores; {skipped} subtotal/marker rows skipped)")
 load_central_total_department()
 
 # ================================================================== 対EDV: Barefoot -> Endeavors wholesale invoices (Jan-Jul 2026)
