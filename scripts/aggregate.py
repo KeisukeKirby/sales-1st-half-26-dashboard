@@ -94,11 +94,16 @@ STORE_GROUP = {
     # not a store/channel grouping like the others, and not directly
     # comparable to them (wholesale price, not retail).
     '対EDV': 'edv',
+    # 輸出: a single VFF-shoe overseas wholesale export shipment (added
+    # 2026-09, see load_export_2026_09() in etl.py). Own category for the
+    # same reason as 対EDV -- wholesale/export price, order-less revenue,
+    # not comparable to the retail-channel stores/categories above.
+    'Export': 'export',
 }
 GROUP_LABEL = {
     'directly_operated': '直営実店舗', 'central_dept': 'Central百貨店内', 'online': 'オンライン',
     'event': 'イベント', 'consignment': '委託販売', 'siam_discovery': 'Siam Discovery', 'thaniya': 'Thaniya',
-    'edv': '対EDV',
+    'edv': '対EDV', 'export': '輸出',
 }
 GENDER_LABEL = {'Women': '女性', 'Men': '男性', 'Unisex': 'ユニセックス'}
 

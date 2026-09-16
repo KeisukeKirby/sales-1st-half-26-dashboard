@@ -976,6 +976,52 @@ def load_edv_invoice_report():
     print(f"loaded {n} rows -> 対EDV ({len(inv_grand)} invoices, sum Grand Total = {sum(inv_grand.values()):,.2f})")
 load_edv_invoice_report()
 
+# ================================================================== Export: VFF shoe overseas wholesale shipment (June 2026)
+# Added 2026-09 from a packing-list image (not a spreadsheet -- transcribed
+# by hand below), a single wholesale export shipment. USD converted to THB
+# at 32.9594 per user instruction; verified the resulting THB total
+# (2,722,907.87) matches the "Jan-Jun_final_without_tax.xlsx" BFT-tab
+# Export-column figure exactly, resolving what had been an unexplained line
+# item in that reference file. That THB figure is VAT-exclusive -- exports
+# are zero-rated under Thai VAT law, and it matches every other verified
+# BFT-tab figure's convention -- so it's converted back to VAT-inclusive raw
+# amounts here, same as every other add_record() call (ser() divides every
+# amount by 1.07 exactly once, downstream, uniformly). Gender is inferred
+# from the Style No. prefix letter (W/M) per the source's own convention,
+# not from the size token the way vff_shoe_gender() does elsewhere (this
+# shipment uses plain EU sizes 35-48, already the same numbering the rest of
+# the dashboard's "size" field uses -- no conversion needed). order_id=None,
+# no per-transaction data -- same convention as 対EDV/Central Lardprao
+# (Dept.)/Yoshi Run for this kind of lump-shipment/order-less revenue.
+def load_export_2026_09():
+    USD_TO_THB = 32.9594
+    # (style_no, model, color, unit_price_usd, {eu_size: qty})
+    LINES = [
+        ('26W7201', 'V-Soul', 'Black', 78.70, {'35':9,'36':15,'37':30,'38':48,'39':42,'40':27,'41':21}),
+        ('26W7202', 'V-Soul', 'Brown', 78.70, {'36':9,'37':18,'38':33,'39':24,'40':15,'41':9}),
+        ('26W7205', 'V-Soul', 'Baby Blue', 78.70, {'35':6,'36':12,'37':21,'38':36,'39':27,'40':18,'41':12}),
+        ('26M7001', 'V-Run', 'Total Black', 93.10, {'39':6,'40':9,'41':21,'42':30,'43':27,'44':21,'45':18,'46':12,'47':9,'48':3}),
+        ('26M7001', 'V-Run', 'Total Black', 93.10, {'35':6,'36':12,'37':27,'38':27,'39':24,'40':15,'41':9}),
+        ('26M7004', 'V-Run', 'Black-Lime/Black', 93.10, {'40':12,'41':21,'42':24,'43':21,'44':15,'45':12,'46':9,'47':6}),
+        ('25M7501', 'Trailope', 'Black', 97.90, {'39':6,'40':12,'41':21,'42':24,'43':21,'44':15,'45':12,'46':6,'47':3}),
+    ]
+    d = date(2026, 6, 1)  # shipment date not itemized in the source; matches the BFT-tab reference, which carries the whole amount in June
+    n = 0
+    for style_no, model, color, unit_price, sizes in LINES:
+        gender = 'Women' if style_no[2] == 'W' else 'Men'
+        for size, qty in sizes.items():
+            amt_thb_excl_vat = unit_price * qty * USD_TO_THB
+            amt_raw = round(amt_thb_excl_vat * 1.07, 2)
+            records.append(dict(
+                store='Export', category='export', date=d.isoformat(), month=d.strftime('%Y-%m'),
+                brand='VFF', model=model, is_vff_shoe=True, gender=gender, size=size, color=color,
+                sub=None, qty=qty, amount=amt_raw, order_id=None,
+                channel=None, payment=None, entity=None,
+            ))
+            n += 1
+    print(f"loaded {n} rows -> Export (1 shipment, 948 pairs, USD 82,614.00 -> THB {sum(r['amount'] for r in records if r['store']=='Export')/1.07:,.2f} excl. VAT)")
+load_export_2026_09()
+
 # ================================================================== summary / sanity checks
 print()
 print("="*80)
