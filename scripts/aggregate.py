@@ -183,6 +183,8 @@ _OLENO_ALIASES = {
     'OLN ULTIMATE TNG': 'Oleno Ultimate TNG', 'OLN TNG': 'Oleno Ultimate TNG',
     'OLENO CALF SUPPORTEN BICOLOR': 'Oleno Calf Supporter Bicolor',
     'OLENO CALF SUPPORTEN PLAIN': 'Oleno Calf Supporter Plain',
+    'OLN OPENFINGER': 'Oleno Hadashi Socks Openfinger', 'OLENO HADASHI OPENFINGER': 'Oleno Hadashi Socks Openfinger',
+    'OLN HADASHI ROAD': 'Oleno Hadashi Socks Road', 'OLENO HADASHI': 'Oleno Hadashi Socks Road',
 }
 for (brand, _key), variants_amount in _casing_amount.items():
     if brand != 'Oleno':
