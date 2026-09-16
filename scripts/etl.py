@@ -269,7 +269,11 @@ def _scan_codes(fn, sheet, header_row_idx, code_key, name_key):
 
 _scan_codes(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 _scan_codes(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
-_scan_codes(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+# 2026-09: cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx replaced by
+# 34e59155-BFT_Shopee_Lazada_Facebook_Jan-Jun_26.xlsx (same 'Orders' sheet
+# schema; see load_online_receipts() below for why the *loader* itself
+# switched to a different, newer file instead of this one).
+_scan_codes(SRC + '34e59155-BFT_Shopee_Lazada_Facebook_Jan-Jun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 _scan_codes(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 print(f"Built brand code->model lookup with {len(CODE_TO_MODEL)} entries")
 
@@ -317,7 +321,7 @@ def _scan_colors(fn, sheet, header_row_idx, code_key, name_key):
 
 _scan_colors(SRC + 'a0d9bc79-Sales_K_village_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 _scan_colors(SRC + '835c1952-Sales_Thaniya_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
-_scan_colors(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
+_scan_colors(SRC + '34e59155-BFT_Shopee_Lazada_Facebook_Jan-Jun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 _scan_colors(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 1, 'Product code', 'Product name')
 print(f"Built color code->name lookup with {len(COLOR_CODE_TO_NAME)} entries")
 
@@ -474,9 +478,12 @@ def load_orders_style(fn, sheet, store_label, category, header_row_idx=1,
           f"({len(order_paid)}/{len(order_line_total)} orders prorated to actual amount paid, "
           f"{overridden} Payment-amount overridden as unreliable)")
 
-# 2. BFT online (original)
-load_orders_style(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders',
-                   'Online', 'online', has_channel=True, is_online_split=True, entity='BFT')
+# 2. BFT online -- 2026-09: replaced by load_online_receipts() below, which
+# reads a different, newer, more comprehensive source (see that function's
+# docstring). The old cf220ee8 loader call and the load_bft_merged_new_only()
+# dedup-supplement function it depended on are disabled together.
+# load_orders_style(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders',
+#                    'Online', 'online', has_channel=True, is_online_split=True, entity='BFT')
 # 3. BFT_EVENT_3
 load_orders_style(SRC + '2514cf15-BFT_EVENT_3.xlsx', 'Orders (2)', 'Event', 'event', has_channel=True)
 # 4. Paradise Park
@@ -690,74 +697,65 @@ def load_simple_online(fn, store_label, category, entity=None):
 # edv_online_orders = load_simple_online(SRC + 'a024894a-EDV_Shopee_Lazada_Facebook_JanJun_26.xlsx',
 #                                         'Online', 'online', entity='EDV')
 
-# ================================================================== BFT merged file: only non-overlapping 13 orders
-def load_bft_merged_new_only():
-    fn = SRC + '6de07263-BFT_Shopee_Lazada_Facebook_Paradise_Event_JanJun_26.xlsx'
+# ================================================================== BFT Online: receipt-level export (replaces cf220ee8 + 6de07263)
+# 2026-09: replaced the old cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx
+# (+ its 6de07263 dedup-supplement) with
+# 4da610ac-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx, a receipt-level export
+# with an explicit 'มูลค่าก่อนภาษี'/'ยอด VAT' (before-VAT / VAT amount) column
+# pair per line -- more reliable than reconstructing VAT-exclusive amounts
+# via proration. It has 3 near-identical sheets ('รายงานใบเสร็จรับเงิน',
+# '(2)', '(3)'); sheet '(2)' is a strict superset of the other two (verified:
+# every document number in sheets 1 and 3 also appears in sheet 2, including
+# all 14 credit-note/CN- return documents sheet 1 lacks), so only it is used.
+# Per user request 2026-09, channel is simplified to 3 buckets instead of the
+# old fine-grained Shopee/Lazada/LINE/Facebook/Instagram/Website/POS split:
+# customer name starting with 'Shopee'/'Lazada' -> that marketplace, anything
+# else (named individuals, companies, the generic "ลูกค้า ไม่ประสงค์ออกนาม"
+# walk-in/direct-channel placeholder) -> 'Online'. Verified against the
+# "Jan-Jun_final_without_tax.xlsx" BFT-tab reference: Lazada matches to the
+# cent for 5 of 6 months (a few thousand THB off in March only); Shopee is
+# ~1.2% below the reference H1 total. The reference's own narrow "Online"
+# column is deliberately not a target here -- it's a single accounting
+# bucket (roughly Website only), while this dashboard's "Online" always
+# meant the broader BFT-entity online total (LINE/direct/etc. included).
+def load_online_receipts():
+    fn = SRC + '4da610ac-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx'
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
-    ws = wb['รายการขาย']
+    ws = wb['รายงานใบเสร็จรับเงิน (2)']
     rows = list(ws.iter_rows(values_only=True))
-    header = rows[0]
-    idx = {h: i for i, h in enumerate(header) if h}
-    data = rows[1:]
+    data = rows[2:]  # row0: merged 'มูลค่ารวม (บาท)' banner; row1: header
 
-    # recompute known-old order id sets to determine which orders are "new"
-    def get_orders(fn2, sheet2, colname, header_idx=1):
-        wb2 = openpyxl.load_workbook(fn2, data_only=True, read_only=True)
-        ws2 = wb2[sheet2]
-        rows2 = list(ws2.iter_rows(values_only=True))
-        header2 = rows2[header_idx]
-        idx2 = {h: i for i, h in enumerate(header2) if h}
-        orders = set()
-        for r in rows2[header_idx + 1:]:
-            if not any(r):
-                continue
-            v = r[idx2[colname]]
-            if v:
-                orders.add(str(v).strip())
-        return orders
-
-    old_online = get_orders(SRC + 'cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx', 'Orders', 'Sales order No.')
-    old_paradise = get_orders(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders', 'Sales order No.')
-    old_event1 = get_orders(SRC + '0165b670-BFT_EVENT_1.xlsx', 'Orders', 'Sales order No.')
-    old_event2 = get_orders(SRC + '7abc0f65-BFT_EVENT_2.xlsx', 'Orders', 'Sales order No.')
-    old_event3 = get_orders(SRC + '2514cf15-BFT_EVENT_3.xlsx', 'Orders (2)', 'Sales order No.')
-    union_old = old_online | old_paradise | old_event1 | old_event2 | old_event3
+    def channel_for(customer):
+        if not customer:
+            return 'Online'
+        c = str(customer)
+        if c.startswith('Shopee'):
+            return 'Shopee'
+        if c.startswith('Lazada'):
+            return 'Lazada'
+        return 'Online'
 
     n = 0
-    seen_in_this_file = set()
     for r in data:
-        if not any(r):
+        if not r or not r[0]:
             continue
-        onum = str(r[idx['No.']]).strip()
-        if onum in union_old:
-            continue  # already counted via the original per-store files
-        sku = r[idx['SKU']]
-        if not sku:
-            continue
-        d = to_date(r[idx['Sale Date']])
+        d = to_date(r[1])
         if d is None:
             continue
-        qty = num(r[idx['Sales Quantity']])
-        amt = num(r[idx['Net']])
-        channel = normalize_channel(r[idx['Channel']])
-        warehouse = r[idx['warehouse']]
-        brand, sub = classify_by_code(sku)
-        item = r[idx['Item']]
-        model = model_from_name(item)
-        # warehouse=='Paradise Park' is the physical fulfillment location, but a
-        # handful of orders tagged that way were actually placed through an
-        # online channel (LINE etc., not an in-store POS sale) -- confirmed by
-        # user 2026-08 for RB-202606003 (LINE, corporate customer, most likely
-        # paid by bank transfer rather than at the Paradise Park register, which
-        # is why it doesn't appear in that store's Cash/Credit/QR ledger). Only
-        # a genuine walk-in (channel blank or 'POS') counts as the store itself.
-        if warehouse == 'Paradise Park' and channel in (None, 'POS'):
-            add_record('Paradise Park', 'store', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku, vff_name_text=item)
-        else:
-            add_record('Online', 'online', d, brand, model, sub, qty, amt, onum, channel=channel, vff_source_text=sku, vff_name_text=item)
+        customer, product_code, product_name, desc = r[3], r[4], r[5], r[6]
+        qty = num(r[7])
+        before_vat, vat_amt = num(r[8]), num(r[9])
+        amt = before_vat + vat_amt  # VAT-inclusive line total; ser() applies VAT later, same as every other source
+        channel = channel_for(customer)
+        brand, sub = classify_by_code(product_code)
+        if brand == 'EXCLUDE':
+            continue
+        model = model_from_name(product_name) if product_name else ('Shipping Fee' if desc == 'Shipping fee' else 'Other')
+        add_record('Online', 'online', d, brand, model, sub, qty, amt, r[0], channel=channel,
+                    vff_source_text=product_code, vff_name_text=product_name)
         n += 1
-    print(f"loaded {n} rows (non-duplicate only) -> BFT merged supplemental")
-load_bft_merged_new_only()
+    print(f"loaded {n} rows -> Online (Shopee/Lazada/Online, receipt-level)")
+load_online_receipts()
 
 # ================================================================== BFT_Central_Total_Department (line-item detail, split by Store Name)
 # 2026-09: swapped to a76e3d0e-BFT_Central_Total_Department_Jan-Jun_26_new.xlsx
