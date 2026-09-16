@@ -6,6 +6,7 @@ dashboard can re-slice any figure into an arbitrary period (a single month,
 Q1, Q2, or the full half) entirely client-side, without re-running this script.
 """
 import json
+import re
 from collections import defaultdict
 
 records = json.load(open('/tmp/claude-0/-home-user-sales-1st-half-26-dashboard/7c7fe66c-960c-5108-be91-c1dc0972813f/scratchpad/records.json'))
@@ -134,19 +135,40 @@ def monthly_out(acc_by_key_month):
     return {k: {m: ser(months.get(m, new_acc())) for m in ALL_MONTHS} for k, months in acc_by_key_month.items()}
 
 # ---------------------------------------------------------------- model-name casing normalization
-# Different source files render the same model with different casing
-# ("VFF KSO EVO" vs "VFF Kso Evo") -- collapse by uppercase key, keep whichever casing
-# variant carries the most revenue as the canonical display label.
+# Different source files render the same model differently: casing
+# ("VFF KSO EVO" vs "VFF Kso Evo") and/or a missing brand prefix ("V-Run" vs
+# "VFF V-Run" -- some online-receipt product names omit the brand entirely).
+# Collapse by (brand, prefix-stripped uppercase) key; the canonical display
+# label prefers the brand-prefixed spelling (e.g. "V-RUN"/"V-Run" -> "VFF
+# V-Run", never the bare form), then non-all-caps casing, then whichever
+# variant carries the most revenue as a final tiebreak.
+def _strip_brand_prefix(brand, model):
+    if not brand:
+        return model.strip()
+    return re.sub(r'^\s*' + re.escape(brand) + r'\s+', '', model.strip(), flags=re.I)
+
 _casing_amount = defaultdict(lambda: defaultdict(float))
 for r in records:
     if r['model']:
-        _casing_amount[r['model'].upper()][r['model']] += r['amount']
+        key = (r['brand'], _strip_brand_prefix(r['brand'], r['model']).upper())
+        _casing_amount[key][r['model']] += r['amount']
+
+def _pick_canonical(brand, variants_amount):
+    variants = list(variants_amount.keys())
+    brand_u = (brand or '').strip().upper()
+    starts_with_brand = [v for v in variants if v.strip().upper().startswith(brand_u + ' ') or v.strip().upper() == brand_u]
+    pool = starts_with_brand or variants
+    non_caps = [v for v in pool if v != v.upper()]
+    pool = non_caps or pool
+    return max(pool, key=lambda v: variants_amount[v])
+
 MODEL_CANON = {
-    upper_key: max(variants.items(), key=lambda kv: kv[1])[0]
-    for upper_key, variants in _casing_amount.items()
+    (brand, v.upper()): _pick_canonical(brand, variants_amount)
+    for (brand, _key), variants_amount in _casing_amount.items()
+    for v in variants_amount
 }
-def canon_model(m):
-    return MODEL_CANON.get(m.upper(), m) if m else m
+def canon_model(brand, m):
+    return MODEL_CANON.get((brand, m.upper()), m) if m else m
 
 # ---------------------------------------------------------------- accumulators
 # every "_month" accumulator is {key: {month: acc}}; totals are summed from these.
@@ -202,7 +224,7 @@ for r in records:
     if oid:
         add(overall_orders_basis_month[month])
 
-    model_c = canon_model(r['model'])
+    model_c = canon_model(brand, r['model'])
     if model_c:
         add(model_month[model_c][month])
         add(brand_model_month[brand][model_c][month])
