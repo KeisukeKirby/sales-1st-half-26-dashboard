@@ -810,15 +810,23 @@ def load_simple_online(fn, store_label, category, entity=None):
 # January to the cent (Lazada 97,084.11 exact; Shopee/Online within a few
 # cents, pure rounding).
 #
-# February-June do NOT share January's clean block layout (their named-
+# Feb/Mar/Apr/Jun do NOT share January's clean block layout (their named-
 # individual/company orders are scattered day-by-day, interleaved with
 # ordinary Shopee/Lazada rows -- confirmed by inspection, not yet resolved
 # into a reliable per-month rule), so they still use the customer-name
-# heuristic below, unverified beyond what the H1 reconciliation in this
-# thread already found (Shopee ~1.2% below the BFT-tab reference H1 total,
-# Lazada exact except March). Whoever revisits this: the fix for Jan (exact
-# row indices) took targeted, month-specific row inspection: the same is
-# needed per month for Feb-Jun before extending the row-position approach.
+# heuristic below, and still carry the same Shopee-too-low/Online-too-high
+# gap vs the BFT-tab reference that the H1 reconciliation earlier in this
+# thread found (each of those 4 months individually off by roughly
+# 5,000-20,000 THB). Whoever revisits this: the fix for Jan/May (exact row
+# indices) took targeted, month-specific row inspection; the same is needed
+# per month for Feb/Mar/Apr/Jun before extending the row-position approach.
+#
+# May 2026 was verified the same way as January, but against a second,
+# separately re-uploaded file (5379d845-BFT_Online_Shopee_Lazada_Jan-Jun_
+# new.xlsx -- loaded in load_online_receipts_may() below): rows 1300-1324
+# (data idx 1298-1322) = Lazada, rows 1325-1691 (idx 1323-1689) = Shopee,
+# rows 1692-1705 (idx 1690-1703) = Online. Verified: matches the reference
+# to the cent (Online 42,002.80 exact; Shopee/Lazada within a few cents).
 def load_online_receipts():
     fn = SRC + '20e89950-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx'
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
@@ -843,6 +851,8 @@ def load_online_receipts():
         d = to_date(r[1])
         if d is None:
             continue
+        if d.year == 2026 and d.month == 5:
+            continue  # May is loaded from a separate, dedicated file -- see load_online_receipts_may() below
         if d.year == 2026 and d.month == 1:
             channel = 'Lazada' if i <= 24 else ('Shopee' if i <= 365 else 'Online')
         else:
@@ -858,8 +868,37 @@ def load_online_receipts():
         add_record('Online', 'online', d, brand, model, sub, qty, amt, r[0], channel=channel,
                     vff_source_text=product_code, vff_name_text=product_name)
         n += 1
-    print(f"loaded {n} rows -> Online (Shopee/Lazada/Online, receipt-level; January uses the verified row-position split, Feb-Jun the customer-name heuristic)")
+    print(f"loaded {n} rows -> Online (Shopee/Lazada/Online, receipt-level; January uses the verified row-position split, Mar/Apr/Jun the customer-name heuristic, May excluded -- see load_online_receipts_may())")
 load_online_receipts()
+
+def load_online_receipts_may():
+    fn = SRC + '5379d845-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['รายงานใบเสร็จรับเงิน (3)']
+    rows = list(ws.iter_rows(values_only=True))
+    data = rows[1:]
+
+    n = 0
+    for i, r in enumerate(data):
+        if not r or not r[0]:
+            continue
+        d = to_date(r[1])
+        if d is None or not (d.year == 2026 and d.month == 5):
+            continue
+        channel = 'Lazada' if i <= 1322 else ('Shopee' if i <= 1689 else 'Online')
+        product_code, product_name, desc = r[4], r[5], r[6]
+        qty = num(r[8])
+        before_vat = num(r[7])
+        amt = before_vat * 1.07
+        brand, sub = classify_by_code(product_code)
+        if brand == 'EXCLUDE':
+            continue
+        model = model_from_name(product_name) if product_name else ('Shipping Fee' if desc == 'Shipping fee' else 'Other')
+        add_record('Online', 'online', d, brand, model, sub, qty, amt, r[0], channel=channel,
+                    vff_source_text=product_code, vff_name_text=product_name)
+        n += 1
+    print(f"loaded {n} rows -> Online, May only (verified row-position split)")
+load_online_receipts_may()
 
 # ================================================================== BFT_Central_Total_Department (line-item detail, split by Store Name)
 # 2026-09: swapped to a76e3d0e-BFT_Central_Total_Department_Jan-Jun_26_new.xlsx
