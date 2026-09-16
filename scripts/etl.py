@@ -788,31 +788,43 @@ def load_simple_online(fn, store_label, category, entity=None):
 
 # ================================================================== BFT Online: receipt-level export (replaces cf220ee8 + 6de07263)
 # 2026-09: replaced the old cf220ee8-BFT_Shopee_Lazada_Facebook_JanJun_26.xlsx
-# (+ its 6de07263 dedup-supplement) with
-# 4da610ac-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx, a receipt-level export
-# with an explicit 'มูลค่าก่อนภาษี'/'ยอด VAT' (before-VAT / VAT amount) column
-# pair per line -- more reliable than reconstructing VAT-exclusive amounts
-# via proration. It has 3 near-identical sheets ('รายงานใบเสร็จรับเงิน',
-# '(2)', '(3)'); sheet '(2)' is a strict superset of the other two (verified:
-# every document number in sheets 1 and 3 also appears in sheet 2, including
-# all 14 credit-note/CN- return documents sheet 1 lacks), so only it is used.
-# Per user request 2026-09, channel is simplified to 3 buckets instead of the
-# old fine-grained Shopee/Lazada/LINE/Facebook/Instagram/Website/POS split:
-# customer name starting with 'Shopee'/'Lazada' -> that marketplace, anything
-# else (named individuals, companies, the generic "ลูกค้า ไม่ประสงค์ออกนาม"
-# walk-in/direct-channel placeholder) -> 'Online'. Verified against the
-# "Jan-Jun_final_without_tax.xlsx" BFT-tab reference: Lazada matches to the
-# cent for 5 of 6 months (a few thousand THB off in March only); Shopee is
-# ~1.2% below the reference H1 total. The reference's own narrow "Online"
-# column is deliberately not a target here -- it's a single accounting
-# bucket (roughly Website only), while this dashboard's "Online" always
-# meant the broader BFT-entity online total (LINE/direct/etc. included).
+# (+ its 6de07263 dedup-supplement) with a receipt-level export with an
+# explicit before-VAT/VAT-amount column pair per line -- more reliable than
+# reconstructing VAT-exclusive amounts via proration. First
+# 4da610ac-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx (customer-name-based
+# channel split: name starting with 'Shopee'/'Lazada' -> that marketplace,
+# anything else -> 'Online'), then swapped to
+# 20e89950-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx (near-identical content,
+# per-user-confirmed as the "_new" successor) once user confirmation
+# surfaced that the customer-name field is NOT a reliable channel indicator
+# for every row: some named-individual/company orders are genuinely Shopee
+# (buyer supplied their real name instead of the 'Shopee ... Customer'
+# placeholder), which the pure name-prefix rule miscounted as 'Online'.
+#
+# January 2026 was fully re-verified by user-confirmed row position instead:
+# in sheet '(3)' of the 20e89950 file, January's 386 rows are laid out as a
+# clean block -- rows 1-25 (data idx 0-24) = Lazada, rows 26-366 (idx 25-365)
+# = Shopee (including those named-individual orders), rows 367-386
+# (idx 366-385) = Online (genuinely anonymous/direct/staff). Verified: this
+# reproduces the "Jan-Jun_final_without_tax.xlsx" BFT-tab reference for
+# January to the cent (Lazada 97,084.11 exact; Shopee/Online within a few
+# cents, pure rounding).
+#
+# February-June do NOT share January's clean block layout (their named-
+# individual/company orders are scattered day-by-day, interleaved with
+# ordinary Shopee/Lazada rows -- confirmed by inspection, not yet resolved
+# into a reliable per-month rule), so they still use the customer-name
+# heuristic below, unverified beyond what the H1 reconciliation in this
+# thread already found (Shopee ~1.2% below the BFT-tab reference H1 total,
+# Lazada exact except March). Whoever revisits this: the fix for Jan (exact
+# row indices) took targeted, month-specific row inspection: the same is
+# needed per month for Feb-Jun before extending the row-position approach.
 def load_online_receipts():
-    fn = SRC + '4da610ac-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx'
+    fn = SRC + '20e89950-BFT_Online_Shopee_Lazada_Jan-Jun_new.xlsx'
     wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
-    ws = wb['รายงานใบเสร็จรับเงิน (2)']
+    ws = wb['รายงานใบเสร็จรับเงิน (3)']
     rows = list(ws.iter_rows(values_only=True))
-    data = rows[2:]  # row0: merged 'มูลค่ารวม (บาท)' banner; row1: header
+    data = rows[1:]  # single header row (unlike sheets '' / '(2)', which have a banner row above the header too)
 
     def channel_for(customer):
         if not customer:
@@ -825,17 +837,20 @@ def load_online_receipts():
         return 'Online'
 
     n = 0
-    for r in data:
+    for i, r in enumerate(data):
         if not r or not r[0]:
             continue
         d = to_date(r[1])
         if d is None:
             continue
-        customer, product_code, product_name, desc = r[3], r[4], r[5], r[6]
-        qty = num(r[7])
-        before_vat, vat_amt = num(r[8]), num(r[9])
-        amt = before_vat + vat_amt  # VAT-inclusive line total; ser() applies VAT later, same as every other source
-        channel = channel_for(customer)
+        if d.year == 2026 and d.month == 1:
+            channel = 'Lazada' if i <= 24 else ('Shopee' if i <= 365 else 'Online')
+        else:
+            channel = channel_for(r[3])
+        product_code, product_name, desc = r[4], r[5], r[6]
+        qty = num(r[8])
+        before_vat = num(r[7])
+        amt = before_vat * 1.07  # VAT-exclusive column; convert to raw so ser() applies VAT once, downstream, like every other source
         brand, sub = classify_by_code(product_code)
         if brand == 'EXCLUDE':
             continue
@@ -843,7 +858,7 @@ def load_online_receipts():
         add_record('Online', 'online', d, brand, model, sub, qty, amt, r[0], channel=channel,
                     vff_source_text=product_code, vff_name_text=product_name)
         n += 1
-    print(f"loaded {n} rows -> Online (Shopee/Lazada/Online, receipt-level)")
+    print(f"loaded {n} rows -> Online (Shopee/Lazada/Online, receipt-level; January uses the verified row-position split, Feb-Jun the customer-name heuristic)")
 load_online_receipts()
 
 # ================================================================== BFT_Central_Total_Department (line-item detail, split by Store Name)
