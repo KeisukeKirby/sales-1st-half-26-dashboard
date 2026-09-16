@@ -498,10 +498,31 @@ load_orders_style(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders',
 # note above; BFT_EVENT_2/1 (Barefoot's own events) are kept.
 # load_orders_style(SRC + '9c5663cd-EDV_EVENT_1.xlsx', 'Orders', 'Event', 'event',
 #                    has_channel=True, has_payment_channel=True)
-load_orders_style(SRC + '7abc0f65-BFT_EVENT_2.xlsx', 'Orders', 'Event', 'event',
+# 2026-09: 7abc0f65-BFT_EVENT_2.xlsx + 0165b670-BFT_EVENT_1.xlsx replaced by a
+# single consolidated file, 95bfee20-BFT_EVENT_1.xlsx, which despite its name
+# contains BOTH Event 1 and Event 2 warehouse rows (Warehouse/Branch: 419
+# 'Event 2' + 345 'Event 1' of 778 total). load_orders_style doesn't branch
+# on warehouse, so one call over this file replaces both old ones. Verified
+# against the live (pre-swap) Event totals: exact match for Jan/Feb/Mar/Apr/
+# Jun; May is 11,369.16 THB lower -- BFT_EVENT_3 (2514cf15, 'Orders (2)'
+# sheet, loaded separately below) isn't part of this file and wasn't
+# re-supplied, so that small residual can't be attributed further this pass.
+# load_orders_style(SRC + '7abc0f65-BFT_EVENT_2.xlsx', 'Orders', 'Event', 'event',
+#                    has_channel=True, has_payment_channel=True)
+# load_orders_style(SRC + '0165b670-BFT_EVENT_1.xlsx', 'Orders', 'Event', 'event',
+#                    has_channel=True, has_payment_channel=True)
+load_orders_style(SRC + '95bfee20-BFT_EVENT_1.xlsx', 'Orders', 'Event', 'event',
                    has_channel=True, has_payment_channel=True)
-load_orders_style(SRC + '0165b670-BFT_EVENT_1.xlsx', 'Orders', 'Event', 'event',
-                   has_channel=True, has_payment_channel=True)
+
+# Yoshi Run -- a Barefoot-run event with no product sales, just a lump-sum
+# participation/booth fee (per user 2026-09): 19,626.28 THB (Jan), 9,813.14
+# THB (May), matching the "Jan-Jun_final_without_tax.xlsx" BFT-tab reference
+# exactly. Those figures are already VAT-exclusive per that file's own
+# convention, so converted back to VAT-inclusive raw amounts here since
+# every other add_record() amount in this pipeline is raw/VAT-inclusive
+# (ser() applies the /1.07 conversion once, downstream, for everyone).
+add_record('Event', 'event', date(2026, 1, 1), None, None, None, 0, round(19626.28 * 1.07, 2), None)
+add_record('Event', 'event', date(2026, 5, 1), None, None, None, 0, round(9813.14 * 1.07, 2), None)
 
 # ================================================================== Central LP 3F (Thai headers)
 # 'ราคารวม' (line total) is the PRE-discount list price of each line; the
