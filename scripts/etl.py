@@ -1352,6 +1352,65 @@ def load_central_total_department():
     print(f"loaded {n} rows -> Central Total Department (all 5 stores; {skipped} subtotal/marker rows skipped)")
 load_central_total_department()
 
+# 2026-09: July-August follow-up (d9a6e5aa-BFT_Central_Total_Department_
+# Jul-Aug_26.xlsx), same schema as the H1 file above (Store Name/SKU Name/
+# Catalogue No./Month Sales Date/.../GP 30%/Before Vat), amount from column J
+# ('Before Vat', already VAT-exclusive per user instruction -- *1.07 here so
+# add_record's downstream VAT division reproduces it). Covers 4 of the 5
+# Central stores (no EASTVILLE rows in this file) for both July and August.
+#
+# July REPLACES etl_jul2026.py's load_central_total_department_jul2026(),
+# now disabled -- see the note there for why (wrong revenue-basis column,
+# and an incorrect assumption that 3 of the 4 stores were already covered by
+# 対EDV). Confirmed with the user 2026-09: this file's retail-basis figures
+# for CENTRAL WORLD-CDS/CHIDLOM/CHIDLOM ONLINE are a genuinely separate
+# revenue stream from 対EDV's wholesale invoice to Endeavors for the same
+# locations, not a duplicate -- both should be loaded. 対EDV's own data
+# currently only extends through July (a separate August wholesale invoice
+# is expected later); this loader's scope is unaffected by that either way.
+def load_central_total_department_julaug2026():
+    fn = SRC + 'd9a6e5aa-BFT_Central_Total_Department_Jul-Aug_26.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Export']
+    rows = list(ws.iter_rows(values_only=True))
+    header = rows[0]
+    idx = {h: i for i, h in enumerate(header) if h}
+    data = rows[1:]
+    MONTHS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}
+    STORE_NAME_MAP = {
+        'CHIDLOM': 'Central Chidlom',
+        'CHIDLOM ONLINE': 'Central Chidlom Online',
+        'CENTRAL WORLD-CDS': 'Central World (CDS)',
+        'LARDPRAO': 'Central Lardprao (Dept.)',
+        'EASTVILLE': 'Central Eastville',
+    }
+    n, skipped = 0, 0
+    for r in data:
+        if not any(r):
+            continue
+        store = r[idx['Store Name']]
+        sku_name = r[idx['SKU Name']]
+        cat = r[idx['Catalogue No.']]
+        msd = r[idx['Month Sales Date']]
+        if not store or not cat or not msd:
+            skipped += 1
+            continue
+        mo, yr = str(msd).split('-')
+        if not (int(yr) == 2026 and MONTHS[mo] in (7, 8)):
+            continue
+        d = date(int(yr), MONTHS[mo], 1)
+        qty = num(r[idx['Sales Quantity']])
+        before_vat = num(r[idx['Before Vat']])
+        amt = before_vat * 1.07
+        brand, sub = classify_by_code(cat)
+        model = model_from_name(sku_name)
+        store_label = STORE_NAME_MAP.get(store, f'Central {store.title()}')
+        add_record(store_label, 'central_dept', d, brand, model, sub, qty, amt,
+                   order_id=None, vff_source_text=cat, vff_name_text=sku_name)
+        n += 1
+    print(f"loaded {n} rows -> Central Total Department, Jul-Aug 2026 (4 of 5 stores, no Eastville in this file; {skipped} subtotal/marker rows skipped)")
+load_central_total_department_julaug2026()
+
 # ================================================================== 対EDV: Barefoot -> Endeavors wholesale invoices (Jan-Jul 2026)
 # New source added 2026-08, replacing the individual Endeavors-operated
 # store/channel feeds above (VFF Cart LP, Central Ladprao 3F, Thaniya,

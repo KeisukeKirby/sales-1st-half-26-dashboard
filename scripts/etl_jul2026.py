@@ -551,7 +551,20 @@ def load_central_total_department_jul2026():
         n += 1
     stores_seen = len(set(r[idx['Store Name']] for r in data if r[idx['Store Name']]))
     print(f"loaded {n} rows -> Central Total Department July 2026 (Lardprao (Dept.) only; {skipped} rows skipped for the other stores, now covered by 対EDV)")
-load_central_total_department_jul2026()
+# 2026-09: superseded by load_central_total_department_julaug2026() in
+# etl.py, which covers July AND August from a single newer file
+# (d9a6e5aa-BFT_Central_Total_Department_Jul-Aug_26.xlsx) and fixes two
+# problems with this loader: (1) it used 'Total Net Sales (Sales Amount)',
+# the pre-Central-fee gross figure, instead of the 'GP 30%'/'Before Vat'
+# net-of-fee figure the H1 loader in etl.py uses (confirmed against the BFT
+# reference tab) -- this understated nothing, it OVERstated Lardprao's July
+# revenue by ~13,343 THB; (2) it excluded CENTRAL WORLD-CDS/CHIDLOM/CHIDLOM
+# ONLINE assuming they were now represented via 対EDV's wholesale invoicing,
+# but the user confirmed 2026-09 that this Central Total Department feed is
+# BFT's own retail sales through those locations -- a genuinely separate
+# revenue stream from 対EDV's wholesale invoice to Endeavors, not a
+# duplicate, so all 4 stores this file covers should be loaded normally.
+# load_central_total_department_jul2026()
 
 # ================================================================== Siam Discovery July 2026
 # Same multi-year workbook as the 2025/2024 Siam Discovery loaders (identical
