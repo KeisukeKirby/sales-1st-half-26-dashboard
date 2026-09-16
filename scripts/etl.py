@@ -501,18 +501,82 @@ load_orders_style(SRC + '2932d908-Sales_Paradies_Park_JanJun_26.xlsx', 'Orders',
 # 2026-09: 7abc0f65-BFT_EVENT_2.xlsx + 0165b670-BFT_EVENT_1.xlsx replaced by a
 # single consolidated file, 95bfee20-BFT_EVENT_1.xlsx, which despite its name
 # contains BOTH Event 1 and Event 2 warehouse rows (Warehouse/Branch: 419
-# 'Event 2' + 345 'Event 1' of 778 total). load_orders_style doesn't branch
-# on warehouse, so one call over this file replaces both old ones. Verified
-# against the live (pre-swap) Event totals: exact match for Jan/Feb/Mar/Apr/
-# Jun; May is 11,369.16 THB lower -- BFT_EVENT_3 (2514cf15, 'Orders (2)'
-# sheet, loaded separately below) isn't part of this file and wasn't
-# re-supplied, so that small residual can't be attributed further this pass.
+# 'Event 2' + 345 'Event 1' of 778 total) -- one loader call now replaces
+# both old ones.
 # load_orders_style(SRC + '7abc0f65-BFT_EVENT_2.xlsx', 'Orders', 'Event', 'event',
 #                    has_channel=True, has_payment_channel=True)
 # load_orders_style(SRC + '0165b670-BFT_EVENT_1.xlsx', 'Orders', 'Event', 'event',
 #                    has_channel=True, has_payment_channel=True)
-load_orders_style(SRC + '95bfee20-BFT_EVENT_1.xlsx', 'Orders', 'Event', 'event',
-                   has_channel=True, has_payment_channel=True)
+def load_event_2026_09():
+    """95bfee20-BFT_EVENT_1.xlsx has an explicit column S, 'Payment amount
+    (excl. VAT)', on each order's first line -- per user confirmation
+    2026-09, this (not load_orders_style()'s usual resolve_order_amount()
+    heuristic over 'Payment amount'/Discount) is each order's authoritative
+    amount. Verified: matches the "Jan-Jun_final_without_tax.xlsx" BFT-tab
+    Event-column reference exactly, to the cent, for every one of the 6
+    months. Column S is blank only for voided/no-payment orders (verified:
+    22 of 568 orders, nearly all Status='Voided') -- correctly excluded.
+    A handful of orders (5, all in May) have every line's 'Total amount'
+    blank too, so there's no per-line weight to prorate the order's S-value
+    by; those fall back to a quantity-weighted split instead (excluding
+    non-product DC/CON/P lines from that quantity, so e.g. a same-order
+    discount line doesn't silently absorb -- and lose -- half the revenue).
+    """
+    fn = SRC + '95bfee20-BFT_EVENT_1.xlsx'
+    wb = openpyxl.load_workbook(fn, data_only=True, read_only=True)
+    ws = wb['Orders']
+    rows = list(ws.iter_rows(values_only=True))
+    header = rows[1]
+    idx = {h: i for i, h in enumerate(header) if h}
+    data = rows[2:]
+    data = [r for r in data if any(r) and r[idx.get('Product code')]]
+
+    order_channel = {}
+    order_line_total = defaultdict(float)
+    order_line_qty = defaultdict(float)  # excludes non-product (DC/CON/P) lines
+    order_s = {}
+    for r in data:
+        oid = r[idx.get('Sales order No.')]
+        order_line_total[oid] += num(r[idx.get('Total amount')])
+        b_check, _ = classify_by_code(r[idx.get('Product code')])
+        if b_check != 'EXCLUDE':
+            order_line_qty[oid] += num(r[idx.get('Quantity')])
+        s_val = r[idx['Payment amount (excl. VAT)']]
+        if s_val not in (None, '') and oid not in order_s:
+            order_s[oid] = num(s_val)
+        if oid and 'Sales channel' in idx and r[idx['Sales channel']] and oid not in order_channel:
+            order_channel[oid] = r[idx['Sales channel']]
+
+    n, skipped = 0, 0
+    for r in data:
+        pc = r[idx.get('Product code')]
+        d = to_date(r[idx.get('Date')])
+        if d is None:
+            continue
+        order_id = r[idx.get('Sales order No.')]
+        if order_id not in order_s:
+            skipped += 1
+            continue  # voided/no-payment order
+        qty = num(r[idx.get('Quantity')])
+        line_amt = num(r[idx.get('Total amount')])
+        order_total = order_line_total[order_id]
+        resolved_raw = round(order_s[order_id] * 1.07, 2)  # excl.-VAT -> raw; ser() re-applies /1.07 downstream
+        if order_total:
+            amt = line_amt / order_total * resolved_raw
+        else:
+            order_qty = order_line_qty[order_id]
+            amt = (qty / order_qty * resolved_raw) if order_qty else 0.0
+        brand, sub = classify_by_code(pc)
+        if brand == 'EXCLUDE':
+            continue
+        pname = r[idx.get('Product name')]
+        model = model_from_name(pname)
+        channel = normalize_channel(order_channel.get(order_id))
+        add_record('Event', 'event', d, brand, model, sub, qty, amt, order_id, channel=channel,
+                    vff_source_text=pc, vff_name_text=pname)
+        n += 1
+    print(f"loaded {n} rows -> Event ({skipped} voided/no-payment rows skipped)")
+load_event_2026_09()
 
 # Yoshi Run -- a Barefoot-run event with no product sales, just a lump-sum
 # participation/booth fee (per user 2026-09): 19,626.28 THB (Jan), 9,813.14
