@@ -489,6 +489,50 @@ out['vff_shoes'] = {
                              for g, sizes in vff_shoe_gender_size_month.items()},
 }
 
+# ---- export_breakdown: Export store's own contribution to the cross-store
+# aggregates above (brand_monthly, model_monthly, brand_model_monthly,
+# vff_shoes.color_monthly/gender_monthly/gender_size_monthly), same shape as
+# each so the dashboard's "輸出実績を除く" toggle (VFF Shoes / 商品・ブラン
+# ド別 tabs) can subtract it back out precisely rather than approximate.
+# Added 2026-09. A single color alias here ('Total Black' -> 'Black') matches
+# a one-off color-name merge applied directly to the live dashboard JSON
+# earlier (not otherwise encoded in this pipeline) -- without it, Export's
+# V-Run 'Total Black' pairs wouldn't line up with the merged 'Black' key the
+# rest of the data already uses, and the toggle would under-subtract.
+_EXPORT_COLOR_ALIASES = {'Total Black': 'Black'}
+_exp_records = [r for r in records if r['store'] == 'Export']
+_exp_brand_month = defaultdict(lambda: defaultdict(new_acc))
+_exp_model_month = defaultdict(lambda: defaultdict(new_acc))
+_exp_brand_model_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))
+_exp_color_month = defaultdict(lambda: defaultdict(new_acc))
+_exp_gender_month = defaultdict(lambda: defaultdict(new_acc))
+_exp_gender_size_month = defaultdict(lambda: defaultdict(lambda: defaultdict(new_acc)))
+for r in _exp_records:
+    month, brand, amt, qty = r['month'], r['brand'], r['amount'], r['qty']
+    def _add(acc):
+        acc['amount'] += amt; acc['qty'] += qty
+    _add(_exp_brand_month[brand][month])
+    model_c = canon_model(brand, r['model'])
+    if model_c:
+        _add(_exp_model_month[model_c][month])
+        _add(_exp_brand_model_month[brand][model_c][month])
+    if r.get('is_vff_shoe'):
+        if r.get('color'):
+            color_c = _EXPORT_COLOR_ALIASES.get(r['color'], r['color'])
+            _add(_exp_color_month[color_c][month])
+        g_label = GENDER_LABEL.get(r.get('gender') or 'Unisex', r.get('gender') or 'Unisex')
+        _add(_exp_gender_month[g_label][month])
+        if r.get('size'):
+            _add(_exp_gender_size_month[g_label][r['size']][month])
+out['export_breakdown'] = {
+    'brand_monthly': monthly_out(_exp_brand_month),
+    'model_monthly': monthly_out(_exp_model_month),
+    'brand_model_monthly': {b: monthly_out(models) for b, models in _exp_brand_model_month.items()},
+    'color_monthly': monthly_out(_exp_color_month),
+    'gender_monthly': monthly_out(_exp_gender_month),
+    'gender_size_monthly': {g: monthly_out(sizes) for g, sizes in _exp_gender_size_month.items()},
+}
+
 # ---- payment (the store-level ledgers seeded above only; per user confirmation
 # 2026-08, Event's own payment-method data is excluded from this feature)
 # Central Ladprao 3F/Thaniya/K Village/VFF Cart LP's ledgers stay in
