@@ -811,7 +811,8 @@ const T = {
     vffZeroModelLinkText: '売上0のモデルを見る（{n}件）', vffZeroModelModalTitle: '売上0のモデル',
     thModel: 'モデル', thAmountTHB: '金額(THB)',
     br02Title: 'ブランド別 売上詳細', selectBrandLabel: 'ブランドを選択', thBrandShare: 'ブランド内比率',
-    vSoulRatioTitle: 'V-Soul 販売比率推移（月別）', vSoulRatioNote: 'VFFブランド内におけるV-Soulの売上構成比（月別）。輸出分は除いて算出しています',
+    vSoulRatioTitle: 'V-Soul 販売比率推移（月別）', vSoulRatioNote: 'VFFブランド内におけるV-Soulの売上構成比・販売足数（月別）。輸出分は除いて算出しています',
+    vSoulRatioLegendRatio: '構成比', vSoulRatioLegendQty: '販売足数',
     br03Title: 'Others 内訳（ブランド別比率）', br03Note: 'Klean Kanteen / Swans / Knockaround / LUNA / Tube の構成比',
     correctionLabel: '訂正履歴:',
     correctionText: '当初「BFT委託」の合計を 1,316,111.80 THB と報告しましたが、元データ末尾の合計行（รวม）を通常の明細行と誤認して二重計上していたため、正しくは <b>658,055.60 THB</b> です。本ダッシュボードは訂正後の値を使用しています。',
@@ -891,7 +892,8 @@ const T = {
     vffZeroModelLinkText: 'View models with 0 sales ({n})', vffZeroModelModalTitle: 'Models with 0 Sales',
     thModel: 'Model', thAmountTHB: 'Amount (THB)',
     br02Title: 'Brand Sales Detail', selectBrandLabel: 'Select Brand', thBrandShare: 'Share within Brand',
-    vSoulRatioTitle: 'V-Soul Sales Ratio Trend (Monthly)', vSoulRatioNote: "V-Soul's share of VFF brand sales, by month. Export figures are excluded from this calculation.",
+    vSoulRatioTitle: 'V-Soul Sales Ratio Trend (Monthly)', vSoulRatioNote: "V-Soul's share of VFF brand sales and units sold, by month. Export figures are excluded from this calculation.",
+    vSoulRatioLegendRatio: 'Share', vSoulRatioLegendQty: 'Units Sold',
     br03Title: 'Others Breakdown (by Brand)', br03Note: 'Composition of Klean Kanteen / Swans / Knockaround / LUNA / Tube',
     correctionLabel: 'Correction:',
     correctionText: 'We originally reported "BFT Consignment" total sales as 1,316,111.80 THB. A trailing "รวม" (total) row in the source sheet had been mistaken for a regular line item and double-counted; the correct figure is <b>658,055.60 THB</b>. This dashboard uses the corrected value.',
@@ -970,7 +972,8 @@ const T = {
     vffZeroModelLinkText: 'ดูรุ่นที่มียอดขาย 0 ({n} รายการ)', vffZeroModelModalTitle: 'รุ่นที่มียอดขาย 0',
     thModel: 'รุ่น', thAmountTHB: 'ยอดขาย (บาท)',
     br02Title: 'รายละเอียดยอดขายตามแบรนด์', selectBrandLabel: 'เลือกแบรนด์', thBrandShare: 'สัดส่วนภายในแบรนด์',
-    vSoulRatioTitle: 'แนวโน้มสัดส่วนยอดขาย V-Soul (รายเดือน)', vSoulRatioNote: 'สัดส่วนยอดขาย V-Soul ในแบรนด์ VFF แยกตามเดือน ไม่รวมยอดส่งออกในการคำนวณนี้',
+    vSoulRatioTitle: 'แนวโน้มสัดส่วนยอดขาย V-Soul (รายเดือน)', vSoulRatioNote: 'สัดส่วนยอดขายและจำนวนที่ขายของ V-Soul ในแบรนด์ VFF แยกตามเดือน ไม่รวมยอดส่งออกในการคำนวณนี้',
+    vSoulRatioLegendRatio: 'สัดส่วน', vSoulRatioLegendQty: 'จำนวนที่ขาย',
     br03Title: 'รายละเอียด Others (ตามแบรนด์)', br03Note: 'สัดส่วนของ Klean Kanteen / Swans / Knockaround / LUNA / Tube',
     correctionLabel: 'การแก้ไข:',
     correctionText: 'เดิมเรารายงานยอดขายรวมของ "BFT Consignment" ไว้ที่ 1,316,111.80 บาท แต่แถว "รวม" ท้ายชีทข้อมูลต้นฉบับถูกเข้าใจผิดว่าเป็นรายการสินค้าปกติและถูกนับซ้ำ ตัวเลขที่ถูกต้องคือ <b>658,055.60 บาท</b> แดชบอร์ดนี้ใช้ค่าที่แก้ไขแล้ว',
@@ -2696,6 +2699,7 @@ const vffSizeDetailHandle = makeDetailToggle('vffSizeDetailBtn', 'vffSizeDetailW
 // V-Soul's monthly share of VFF brand sales, always with Export excluded from
 // both numerator and denominator (independent of the global excludeExport
 // toggle -- this chart's whole point is the underlying retail/wholesale trend).
+const VSR_QTY_HEX = '#7FA0C4';
 function renderVSoulRatioChart(){
   const el = document.getElementById('vSoulRatioChart');
   if (!el) return;
@@ -2708,25 +2712,50 @@ function renderVSoulRatioChart(){
     const vSoul = (vSoulModel[m] ? vSoulModel[m].amount : 0) - (expModel[m] ? expModel[m].amount : 0);
     return total > 0 ? vSoul / total * 100 : 0;
   });
-  const {max: maxV, step: axisStep} = niceAxis(Math.max(...ratios, 1), 4);
-  const w=500,h=200,padL=48,padR=16,padT=16,padB=26,plotW=w-padL-padR,plotH=h-padT-padB;
+  const qtys = MONTHS.map(m => {
+    const vSoul = vSoulModel[m] ? vSoulModel[m].qty : 0;
+    const exp = expModel[m] ? expModel[m].qty : 0;
+    return Math.max(vSoul - exp, 0);
+  });
+  // Two independent y-scales sharing the same number of gridline intervals
+  // (steps=4) so the left (%) and right (足数) tick labels land on the exact
+  // same horizontal gridlines, even though each axis has its own nice round max.
+  const steps = 4;
+  const {max: maxRatio} = niceAxis(Math.max(...ratios, 1), steps);
+  const {max: maxQty} = niceAxis(Math.max(...qtys, 1), steps);
+  const w=500,h=220,padL=44,padR=44,padT=16,padB=26,plotW=w-padL-padR,plotH=h-padT-padB;
   const x = i => padL + plotW*i/(MONTHS.length-1);
-  const y = v => padT+plotH-(v/maxV)*plotH;
+  const y = v => padT+plotH-(v/maxRatio)*plotH;
+  const bandW = plotW / MONTHS.length;
+  const barW = Math.min(bandW * 0.42, 30);
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px">`;
-  for (let s=0; s*axisStep<=maxV; s++){
-    const v = axisStep*s, yy=y(v);
+  for (let s=0; s<=steps; s++){
+    const yy = padT + plotH*(1 - s/steps);
     svg += `<line x1="${padL}" y1="${yy}" x2="${w-padR}" y2="${yy}" class="axis-line"></line>`;
-    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${v.toFixed(0)}%</text>`;
+    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${(maxRatio*s/steps).toFixed(0)}%</text>`;
+    svg += `<text x="${w-padR+8}" y="${yy+3}" text-anchor="start" fill="${VSR_QTY_HEX}">${fmt(Math.round(maxQty*s/steps))}</text>`;
   }
   MONTHS.forEach((m,i)=>svg+=`<text x="${x(i)}" y="${h-6}" text-anchor="middle">${monthLabel(m)}</text>`);
+  qtys.forEach((v,i)=>{
+    const barH = (v/maxQty)*plotH;
+    svg += `<rect x="${x(i)-barW/2}" y="${padT+plotH-barH}" width="${barW}" height="${Math.max(barH,0)}" fill="${VSR_QTY_HEX}" opacity="0.55" rx="2" class="vsrbar" data-i="${i}"></rect>`;
+  });
   let path=''; ratios.forEach((v,i)=>path+=(i===0?'M':'L')+x(i)+' '+y(v)+' ');
   svg += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>`;
   ratios.forEach((v,i)=>svg+=`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2" class="vsrpt" data-i="${i}"></circle>`);
   svg += `</svg>`;
-  el.innerHTML = svg;
+  const legendHtml = `<div class="legend" style="flex-direction:row;gap:18px;margin-top:6px;justify-content:center;flex-wrap:wrap">
+    <div class="item"><span class="k"><span class="swatch" style="background:var(--accent)"></span>${esc(t('vSoulRatioLegendRatio'))}</span></div>
+    <div class="item"><span class="k"><span class="swatch" style="background:${VSR_QTY_HEX}"></span>${esc(t('vSoulRatioLegendQty'))}</span></div>
+  </div>`;
+  el.innerHTML = svg + legendHtml;
   el.querySelectorAll('.vsrpt').forEach(pt=>{
-    pt.addEventListener('mousemove', e=>showTip(e, `<b>${monthLabel(MONTHS[+pt.dataset.i])}</b><br>${ratios[+pt.dataset.i].toFixed(1)}%`));
+    pt.addEventListener('mousemove', e=>showTip(e, `<b>${monthLabel(MONTHS[+pt.dataset.i])}</b><br>${t('vSoulRatioLegendRatio')}: ${ratios[+pt.dataset.i].toFixed(1)}%<br>${t('vSoulRatioLegendQty')}: ${fmt(qtys[+pt.dataset.i])} ${t('unitPt')}`));
     pt.addEventListener('mouseleave', hideTip);
+  });
+  el.querySelectorAll('.vsrbar').forEach(bar=>{
+    bar.addEventListener('mousemove', e=>showTip(e, `<b>${monthLabel(MONTHS[+bar.dataset.i])}</b><br>${t('vSoulRatioLegendQty')}: ${fmt(qtys[+bar.dataset.i])} ${t('unitPt')}`));
+    bar.addEventListener('mouseleave', hideTip);
   });
 }
 
