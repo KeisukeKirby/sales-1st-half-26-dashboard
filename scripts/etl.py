@@ -1580,7 +1580,160 @@ def load_export_2026_09():
             ))
             n += 1
     print(f"loaded {n} rows -> Export (1 shipment, 948 pairs, USD 82,614.00 -> THB {sum(r['amount'] for r in records if r['store']=='Export')/1.07:,.2f} excl. VAT)")
-load_export_2026_09()
+# load_export_2026_09()  # superseded 2026-09-24 -- replaced by load_export_invoices_2026_09()
+# below, which covers this same June shipment (IVT2606001, unchanged) plus
+# two more invoices (July IVT2607001, August IVT2608001) the user provided
+# afterward. Kept, not deleted, for history/reference.
+
+# ================================================================== Export: 3 wholesale invoices (Jun/Jul/Aug 2026), added 2026-09-24
+# Three packing-list/invoice images (not spreadsheets -- transcribed by hand,
+# with per-size columns cross-checked against each invoice's own header row
+# via pixel analysis since two rows read at first glance turned out to be
+# off by one EU-size column):
+#   IVT2606001 (June 5, 2026): USD, rate 32.9594 -- identical content to the
+#     original load_export_2026_09() shipment above (same 7 VFF-shoe lines).
+#   IVT2607001 (July 15, 2026): THB directly (no FX conversion) -- the first
+#     Export invoice to include non-VFF goods: Marugo Tabi Shoes (TabiRela
+#     brand, CM sizes -- not tracked at size level, only VFF shoes get
+#     size/color/gender breakdown in this dashboard) and two "Socks of
+#     Synthetic Fibers" lines (Oleno Ultimate family; and "BAREFOOTINC SOCKS
+#     WITH ANTI-SLIP", a Barefoot Inc. house-brand sock with no existing
+#     brand bucket of its own -- classified under BFJ per user instruction
+#     2026-09-24 ("BFJに入れて")).
+#   IVT2608001 (August 11, 2026): USD, rate 32.8081 -- VFF shoes only,
+#     including a new model line, Groundsplay LS, not seen in this dashboard
+#     before (kept as its own model, not merged into the existing bare
+#     "Groundsplay" line -- the "LS" suffix isn't confirmed to be the same
+#     product and canon_model()'s own (brand, prefix-stripped-upper) grouping
+#     wouldn't merge them either).
+# Exports are zero-rated under Thai VAT law, so each invoice/packing-list
+# THB (or USD*rate) goods figure is treated as the VAT-exclusive net amount,
+# then multiplied by 1.07 into "raw" here -- ser() divides every amount by
+# 1.07 exactly once, downstream, uniformly, same as every other add_record()
+# call. Gender for VFF-shoe lines is inferred from the Style No.'s 3rd
+# character (W/M/U -- Scramkey's "25U4601"-style codes are Unisex), matching
+# load_export_2026_09()'s convention; sizes are plain EU (34-48), no
+# conversion needed. Color 'Total Black' is aliased to 'Black' (this
+# dashboard's established merge -- see aggregate.py's _EXPORT_COLOR_ALIASES).
+# order_id=None throughout -- these are lump wholesale invoices, not
+# per-transaction retail receipts, same convention as 対EDV/Central Lardprao
+# (Dept.) elsewhere in this file.
+def load_export_invoices_2026_09():
+    EXPORT_COLOR_ALIASES = {'Total Black': 'Black'}
+
+    def add_vff_shoe_line(month_date, style_no, model, color, unit_price_thb, sizes):
+        gender_letter = style_no[2].upper()
+        gender = 'Women' if gender_letter == 'W' else 'Men' if gender_letter == 'M' else 'Unisex'
+        color = EXPORT_COLOR_ALIASES.get(color, color)
+        n = 0
+        for size, qty in sizes.items():
+            amt_raw = round(unit_price_thb * qty * 1.07, 2)
+            records.append(dict(
+                store='Export', category='export', date=month_date.isoformat(), month=month_date.strftime('%Y-%m'),
+                brand='VFF', model=model, is_vff_shoe=True, gender=gender, size=str(size), color=color,
+                sub=None, qty=qty, amount=amt_raw, order_id=None,
+                channel=None, payment=None, entity=None,
+            ))
+            n += 1
+        return n
+
+    def add_plain_line(month_date, brand, model, qty, unit_price_thb):
+        amt_raw = round(unit_price_thb * qty * 1.07, 2)
+        records.append(dict(
+            store='Export', category='export', date=month_date.isoformat(), month=month_date.strftime('%Y-%m'),
+            brand=brand, model=model, is_vff_shoe=False, gender=None, size=None, color=None,
+            sub=None, qty=qty, amount=amt_raw, order_id=None,
+            channel=None, payment=None, entity=None,
+        ))
+        return 1
+
+    total_n = 0
+
+    # ---- June 2026 (IVT2606001) -- USD, rate 32.9594 -- unchanged from the original shipment
+    USD_JUN = 32.9594
+    JUNE_LINES = [
+        ('26W7201', 'V-Soul', 'Black', 78.70, {'35':9,'36':15,'37':30,'38':48,'39':42,'40':27,'41':21}),
+        ('26W7202', 'V-Soul', 'Brown', 78.70, {'36':9,'37':18,'38':33,'39':24,'40':15,'41':9}),
+        ('26W7205', 'V-Soul', 'Baby Blue', 78.70, {'35':6,'36':12,'37':21,'38':36,'39':27,'40':18,'41':12}),
+        ('26M7001', 'V-Run', 'Total Black', 93.10, {'39':6,'40':9,'41':21,'42':30,'43':27,'44':21,'45':18,'46':12,'47':9,'48':3}),
+        ('26M7001', 'V-Run', 'Total Black', 93.10, {'35':6,'36':12,'37':27,'38':27,'39':24,'40':15,'41':9}),
+        ('26M7004', 'V-Run', 'Black-Lime/Black', 93.10, {'40':12,'41':21,'42':24,'43':21,'44':15,'45':12,'46':9,'47':6}),
+        ('25M7501', 'Trailope', 'Black', 97.90, {'39':6,'40':12,'41':21,'42':24,'43':21,'44':15,'45':12,'46':6,'47':3}),
+    ]
+    d_jun = date(2026, 6, 1)
+    for style_no, model, color, unit_usd, sizes in JUNE_LINES:
+        total_n += add_vff_shoe_line(d_jun, style_no, model, color, unit_usd * USD_JUN, sizes)
+
+    # ---- July 2026 (IVT2607001) -- THB, no conversion
+    d_jul = date(2026, 7, 1)
+    JULY_VFF = [
+        ('25M7007', 'V-Run', 'Fig/Ivory/A.Green', 2750, {'40':2,'41':3,'42':3,'43':3,'44':2,'45':2}),
+        ('26W7002', 'V-Run', 'Total Ivory', 2750, {'37':2,'38':3,'39':2,'40':2}),
+        ('14M0701', 'Kso Evo', 'Black', 2150, {'41':3,'42':4,'43':4,'44':3,'45':2,'46':2}),
+        ('26M0706', 'Kso Evo', 'Deep Lake/Black', 2150, {'41':2,'42':3,'43':3,'44':2,'45':2}),
+        ('14W0701', 'Kso Evo', 'Black', 2150, {'37':2,'38':3,'39':4,'40':3}),
+        ('26W0706', 'Kso Evo', 'Deep Lake/Black', 2150, {'37':2,'38':2,'39':2,'40':2}),
+        ('25W7106', 'V-Alpha', 'Deep Lake', 2260, {'36':1,'37':2,'38':3,'39':2,'40':2}),
+        ('26M7506', 'Trailope', 'Deep Lake', 2700, {'41':1,'42':2,'43':2,'44':2,'45':1}),
+        ('25U4601', 'Scramkey', 'Black', 2560, {'36':2,'37':2,'38':2,'39':2,'40':4,'41':5,'42':5,'43':5,'44':3,'45':2,'46':2}),
+        ('26U4606', 'Scramkey', 'Deep Lake/Black', 2560, {'41':2,'42':2,'43':2,'44':2,'45':2}),
+        ('26M5003', 'Spidrwalk', 'Lime Green', 2560, {'40':2,'41':4,'42':6,'43':6,'44':4,'45':4,'46':3}),
+        ('26M5001', 'Spidrwalk', 'Total Black', 2560, {'41':2,'42':2,'43':2,'44':2,'45':2}),
+        ('26W5001', 'Spidrwalk', 'Total Black', 2560, {'37':2,'38':2,'39':2}),
+        ('26W5004', 'Spidrwalk', 'Fuchsia', 2560, {'37':2,'38':2,'39':2,'40':2}),
+    ]
+    for style_no, model, color, unit_thb, sizes in JULY_VFF:
+        total_n += add_vff_shoe_line(d_jul, style_no, model, color, unit_thb, sizes)
+
+    # Model names spelled out in full (matching this dashboard's existing
+    # canonical TabiRela entries exactly) rather than the invoice's bare
+    # "Style" column text ("Hitoe+"/"Tabirela") -- canon_model()'s automatic
+    # (brand, prefix-stripped-upper) grouping wouldn't catch either bare form
+    # (no shared prefix with "Marugo Tabi ..."), so writing the canonical
+    # form directly here keeps this loader consistent with the live,
+    # already-patched dashboard_data.json without also having to extend
+    # aggregate.py's alias table.
+    JULY_TABIRELA = [
+        ('Marugo Tabi Hitoe+', 26, 1770), ('Marugo Tabi Hitoe+', 24, 1770),
+        ('Marugo TabiRela', 14, 1300), ('Marugo TabiRela', 17, 1300), ('Marugo TabiRela', 9, 1300), ('Marugo TabiRela', 8, 1300),
+    ]
+    for model, qty, unit_thb in JULY_TABIRELA:
+        total_n += add_plain_line(d_jul, 'TabiRela', model, qty, unit_thb)
+
+    JULY_OLENO = [
+        ('Oleno Ultimate', 320, 330), ('Oleno Ultimate TNG', 96, 390),
+        ('Oleno Ultimate TNG', 64, 390), ('Oleno Ultimate ASO', 96, 360),
+    ]
+    for model, qty, unit_thb in JULY_OLENO:
+        total_n += add_plain_line(d_jul, 'Oleno', model, qty, unit_thb)
+
+    # "BFJ " prefix included explicitly -- there's no existing BFJ variant of
+    # this brand-new model for canon_model()'s automatic grouping to prefer,
+    # so it would otherwise stay unprefixed, unlike every other BFJ model.
+    JULY_BFJ = [
+        ('BFJ Barefooting Socks Anti-Slip', 320, 190), ('BFJ Barefooting Socks Anti-Slip', 260, 190),
+    ]
+    for model, qty, unit_thb in JULY_BFJ:
+        total_n += add_plain_line(d_jul, 'BFJ', model, qty, unit_thb)
+
+    # ---- August 2026 (IVT2608001) -- USD, rate 32.8081
+    USD_AUG = 32.8081
+    d_aug = date(2026, 8, 1)
+    AUGUST_VFF = [
+        # "VFF " prefix included explicitly -- Groundsplay LS is a brand-new
+        # model with no existing sibling for canon_model() to group/prefer against.
+        ('26M3201', 'VFF Groundsplay LS', 'Total Black', 75.00, {'40':18,'41':24,'42':27,'43':24,'44':12,'45':12,'46':9,'47':6}),
+        ('26W3202', 'VFF Groundsplay LS', 'Ivory-Deep Lake', 75.00, {'36':6,'37':15,'38':24,'39':30,'40':24,'41':15,'42':6}),
+        ('26M5001', 'Spidrwalk', 'Total Black', 75.00, {'40':12,'41':12,'42':12,'43':12,'44':12,'45':6,'46':6}),
+        ('26W5001', 'Spidrwalk', 'Total Black', 75.00, {'36':9,'37':18,'38':15,'39':15,'40':15,'41':12}),
+        ('25M4301', 'Breezandal', 'Black', 75.00, {'39':9,'40':12,'41':12,'42':15,'43':12,'44':12,'45':6,'46':6}),
+        ('25W4302', 'Breezandal', 'Ivory/Green', 75.00, {'37':15,'38':15,'39':15,'40':15,'41':12}),
+    ]
+    for style_no, model, color, unit_usd, sizes in AUGUST_VFF:
+        total_n += add_vff_shoe_line(d_aug, style_no, model, color, unit_usd * USD_AUG, sizes)
+
+    print(f"loaded {total_n} rows -> Export (3 invoices: Jun 948 pairs/USD82,614.00, Jul 1,443 pairs/THB929,680.00, Aug 564 pairs/USD42,300.00)")
+load_export_invoices_2026_09()
 
 # ================================================================== summary / sanity checks
 print()
