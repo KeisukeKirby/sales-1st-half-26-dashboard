@@ -624,7 +624,7 @@ const PREV_MONTHS = DATA.prev_months || [];
 // Store, and the VFF Shoes channel-share view all bucket by the same
 // DATA.stores[].group field, so "channel" means one consistent thing dashboard-wide.
 const GROUP_ORDER = ['directly_operated','central_dept','online','event','consignment','siam_discovery','thaniya','edv','export'];
-const BRAND_HEX = {'VFF':'#E8A33D','Coolcore':'#5FA88A','Oleno':'#C97B4A','BFJ':'#7FA0C4','TabiRela':'#B189C7','Others':'#D9C15A','Tabio':'#C4507A'};
+const BRAND_HEX = {'VFF':'#E8A33D','Coolcore':'#5FA88A','Oleno':'#C97B4A','BFJ':'#7FA0C4','TabiRela':'#B189C7','Others':'#D9C15A','Tabio':'#C4507A','VFF_SHOES':'#E8A33D','VFF_SOCKS':'#C4674F'};
 const PAY_HEX = {'Cash':'#5FA88A','Credit Card':'#7FA0C4','QR Code':'#E8A33D','Other':'#C4674F'};
 const OTHERS_SUB_HEX = ['#E8A33D','#5FA88A','#C97B4A','#7FA0C4','#B189C7'];
 const GENDER_HEX = {'女性': '#B189C7', '男性': '#7FA0C4', 'ユニセックス': '#D9C15A'};
@@ -672,6 +672,57 @@ function withoutExportNested(mainMap, exportMap){
 }
 function round2(v){ return Math.round(v*100)/100; }
 function round1(v){ return Math.round(v*10)/10; }
+
+// ============================================================== 商品・ブランド別: split VFF into シューズ/ソックス他
+// The 商品・ブランド別 tab's per-brand views (ブランド別 売上構成, チャネル別
+// ブランド構成, ブランド別 売上詳細) treat 'VFF' as one brand, lumping VFF
+// shoes together with VFF socks/accessories. Per user request they're split
+// into two synthetic brand keys, VFF_SHOES and VFF_SOCKS, using the already
+// exact vff_shoes.* aggregates (is_vff_shoe flag, built with full precision --
+// see load_export_2026_09() etc. in etl.py) as the shoes figure, with socks
+// derived as the exact residual (brand total - shoes), so the two always sum
+// back to the original 'VFF' total to the cent. Scoped to this tab only --
+// DATA.brand_monthly itself is left untouched so every other tab (店舗ごとの
+//詳細 brand donut, etc.) keeps showing VFF as one line, as before.
+const VFF_SHOES_MONTHLY = {};
+(DATA.vff_shoes.monthly || []).forEach(r => { VFF_SHOES_MONTHLY[r.month] = {amount: r.amount, qty: r.qty, orders: r.orders}; });
+const VFF_SHOE_MODEL_SET = new Set(Object.keys(DATA.vff_shoes.model_monthly || {}));
+function vffSocksModelMonthly(){
+  const out = {};
+  Object.entries(DATA.brand_model_monthly.VFF || {}).forEach(([model, mm]) => {
+    if (!VFF_SHOE_MODEL_SET.has(model)) out[model] = mm;
+  });
+  return out;
+}
+// brandMonthlyMap: brand -> month -> {amount,qty,orders} (already Export-adjusted
+// if the caller wants that). shoeMonthlyEff: month -> {amount,qty,orders} for
+// VFF shoes only, adjusted the same way. Replaces the 'VFF' entry with VFF_SHOES
+// (=shoeMonthlyEff) and VFF_SOCKS (=exact residual); every other brand passes through.
+function splitVffBrand(brandMonthlyMap, shoeMonthlyEff){
+  if (!brandMonthlyMap || !brandMonthlyMap.VFF) return brandMonthlyMap;
+  const out = {...brandMonthlyMap};
+  delete out.VFF;
+  const vffTotal = brandMonthlyMap.VFF;
+  const shoes = {}, socks = {};
+  Object.keys(vffTotal).forEach(m => {
+    const tot = vffTotal[m] || {amount:0, qty:0, orders:0};
+    const sh = (shoeMonthlyEff && shoeMonthlyEff[m]) || {amount:0, qty:0, orders:0};
+    shoes[m] = sh;
+    socks[m] = {
+      amount: round2(tot.amount - sh.amount),
+      qty: round1(tot.qty - sh.qty),
+      orders: (tot.orders || 0) - (sh.orders || 0),
+    };
+  });
+  out.VFF_SHOES = shoes;
+  out.VFF_SOCKS = socks;
+  return out;
+}
+function brandDisplay(brand){
+  if (brand === 'VFF_SHOES') return t('vffShoesLabel');
+  if (brand === 'VFF_SOCKS') return t('vffSocksLabel');
+  return brand;
+}
 // Channel-group categorical palette (7 categories). Validated colorblind-safe as
 // a set against the dashboard's dark surfaces via the dataviz skill's
 // validate_palette.js (lightness band, chroma floor, CVD ΔE>=8, normal-vision
@@ -811,6 +862,7 @@ const T = {
     vffZeroModelLinkText: '売上0のモデルを見る（{n}件）', vffZeroModelModalTitle: '売上0のモデル',
     thModel: 'モデル', thAmountTHB: '金額(THB)',
     br02Title: 'ブランド別 売上詳細', selectBrandLabel: 'ブランドを選択', thBrandShare: 'ブランド内比率',
+    vffShoesLabel: 'VFFシューズ', vffSocksLabel: 'VFFソックス他',
     vSoulRatioTitle: 'V-Soul 販売比率推移（月別）', vSoulRatioNote: 'VFFブランド内におけるV-Soulの売上構成比・販売足数（月別）。輸出分は除いて算出しています',
     vSoulRatioLegendRatio: '構成比', vSoulRatioLegendQty: '販売足数',
     br03Title: 'Others 内訳（ブランド別比率）', br03Note: 'Klean Kanteen / Swans / Knockaround / LUNA / Tube の構成比',
@@ -892,6 +944,7 @@ const T = {
     vffZeroModelLinkText: 'View models with 0 sales ({n})', vffZeroModelModalTitle: 'Models with 0 Sales',
     thModel: 'Model', thAmountTHB: 'Amount (THB)',
     br02Title: 'Brand Sales Detail', selectBrandLabel: 'Select Brand', thBrandShare: 'Share within Brand',
+    vffShoesLabel: 'VFF Shoes', vffSocksLabel: 'VFF Socks & Other',
     vSoulRatioTitle: 'V-Soul Sales Ratio Trend (Monthly)', vSoulRatioNote: "V-Soul's share of VFF brand sales and units sold, by month. Export figures are excluded from this calculation.",
     vSoulRatioLegendRatio: 'Share', vSoulRatioLegendQty: 'Units Sold',
     br03Title: 'Others Breakdown (by Brand)', br03Note: 'Composition of Klean Kanteen / Swans / Knockaround / LUNA / Tube',
@@ -972,6 +1025,7 @@ const T = {
     vffZeroModelLinkText: 'ดูรุ่นที่มียอดขาย 0 ({n} รายการ)', vffZeroModelModalTitle: 'รุ่นที่มียอดขาย 0',
     thModel: 'รุ่น', thAmountTHB: 'ยอดขาย (บาท)',
     br02Title: 'รายละเอียดยอดขายตามแบรนด์', selectBrandLabel: 'เลือกแบรนด์', thBrandShare: 'สัดส่วนภายในแบรนด์',
+    vffShoesLabel: 'VFF (รองเท้า)', vffSocksLabel: 'VFF (ถุงเท้าและอื่นๆ)',
     vSoulRatioTitle: 'แนวโน้มสัดส่วนยอดขาย V-Soul (รายเดือน)', vSoulRatioNote: 'สัดส่วนยอดขายและจำนวนที่ขายของ V-Soul ในแบรนด์ VFF แยกตามเดือน ไม่รวมยอดส่งออกในการคำนวณนี้',
     vSoulRatioLegendRatio: 'สัดส่วน', vSoulRatioLegendQty: 'จำนวนที่ขาย',
     br03Title: 'รายละเอียด Others (ตามแบรนด์)', br03Note: 'สัดส่วนของ Klean Kanteen / Swans / Knockaround / LUNA / Tube',
@@ -1809,10 +1863,13 @@ function renderChannelBrandDonut(){
   DATA.stores.forEach(s => {
     if (keep !== 'ALL' && s.group !== keep) return;
     if (excludeExport && s.store === 'Export') return;
-    const bm = sumKeyed(s.brand_monthly, months);
+    // Export never carries socks, and (when the toggle is off) its own row is
+    // already included in s.brand_monthly, so splitting per-store here with no
+    // further export adjustment stays consistent with the skip above.
+    const bm = sumKeyed(splitVffBrand(s.brand_monthly, (DATA.vff_shoes.store_monthly || {})[s.store]), months);
     Object.entries(bm).forEach(([brand,v]) => { brandTotals[brand] = (brandTotals[brand]||0) + v.amount; });
   });
-  const items = Object.entries(brandTotals).sort((a,b) => b[1]-a[1]).map(([brand,amt]) => ({label:brand, key:brand, value:amt, color:BRAND_HEX[brand]||'#8E9C8F'}));
+  const items = Object.entries(brandTotals).sort((a,b) => b[1]-a[1]).map(([brand,amt]) => ({label:brandDisplay(brand), key:brand, value:amt, color:BRAND_HEX[brand]||'#8E9C8F'}));
   const total = items.reduce((a,d)=>a+d.value,0) || 1;
   document.getElementById('channelBrandDonut').innerHTML = donutChart(items, {centerLabel: (total/1e6).toFixed(2)+'M', centerUnit:'THB'});
   attachDonutTip(document.getElementById('channelBrandDonut'), items, total);
@@ -2024,9 +2081,11 @@ function renderBrandComp(){
   sel.value = keep;
   const metricKey = keep;
 
-  const brandSummed = sumKeyed(withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly), months);
+  const brandMonthlyEff = withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly);
+  const vffShoesEff = withoutExport({VFF: VFF_SHOES_MONTHLY}, DATA.export_breakdown.brand_monthly).VFF;
+  const brandSummed = sumKeyed(splitVffBrand(brandMonthlyEff, vffShoesEff), months);
   const brandList = toSortedList(brandSummed, 'brand').sort((a,b) => b[metricKey] - a[metricKey]);
-  const items = brandList.map(b => ({label:b.brand, key:b.brand, value:b[metricKey], color: BRAND_HEX[b.brand] || '#8E9C8F'}));
+  const items = brandList.map(b => ({label:brandDisplay(b.brand), key:b.brand, value:b[metricKey], color: BRAND_HEX[b.brand] || '#8E9C8F'}));
   const total = items.reduce((a,d)=>a+d.value,0) || 1;
   const unit = metricKey==='amount' ? 'THB' : t('unitPt');
   document.getElementById('brandDonut').innerHTML = donutChart(items, {centerLabel: metricKey==='amount' ? (total/1e6).toFixed(2)+'M' : fmt(total), centerUnit: unit});
@@ -2034,7 +2093,7 @@ function renderBrandComp(){
   document.getElementById('brandLegend').innerHTML = items.map(d =>
     `<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span><span class="v">${fmtPct(d.value/total)}</span></div>`).join('');
   document.getElementById('brandBody').innerHTML = brandList.map(b => `
-    <tr data-key="${esc(b.brand)}"><td>${esc(b.brand)}</td><td class="num">${fmt(b.qty)}</td><td class="num">${fmt(b.amount)}</td><td class="num">${fmtPct(b[metricKey]/total)}</td></tr>
+    <tr data-key="${esc(b.brand)}"><td>${esc(brandDisplay(b.brand))}</td><td class="num">${fmt(b.qty)}</td><td class="num">${fmt(b.amount)}</td><td class="num">${fmtPct(b[metricKey]/total)}</td></tr>
   `).join('');
   linkDonutTable(document.getElementById('brandDonut'), document.getElementById('brandBody'));
 }
@@ -2098,7 +2157,16 @@ document.getElementById('zeroQtyModal').addEventListener('click', e => {
 const BRAND_DETAIL_LIMIT = 15;
 let brandDetailShowAll = false;
 function renderBrandDetail(brand, months){
-  const modelMonthly = withoutExport(DATA.brand_model_monthly[brand] || {}, (DATA.export_breakdown.brand_model_monthly || {})[brand]);
+  let modelMonthly;
+  if (brand === 'VFF_SHOES') {
+    modelMonthly = withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly);
+  } else if (brand === 'VFF_SOCKS') {
+    // Sock/accessory models never appear in export_breakdown (Export ships shoes
+    // only), so withoutExport leaves every row here untouched either way.
+    modelMonthly = withoutExport(vffSocksModelMonthly(), (DATA.export_breakdown.brand_model_monthly || {}).VFF);
+  } else {
+    modelMonthly = withoutExport(DATA.brand_model_monthly[brand] || {}, (DATA.export_breakdown.brand_model_monthly || {})[brand]);
+  }
   const summed = sumKeyed(modelMonthly, months);
   // Models with 0 (or negative) net quantity in the selected period carry no
   // sales signal here and are dropped from the list entirely (not behind a
@@ -2124,12 +2192,14 @@ function setupBrandSelect(){
   mountPeriodSelect('brandDetailPeriodSel', brandDetailPeriod, setupBrandSelect);
   const months = monthsFor(brandDetailPeriod.key);
   const sel = document.getElementById('brandSelect');
-  const brandList = toSortedList(sumKeyed(withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly), months), 'brand')
+  const brandMonthlyEff = withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly);
+  const vffShoesEff = withoutExport({VFF: VFF_SHOES_MONTHLY}, DATA.export_breakdown.brand_monthly).VFF;
+  const brandList = toSortedList(sumKeyed(splitVffBrand(brandMonthlyEff, vffShoesEff), months), 'brand')
     .filter(b => b.brand !== 'Unknown' && b.brand !== 'Others');
   sel.innerHTML = '';
   brandList.forEach(b => {
     const opt = document.createElement('option');
-    opt.value = b.brand; opt.textContent = b.brand;
+    opt.value = b.brand; opt.textContent = brandDisplay(b.brand);
     sel.appendChild(opt);
   });
   if (!brandList.length) return;
