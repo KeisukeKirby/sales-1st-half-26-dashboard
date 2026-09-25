@@ -1699,45 +1699,58 @@ let expandedExportInvoices = new Set();
 function modelWithBrand(brand, model){
   return model.toUpperCase().startsWith((brand || '').toUpperCase()) ? model : `${brand} ${model}`;
 }
+// 2-decimal formatter for per-unit prices (fmt() rounds to whole numbers,
+// which would silently turn e.g. 78.70 USD into "79" here).
+const fmt2 = n => Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 function buildExportDetailTable(){
   const invoices = DATA.export_invoices || [];
   if (!invoices.length) {
     return `<div class="section-note" style="margin:0">${esc(t('noOrderData'))}</div>`;
   }
-  let grandQty = 0, grandAmount = 0;
   const rows = invoices.map(inv => {
-    grandQty += inv.total_qty; grandAmount += inv.total_amount_thb;
     const isOpen = expandedExportInvoices.has(inv.invoice_no);
     const headRow = `<tr>
       <td>${esc(monthLabel(inv.month))}</td>
       <td><button type="button" class="invoice-link" data-invoice="${esc(inv.invoice_no)}">${esc(inv.invoice_no)} ${isOpen ? '▲' : '▼'}</button></td>
-      <td class="num">${fmt(inv.total_qty)}</td>
-      <td class="num">${fmt(inv.total_amount_thb)}</td>
     </tr>`;
     if (!isOpen) return headRow;
-    const unitSuffix = inv.currency === 'THB' ? ' THB' : ` USD${inv.rate ? ` (×${inv.rate})` : ''}`;
-    const lineRows = inv.lines.map(l => `<tr class="export-line-row">
-      <td style="color:var(--ink-dim)">${esc(l.style_no)}</td>
-      <td>${esc(modelWithBrand(l.brand, l.model))}</td>
-      <td>${l.color ? esc(l.color) : '—'}</td>
-      <td class="num">${fmt(l.qty)}</td>
-      <td class="num">${fmt(l.unit_price)} ${esc(inv.currency)}</td>
-      <td class="num">${fmt(l.amount)} ${esc(inv.currency)}</td>
-    </tr>`).join('');
+    const unitHeadLabel = inv.currency === 'THB' ? t('thUnitPrice') : `${t('thUnitPrice')} USD (THB)`;
+    const lineRows = inv.lines.map(l => {
+      const unitCell = inv.currency === 'THB'
+        ? `${fmt2(l.unit_price)} THB`
+        : `${fmt2(l.unit_price)} USD (${fmt(l.unit_price * inv.rate)} THB)`;
+      return `<tr class="export-line-row">
+        <td style="color:var(--ink-dim)">${esc(l.style_no)}</td>
+        <td>${esc(modelWithBrand(l.brand, l.model))}</td>
+        <td>${l.color ? esc(l.color) : '—'}</td>
+        <td class="num">${fmt(l.qty)}</td>
+        <td class="num">${unitCell}</td>
+        <td class="num">${fmt(l.amount)} ${esc(inv.currency)}</td>
+      </tr>`;
+    }).join('');
+    // Per-invoice total sits at the bottom of its own breakdown, not up in
+    // the collapsed month/invoice row -- amount shown in THB regardless of
+    // the invoice's own currency, since that's the figure every other total
+    // on this page is in.
+    const totalRow = `<tr style="font-weight:700;border-top:1px solid var(--line)">
+      <td colspan="3">${esc(t('thTotal'))}</td>
+      <td class="num">${fmt(inv.total_qty)}</td>
+      <td></td>
+      <td class="num">${fmt(inv.total_amount_thb)} THB</td>
+    </tr>`;
     const detailTable = `<table style="width:100%;margin:8px 0 4px">
       <thead><tr>
         <th>${esc(t('thStyleNo'))}</th><th>${esc(t('thModel'))}</th><th>${esc(t('thColor'))}</th>
         <th style="text-align:right">${esc(t('thQty'))}</th>
-        <th style="text-align:right">${esc(t('thUnitPrice'))}${esc(unitSuffix)}</th>
+        <th style="text-align:right">${esc(unitHeadLabel)}</th>
         <th style="text-align:right">${esc(t('thAmountPlain'))}</th>
       </tr></thead>
-      <tbody>${lineRows}</tbody>
+      <tbody>${lineRows}${totalRow}</tbody>
     </table>`;
-    return headRow + `<tr><td colspan="4" style="padding:0 0 0 20px">${detailTable}</td></tr>`;
+    return headRow + `<tr><td colspan="2" style="padding:0 0 0 20px">${detailTable}</td></tr>`;
   }).join('');
-  const grandRow = `<tr style="font-weight:700;border-top:2px solid var(--line)"><td colspan="2">${esc(t('thTotal'))}</td><td class="num">${fmt(grandQty)}</td><td class="num">${fmt(grandAmount)}</td></tr>`;
-  const head = `<th>${esc(t('thMonth'))}</th><th>${esc(t('thInvoiceNo'))}</th><th style="text-align:right">${esc(t('thQty'))}</th><th style="text-align:right">${esc(t('thAmountTHB'))}</th>`;
-  return `<table><thead><tr>${head}</tr></thead><tbody>${rows}${grandRow}</tbody></table>`;
+  const head = `<th>${esc(t('thMonth'))}</th><th>${esc(t('thInvoiceNo'))}</th>`;
+  return `<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 const exportDetailHandle = makeDetailToggle('exportDetailBtn', 'exportDetailWrap', buildExportDetailTable, wrap => {
   wrap.querySelectorAll('.invoice-link').forEach(btn => {
