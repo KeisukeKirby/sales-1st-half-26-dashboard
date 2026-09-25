@@ -1714,10 +1714,10 @@ function buildExportDetailTable(){
       <td><button type="button" class="invoice-link" data-invoice="${esc(inv.invoice_no)}">${esc(inv.invoice_no)} ${isOpen ? '▲' : '▼'}</button></td>
     </tr>`;
     if (!isOpen) return headRow;
-    const unitHeadLabel = inv.currency === 'THB' ? t('thUnitPrice') : `${t('thUnitPrice')} USD (THB)`;
+    const unitHeadLabel = inv.currency === 'THB' ? t('thUnitPrice') : `${t('thUnitPrice')} USD (THB, ×${inv.rate})`;
     const lineRows = inv.lines.map(l => {
       const unitCell = inv.currency === 'THB'
-        ? `${fmt2(l.unit_price)} THB`
+        ? `${fmt(l.unit_price)} THB`
         : `${fmt2(l.unit_price)} USD (${fmt(l.unit_price * inv.rate)} THB)`;
       return `<tr class="export-line-row">
         <td style="color:var(--ink-dim)">${esc(l.style_no)}</td>
