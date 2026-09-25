@@ -1618,6 +1618,17 @@ def load_export_2026_09():
 # order_id=None throughout -- these are lump wholesale invoices, not
 # per-transaction retail receipts, same convention as 対EDV/Central Lardprao
 # (Dept.) elsewhere in this file.
+#
+# NOTE on DATA.export_invoices (added 2026-09-25): the dashboard's "輸出実績
+# を表示" panel (Overview tab) shows each invoice's own line items (style
+# no./model/color/qty/unit price, in the invoice's own currency) when its
+# invoice number is clicked. That structure -- invoice_no/date/currency/rate
+# per invoice, row-level (not size-exploded) qty/unit_price/amount per line
+# -- has no equivalent in this file's flat `records` schema (no invoice_no
+# field) and isn't produced by aggregate.py; it was built directly against
+# dashboard_data.json from the same JUNE_LINES/JULY_VFF/JULY_TABIRELA/
+# JULY_OLENO/JULY_BFJ/AUGUST_VFF row data below. If this loader's line items
+# ever change, DATA.export_invoices needs the matching hand-update too.
 def load_export_invoices_2026_09():
     EXPORT_COLOR_ALIASES = {'Total Black': 'Black'}
 
