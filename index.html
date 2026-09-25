@@ -223,6 +223,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <!-- ============================================================ 全体 -->
   <section class="tabpanel active" id="tab-overview">
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" id="excludeExportOverview">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="section-title">
       <span class="n">01</span><span data-i18n="allSummaryTitle">全体サマリー</span>
       <div id="summaryPeriodSel" style="margin-left:auto"></div>
@@ -241,8 +245,12 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
     <div class="panel" style="margin-top:20px">
       <h3 data-i18n="summaryMonthlyChartTitle">月別売上金額</h3>
       <div id="summaryMonthlyChart"></div>
-      <button type="button" class="show-more-btn" id="summaryMonthlyDetailBtn" style="margin-top:16px"></button>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+        <button type="button" class="show-more-btn" id="summaryMonthlyDetailBtn"></button>
+        <button type="button" class="show-more-btn" id="exportDetailBtn"></button>
+      </div>
       <div id="summaryMonthlyDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
+      <div id="exportDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
     </div>
   </section>
 
@@ -723,6 +731,26 @@ function brandDisplay(brand){
   if (brand === 'VFF_SOCKS') return t('vffSocksLabel');
   return brand;
 }
+// 全体 tab: DATA.monthly_overall is a pre-summed (all stores, all brands)
+// list, not a per-store map, so the toggle can't reuse withoutExport() here --
+// it subtracts the Export store's own monthly totals (already the exact
+// per-month grand total, no brand-level split needed) from each month present
+// in both. Only ever touches 2026 months; monthly_overall_prev/_2024h1 (the
+// 2025/2024 bars) are untouched since Export has no prior-year data.
+const EXPORT_STORE_MONTHLY = (DATA.stores.find(s => s.store === 'Export') || {}).monthly || {};
+function monthlyOverallEff(){
+  if (!excludeExport) return DATA.monthly_overall;
+  return DATA.monthly_overall.map(r => {
+    const exp = EXPORT_STORE_MONTHLY[r.month];
+    if (!exp) return r;
+    return {
+      month: r.month,
+      amount: round2(r.amount - exp.amount),
+      qty: round1(r.qty - exp.qty),
+      orders: (r.orders || 0) - (exp.orders || 0),
+    };
+  });
+}
 // Channel-group categorical palette (7 categories). Validated colorblind-safe as
 // a set against the dashboard's dark surfaces via the dataviz skill's
 // validate_palette.js (lightness band, chroma floor, CVD ΔE>=8, normal-vision
@@ -898,6 +926,7 @@ const T = {
     stackTooltipShare: '',
     showMore: n => `もっと見る（+${fmt(n)}）`, showLess: '折りたたむ',
     showDetailBtn: '実績詳細を表示', hideDetailBtn: '実績詳細を閉じる',
+    exportDetailBtn: '輸出実績を表示', exportDetailBtnHide: '輸出実績を閉じる', thMonth: '月',
     storeQtyDetailBtn: '商品点数他詳細', storeQtyDetailBtnHide: '商品点数他詳細を閉じる',
     thTotal: '合計', thYear: '年',
   },
@@ -979,6 +1008,7 @@ const T = {
     stackTooltipShare: '',
     showMore: n => `Show more (+${fmt(n)})`, showLess: 'Collapse',
     showDetailBtn: 'Show detailed figures', hideDetailBtn: 'Hide detailed figures',
+    exportDetailBtn: 'Show Export Details', exportDetailBtnHide: 'Hide Export Details', thMonth: 'Month',
     storeQtyDetailBtn: 'Qty / Orders / Avg. Ticket Detail', storeQtyDetailBtnHide: 'Hide Qty / Orders / Avg. Ticket Detail',
     thTotal: 'Total', thYear: 'Year',
   },
@@ -1060,6 +1090,7 @@ const T = {
     stackTooltipShare: '',
     showMore: n => `แสดงเพิ่มเติม (+${fmt(n)})`, showLess: 'ย่อ',
     showDetailBtn: 'แสดงรายละเอียด', hideDetailBtn: 'ซ่อนรายละเอียด',
+    exportDetailBtn: 'แสดงรายละเอียดการส่งออก', exportDetailBtnHide: 'ซ่อนรายละเอียดการส่งออก', thMonth: 'เดือน',
     storeQtyDetailBtn: 'รายละเอียดจำนวน/บิล/ยอดเฉลี่ย', storeQtyDetailBtnHide: 'ซ่อนรายละเอียดจำนวน/บิล/ยอดเฉลี่ย',
     thTotal: 'รวม', thYear: 'ปี',
   }
@@ -1299,6 +1330,10 @@ function groupSumsForMonths(metricKey, months){
   const groupSums = {}; GROUP_ORDER.forEach(g => groupSums[g] = 0);
   DATA.stores.forEach(s => {
     if (!(s.group in groupSums)) return;
+    // Only ever affects current-year (2026) totals -- Export has no prior-year
+    // data, so this is a no-op for the 2025/2024 reference columns that also
+    // call this function (buildComboDetailTable's prevGroupSums/twoAgoGroupSums).
+    if (excludeExport && s.store === 'Export') return;
     const p = sumMonthly(s.monthly, months);
     groupSums[s.group] += p[metricKey];
   });
@@ -1366,7 +1401,7 @@ function periodRangeTextFor(key){
   return t('periodRangeText')[key] || '';
 }
 function buildSummaryBlock(periodKey, months){
-  const OVERALL_MAP = Object.fromEntries(DATA.monthly_overall.map(m => [m.month, m]));
+  const OVERALL_MAP = Object.fromEntries(monthlyOverallEff().map(m => [m.month, m]));
   const OVERALL_PREV_MAP = Object.fromEntries((DATA.monthly_overall_prev || []).map(m => [m.month, m]));
   const totals = sumMonthly(OVERALL_MAP, months);
   const prevTotals = sumMonthly(OVERALL_PREV_MAP, prevMonthsFor(periodKey));
@@ -1452,6 +1487,7 @@ function renderSummarySection(){
   avgTicketDetailHandle.refresh();
   renderSummaryMonthlyChart();
   summaryMonthlyDetailHandle.refresh();
+  exportDetailHandle.refresh();
 }
 // Grouped bar chart: one cluster per month (Jan-Jul), with a bar per year
 // (2024/2025/2026) so year-over-year monthly movement is visible at a
@@ -1464,7 +1500,7 @@ function renderSummaryMonthlyChart(){
   const YEAR_SERIES = [
     {label: '2024', months: DATA.monthly_overall_2024h1 || [], color: '#3A5147'},
     {label: '2025', months: DATA.monthly_overall_prev || [], color: '#5FA88A'},
-    {label: '2026', months: DATA.monthly_overall, color: '#E8A33D'},
+    {label: '2026', months: monthlyOverallEff(), color: '#E8A33D'},
   ].filter(ys => SHOW_PRIOR_YEAR || ys.label === '2026')
    .map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}))
    .filter(ys => ys.monthKeys.length > 0);
@@ -1518,7 +1554,7 @@ function renderSummaryMonthlyChart(){
 // without switching tabs -- this is what used to be the standalone "年度別実績"
 // section, folded in here instead.
 function buildSummaryDetailTable(){
-  const OVERALL_MAP = Object.fromEntries(DATA.monthly_overall.map(m => [m.month, m]));
+  const OVERALL_MAP = Object.fromEntries(monthlyOverallEff().map(m => [m.month, m]));
   const PREV_MAP = Object.fromEntries((DATA.monthly_overall_prev || []).map(m => [m.month, m]));
   const MAP_2024 = Object.fromEntries((DATA.monthly_overall_2024h1 || []).map(m => [m.month, m]));
   const prevMonths = prevMonthsFor('H1');
@@ -1613,9 +1649,9 @@ function buildSummaryMonthlyDetailTable(){
   const YEAR_SERIES = (SHOW_PRIOR_YEAR ? [
     {label: '2024', months: DATA.monthly_overall_2024h1 || []},
     {label: '2025', months: DATA.monthly_overall_prev || []},
-    {label: '2026', months: DATA.monthly_overall},
+    {label: '2026', months: monthlyOverallEff()},
   ] : [
-    {label: '2026', months: DATA.monthly_overall},
+    {label: '2026', months: monthlyOverallEff()},
   ]).map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}));
   const rows = YEAR_SERIES.map((ys, yi) => {
     const cells = MONTHS.map((_, i) => {
@@ -1641,6 +1677,36 @@ function buildSummaryMonthlyDetailTable(){
   return `<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 const summaryMonthlyDetailHandle = makeDetailToggle('summaryMonthlyDetailBtn', 'summaryMonthlyDetailWrap', buildSummaryMonthlyDetailTable);
+// "輸出実績を表示": each Export shipment/invoice (one per month it occurred
+// in) broken down by brand, straight from DATA.export_breakdown.brand_monthly
+// -- always shows the FULL figures regardless of the 輸出実績を除く toggle
+// above (the whole point of this table is to show what that toggle removes).
+function buildExportDetailTable(){
+  const eb = DATA.export_breakdown;
+  const brands = Object.keys(eb.brand_monthly);
+  const activeMonths = MONTHS.filter(m => brands.some(b => ((eb.brand_monthly[b][m] || {}).amount || 0) > 0));
+  if (!activeMonths.length) {
+    return `<div class="section-note" style="margin:0">${esc(t('noOrderData'))}</div>`;
+  }
+  let grandQty = 0, grandAmount = 0;
+  const rows = activeMonths.map(m => {
+    const monthBrands = brands.filter(b => ((eb.brand_monthly[b][m] || {}).amount || 0) > 0)
+      .sort((a, b) => eb.brand_monthly[b][m].amount - eb.brand_monthly[a][m].amount);
+    let monthQty = 0, monthAmount = 0;
+    const brandRows = monthBrands.map((b, i) => {
+      const v = eb.brand_monthly[b][m];
+      monthQty += v.qty; monthAmount += v.amount;
+      return `<tr><td>${i === 0 ? esc(monthLabel(m)) : ''}</td><td>${esc(b)}</td><td class="num">${fmt(v.qty)}</td><td class="num">${fmt(v.amount)}</td></tr>`;
+    }).join('');
+    grandQty += monthQty; grandAmount += monthAmount;
+    const subtotalRow = `<tr style="font-weight:700;border-top:1px solid var(--line)"><td></td><td>${esc(t('thTotal'))}</td><td class="num">${fmt(monthQty)}</td><td class="num">${fmt(monthAmount)}</td></tr>`;
+    return brandRows + subtotalRow;
+  }).join('');
+  const grandRow = `<tr style="font-weight:700;border-top:2px solid var(--line)"><td colspan="2">${esc(t('thTotal'))}</td><td class="num">${fmt(grandQty)}</td><td class="num">${fmt(grandAmount)}</td></tr>`;
+  const head = `<th>${esc(t('thMonth'))}</th><th>${esc(t('thBrand'))}</th><th style="text-align:right">${esc(t('thQty'))}</th><th style="text-align:right">${esc(t('thAmountTHB'))}</th>`;
+  return `<table><thead><tr>${head}</tr></thead><tbody>${rows}${grandRow}</tbody></table>`;
+}
+const exportDetailHandle = makeDetailToggle('exportDetailBtn', 'exportDetailWrap', buildExportDetailTable, null, {show: 'exportDetailBtn', hide: 'exportDetailBtnHide'});
 
 // Generic "実績詳細を表示" collapsible panel used under the monthly-trend charts:
 // builds its table on open and re-renders (label + content) whenever refresh()
