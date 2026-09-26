@@ -226,14 +226,14 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <!-- ============================================================ 全体 -->
   <section class="tabpanel active" id="tab-overview">
-    <label class="export-toggle">
-      <input type="checkbox" class="export-toggle-input" id="excludeExportOverview">
-      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
-    </label>
     <div class="section-title">
       <span class="n">01</span><span data-i18n="allSummaryTitle">全体サマリー</span>
       <div id="summaryPeriodSel" style="margin-left:auto"></div>
     </div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="overviewSummary">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div id="summaryBlock"></div>
     <!-- summaryDetailBtn/avgTicketDetailBtn live here at parse time only so
          makeDetailToggle has a real element to bind to before summaryBlock's
@@ -247,6 +247,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="panel" style="margin-top:20px">
       <h3 data-i18n="summaryMonthlyChartTitle">月別売上金額</h3>
+      <label class="export-toggle">
+        <input type="checkbox" class="export-toggle-input" data-key="overviewMonthly">
+        <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+      </label>
       <div id="summaryMonthlyChart"></div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
         <button type="button" class="show-more-btn" id="summaryMonthlyDetailBtn"></button>
@@ -259,11 +263,11 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <!-- ============================================================ VFFシューズ -->
   <section class="tabpanel" id="tab-vffshoes">
+    <div class="section-title"><span class="n">01</span><span data-i18n="vff01Title">月次 販売足数推移（店舗別）</span></div>
     <label class="export-toggle">
-      <input type="checkbox" class="export-toggle-input" id="excludeExportVff">
+      <input type="checkbox" class="export-toggle-input" data-key="vffStore">
       <span data-i18n="excludeExportLabel">輸出実績を除く</span>
     </label>
-    <div class="section-title"><span class="n">01</span><span data-i18n="vff01Title">月次 販売足数推移（店舗別）</span></div>
     <div class="panel">
       <div id="vffShoeLineChart"></div>
       <button type="button" class="show-more-btn" id="vffStoreDetailBtn" style="margin-top:16px"></button>
@@ -277,6 +281,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <div id="vffChannelPeriodSel"></div>
       </div>
     </div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="vffChannel">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="grid2">
       <div class="panel">
         <h3 data-i18n="channelShareTitle">チャネル別 シェア</h3>
@@ -297,6 +305,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <div id="vffGenderPeriodSel" style="margin-left:auto"></div>
     </div>
     <div class="section-note" data-i18n="vff03Note">サイズ表記のW/Mから推定した参考値</div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="vffGender">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="panel">
       <div class="donut-wrap">
         <div id="vffGenderDonut"></div>
@@ -311,6 +323,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <div id="vffModelPeriodSel" style="margin-left:auto"></div>
     </div>
     <div class="section-note" data-i18n="vff04Note">各モデルシリーズ別の販売足数（上位10シリーズ、サイズ/カラー・派生モデルは合算）</div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="vffModel">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="panel">
       <div id="vffModelChart"></div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px">
@@ -325,6 +341,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <div id="vffColorPeriodSel" style="margin-left:auto"></div>
     </div>
     <div class="section-note" data-i18n="vff05Note">カラー別の販売足数（上位10色）。実績詳細では全色を確認できます</div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="vffColor">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="panel">
       <div id="vffColorChart"></div>
       <button type="button" class="show-more-btn" id="vffColorDetailBtn" style="margin-top:16px"></button>
@@ -336,6 +356,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <div id="vffSizePeriodSel" style="margin-left:auto"></div>
     </div>
     <div class="section-note" data-i18n="vff06Note">サイズ表記から推定した性別区分ごとの販売足数</div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="vffSize">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="panel">
       <div class="donut-wrap">
         <div id="vffSizeGenderDonut"></div>
@@ -352,6 +376,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
     <div class="section-title">
       <span class="n">01</span><span data-i18n="st01TitleTable">店舗・チャネル別 売上テーブル</span>
     </div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="storesCombo">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="panel">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <h3 style="margin:0" data-i18n="ov01Title">月次推移（チャネル別内訳）</h3>
@@ -418,10 +446,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <!-- ============================================================ 商品・ブランド別 -->
   <section class="tabpanel" id="tab-brand">
-    <label class="export-toggle">
-      <input type="checkbox" class="export-toggle-input" id="excludeExportBrand">
-      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
-    </label>
     <div class="section-title">
       <span class="n">01</span><span data-i18n="ov04TitleBrand">ブランド別 売上構成（全体）</span>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -429,6 +453,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <div id="brandCompPeriodSel"></div>
       </div>
     </div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="brandComp">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="grid2">
       <div class="panel">
         <h3 data-i18n="brandShareTitle">ブランド別 シェア</h3>
@@ -452,6 +480,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       </div>
     </div>
     <div class="section-note" data-i18n="ov03NoteDonut">プルダウンでチャネルを選択すると、そのチャネル内でのブランド別売上構成比（金額ベース）を表示します</div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="brandChannel">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="panel">
       <div class="donut-wrap">
         <div id="channelBrandDonut"></div>
@@ -463,6 +495,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <span class="n">03</span><span data-i18n="br01Title">モデル別ランキング（全ブランド合算・サイズ/カラー合算）</span>
       <div id="modelRankPeriodSel" style="margin-left:auto"></div>
     </div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="brandModel">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="grid2b">
       <div class="panel">
         <h3 data-i18n="top10Title">売上トップ10</h3>
@@ -484,6 +520,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <span class="n">04</span><span data-i18n="br02Title">ブランド別 売上詳細</span>
       <div id="brandDetailPeriodSel" style="margin-left:auto"></div>
     </div>
+    <label class="export-toggle">
+      <input type="checkbox" class="export-toggle-input" data-key="brandDetail">
+      <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+    </label>
     <div class="panel">
       <div class="detail-head">
         <label for="brandSelect" data-i18n="selectBrandLabel">ブランドを選択</label>
@@ -640,20 +680,29 @@ const PAY_HEX = {'Cash':'#5FA88A','Credit Card':'#7FA0C4','QR Code':'#E8A33D','O
 const OTHERS_SUB_HEX = ['#E8A33D','#5FA88A','#C97B4A','#7FA0C4','#B189C7'];
 const GENDER_HEX = {'女性': '#B189C7', '男性': '#7FA0C4', 'ユニセックス': '#D9C15A'};
 
-// ============================================================== 輸出実績を除く toggle (VFF Shoes / 商品・ブランド別 tabs only)
-// 輸出 (Export) is a single June-2026 wholesale shipment (see
-// load_export_2026_09() in etl.py) that's large enough to skew per-model/
-// color/gender rankings. Per user request, both tabs get a toggle to view
-// figures with or without it. Since Export's contribution is baked into
-// every cross-store aggregate (model_monthly, color_monthly, gender_monthly,
-// etc.), DATA.export_breakdown carries its exact per-key monthly contribution
-// (same shape as the maps it corresponds to) so it can be subtracted back out
-// on demand; for maps keyed directly by store (store_monthly, store_gender_
-// monthly), the Export store's own entry is skipped instead of subtracted,
-// which is simpler and exactly as precise.
-let excludeExport = false;
-function withoutExport(mainMap, exportMap){
-  if (!excludeExport || !exportMap) return mainMap;
+// ============================================================== 輸出実績を除く toggle (per block, not shared)
+// 輸出 (Export) is now 3 wholesale shipments (see load_export_invoices_2026_09()
+// in etl.py) that are large enough to skew per-model/color/gender rankings and
+// per-brand totals. Per user request 2026-09-26, every block that Export can
+// affect gets its OWN independent toggle (not one shared switch for a whole
+// tab) -- exportToggleState holds one boolean per block, keyed by the
+// data-key on that block's own checkbox. Since Export's contribution is baked
+// into every cross-store aggregate (model_monthly, color_monthly,
+// gender_monthly, etc.), DATA.export_breakdown carries its exact per-key
+// monthly contribution (same shape as the maps it corresponds to) so it can
+// be subtracted back out on demand; for maps keyed directly by store
+// (store_monthly, store_gender_monthly), the Export store's own entry is
+// skipped instead of subtracted, which is simpler and exactly as precise.
+const EXPORT_TOGGLE_KEYS = [
+  'overviewSummary', 'overviewMonthly',
+  'vffStore', 'vffChannel', 'vffGender', 'vffModel', 'vffColor', 'vffSize',
+  'brandComp', 'brandChannel', 'brandModel', 'brandDetail',
+  'storesCombo',
+];
+const exportToggleState = {};
+EXPORT_TOGGLE_KEYS.forEach(k => { exportToggleState[k] = false; });
+function withoutExport(mainMap, exportMap, key){
+  if (!exportToggleState[key] || !exportMap) return mainMap;
   const out = {};
   Object.entries(mainMap || {}).forEach(([k, monthly]) => {
     const exp = exportMap[k];
@@ -673,11 +722,11 @@ function withoutExport(mainMap, exportMap){
   return out;
 }
 // Same idea, one level deeper (gender -> size -> month), for gender_size_monthly.
-function withoutExportNested(mainMap, exportMap){
-  if (!excludeExport || !exportMap) return mainMap;
+function withoutExportNested(mainMap, exportMap, key){
+  if (!exportToggleState[key] || !exportMap) return mainMap;
   const out = {};
   Object.entries(mainMap || {}).forEach(([g, sizes]) => {
-    out[g] = withoutExport(sizes, exportMap[g]);
+    out[g] = withoutExport(sizes, exportMap[g], key);
   });
   return out;
 }
@@ -741,8 +790,8 @@ function brandDisplay(brand){
 // in both. Only ever touches 2026 months; monthly_overall_prev/_2024h1 (the
 // 2025/2024 bars) are untouched since Export has no prior-year data.
 const EXPORT_STORE_MONTHLY = (DATA.stores.find(s => s.store === 'Export') || {}).monthly || {};
-function monthlyOverallEff(){
-  if (!excludeExport) return DATA.monthly_overall;
+function monthlyOverallEff(key){
+  if (!exportToggleState[key]) return DATA.monthly_overall;
   return DATA.monthly_overall.map(r => {
     const exp = EXPORT_STORE_MONTHLY[r.month];
     if (!exp) return r;
@@ -1332,21 +1381,21 @@ function niceAxis(maxValue, steps){
 // driven by a month picker -- per explicit request, only the monthly view uses
 // a dropdown; the three aggregate periods are always on screen together so
 // they can be compared at a glance.
-function groupSumsForMonths(metricKey, months){
+function groupSumsForMonths(metricKey, months, exportKey){
   const groupSums = {}; GROUP_ORDER.forEach(g => groupSums[g] = 0);
   DATA.stores.forEach(s => {
     if (!(s.group in groupSums)) return;
     // Only ever affects current-year (2026) totals -- Export has no prior-year
     // data, so this is a no-op for the 2025/2024 reference columns that also
     // call this function (buildComboDetailTable's prevGroupSums/twoAgoGroupSums).
-    if (excludeExport && s.store === 'Export') return;
+    if (exportToggleState[exportKey] && s.store === 'Export') return;
     const p = sumMonthly(s.monthly, months);
     groupSums[s.group] += p[metricKey];
   });
   return groupSums;
 }
-function channelBreakdown(metricKey, months){
-  const groupSums = groupSumsForMonths(metricKey, months);
+function channelBreakdown(metricKey, months, exportKey){
+  const groupSums = groupSumsForMonths(metricKey, months, exportKey);
   return GROUP_ORDER.filter(g => groupSums[g] > 0).map(g => ({label:trLabel(DATA.group_label[g]), key:g, value:groupSums[g], color:GROUP_HEX[g]}));
 }
 // 2024's months, positionally parallel to MONTHS/PREV_MONTHS -- 2 years back.
@@ -1407,7 +1456,7 @@ function periodRangeTextFor(key){
   return t('periodRangeText')[key] || '';
 }
 function buildSummaryBlock(periodKey, months){
-  const OVERALL_MAP = Object.fromEntries(monthlyOverallEff().map(m => [m.month, m]));
+  const OVERALL_MAP = Object.fromEntries(monthlyOverallEff('overviewSummary').map(m => [m.month, m]));
   const OVERALL_PREV_MAP = Object.fromEntries((DATA.monthly_overall_prev || []).map(m => [m.month, m]));
   const totals = sumMonthly(OVERALL_MAP, months);
   const prevTotals = sumMonthly(OVERALL_PREV_MAP, prevMonthsFor(periodKey));
@@ -1428,7 +1477,7 @@ function buildSummaryBlock(periodKey, months){
   const rangeText = periodRangeTextFor(periodKey);
   let html = `<div class="summary-period-heading" style="margin-bottom:12px">${esc(t('periodLabels')[periodKey] || periodKey)}${rangeText ? `<span class="summary-period-range">${esc(rangeText)}</span>` : ''}</div><div class="grid3">`;
   html += metrics.map((m,mi) => {
-    const items = channelBreakdown(m.mkey, months);
+    const items = channelBreakdown(m.mkey, months, 'overviewSummary');
     const total = items.reduce((a,d)=>a+d.value,0) || 1;
     const donutSvg = donutChart(items, {size:148, r:54, stroke:18,
       centerLabel: m.mkey==='amount' ? (total/1e6).toFixed(2)+'M' : fmt(total),
@@ -1468,7 +1517,7 @@ function mountSummaryBlock(periodKey, months){
   const avgBtn = document.getElementById('avgTicketDetailBtn');
   container.innerHTML = html;
   metrics.forEach((m,mi) => {
-    const items = channelBreakdown(m.mkey, months);
+    const items = channelBreakdown(m.mkey, months, 'overviewSummary');
     const total = items.reduce((a,d)=>a+d.value,0) || 1;
     const unit = m.mkey==='amount' ? 'THB' : m.unit;
     attachDonutTip(container.querySelector(`.sb-donut[data-mi="${mi}"]`), items, total, unit);
@@ -1506,7 +1555,7 @@ function renderSummaryMonthlyChart(){
   const YEAR_SERIES = [
     {label: '2024', months: DATA.monthly_overall_2024h1 || [], color: '#3A5147'},
     {label: '2025', months: DATA.monthly_overall_prev || [], color: '#5FA88A'},
-    {label: '2026', months: monthlyOverallEff(), color: '#E8A33D'},
+    {label: '2026', months: monthlyOverallEff('overviewMonthly'), color: '#E8A33D'},
   ].filter(ys => SHOW_PRIOR_YEAR || ys.label === '2026')
    .map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}))
    .filter(ys => ys.monthKeys.length > 0);
@@ -1518,8 +1567,11 @@ function renderSummaryMonthlyChart(){
   const barW = (groupW - barGap * (YEAR_SERIES.length - 1)) / YEAR_SERIES.length;
   const xC = i => padL + bandW * i + bandW / 2;
 
-  // Fixed axis max (per user request) so the scale stays put across months.
-  const axisMax = 8000000, step = 1600000;
+  // Fixed axis max (per user request) so the scale stays put across months --
+  // lower when Export is excluded from this block, since it's a large share
+  // of some months' totals.
+  const axisMax = exportToggleState.overviewMonthly ? 4000000 : 7000000;
+  const step = axisMax / 5;
   const y = v => padT + plotH - (v / axisMax) * plotH;
   const baseY = y(0);
 
@@ -1560,7 +1612,7 @@ function renderSummaryMonthlyChart(){
 // without switching tabs -- this is what used to be the standalone "年度別実績"
 // section, folded in here instead.
 function buildSummaryDetailTable(){
-  const OVERALL_MAP = Object.fromEntries(monthlyOverallEff().map(m => [m.month, m]));
+  const OVERALL_MAP = Object.fromEntries(monthlyOverallEff('overviewSummary').map(m => [m.month, m]));
   const PREV_MAP = Object.fromEntries((DATA.monthly_overall_prev || []).map(m => [m.month, m]));
   const MAP_2024 = Object.fromEntries((DATA.monthly_overall_2024h1 || []).map(m => [m.month, m]));
   const prevMonths = prevMonthsFor('H1');
@@ -1655,9 +1707,9 @@ function buildSummaryMonthlyDetailTable(){
   const YEAR_SERIES = (SHOW_PRIOR_YEAR ? [
     {label: '2024', months: DATA.monthly_overall_2024h1 || []},
     {label: '2025', months: DATA.monthly_overall_prev || []},
-    {label: '2026', months: monthlyOverallEff()},
+    {label: '2026', months: monthlyOverallEff('overviewMonthly')},
   ] : [
-    {label: '2026', months: monthlyOverallEff()},
+    {label: '2026', months: monthlyOverallEff('overviewMonthly')},
   ]).map(ys => ({...ys, map: Object.fromEntries(ys.months.map(m => [m.month, m])), monthKeys: ys.months.map(m => m.month)}));
   const rows = YEAR_SERIES.map((ys, yi) => {
     const cells = MONTHS.map((_, i) => {
@@ -1796,6 +1848,7 @@ function groupMonthlyTotals(){
   GROUP_ORDER.forEach(g => { out[g] = {}; MONTHS.forEach(m => out[g][m] = {amount:0, qty:0}); });
   DATA.stores.forEach(s => {
     if (!out[s.group]) return;
+    if (exportToggleState.storesCombo && s.store === 'Export') return;
     MONTHS.forEach(m => {
       const v = s.monthly[m];
       if (v) { out[s.group][m].amount += v.amount; out[s.group][m].qty += v.qty; }
@@ -1824,7 +1877,11 @@ function renderComboChart(){
   const metricKey = stackMetric; // 'amount' | 'qty'
 
   const monthTotals = monthly.map(m => GROUP_ORDER.reduce((s,g) => s + groupMonthly[g][m.month][metricKey], 0));
-  const {max: maxV, step} = niceAxis(Math.max(...monthTotals, 1), 6);
+  // Fixed axis max when Export is excluded (per user request): 4M for amount,
+  // 2,000 for qty. With Export included, keep the auto-scaled niceAxis max.
+  const {max: maxV, step} = exportToggleState.storesCombo
+    ? (metricKey === 'amount' ? {max: 4000000, step: 800000} : {max: 2000, step: 400})
+    : niceAxis(Math.max(...monthTotals, 1), 6);
   const y = v => padT + plotH - (v/maxV)*plotH;
 
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" preserveAspectRatio="xMinYMin meet">`;
@@ -1882,8 +1939,8 @@ function buildComboDetailTable(){
   const metricKey = stackMetric;
   const prevMonths = prevMonthsFor('H1'), twoAgoMonths = twoYearsAgoMonthsFor('H1');
   const q1Months = monthsFor('Q1'), q2Months = monthsFor('Q2'), h1Months = monthsFor('H1');
-  const prevGroupSums = groupSumsForMonths(metricKey, prevMonths);
-  const twoAgoGroupSums = groupSumsForMonths(metricKey, twoAgoMonths);
+  const prevGroupSums = groupSumsForMonths(metricKey, prevMonths, 'storesCombo');
+  const twoAgoGroupSums = groupSumsForMonths(metricKey, twoAgoMonths, 'storesCombo');
 
   const storesByGroup = {};
   DETAIL_GROUP_ORDER.forEach(g => { storesByGroup[g] = []; });
@@ -1983,7 +2040,7 @@ function renderChannelBrandDonut(){
   const brandTotals = {};
   DATA.stores.forEach(s => {
     if (keep !== 'ALL' && s.group !== keep) return;
-    if (excludeExport && s.store === 'Export') return;
+    if (exportToggleState.brandChannel && s.store === 'Export') return;
     // Export never carries socks, and (when the toggle is off) its own row is
     // already included in s.brand_monthly, so splitting per-store here with no
     // further export adjustment stays consistent with the skip above.
@@ -2202,8 +2259,8 @@ function renderBrandComp(){
   sel.value = keep;
   const metricKey = keep;
 
-  const brandMonthlyEff = withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly);
-  const vffShoesEff = withoutExport({VFF: VFF_SHOES_MONTHLY}, DATA.export_breakdown.brand_monthly).VFF;
+  const brandMonthlyEff = withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly, 'brandComp');
+  const vffShoesEff = withoutExport({VFF: VFF_SHOES_MONTHLY}, DATA.export_breakdown.brand_monthly, 'brandComp').VFF;
   const brandSummed = sumKeyed(splitVffBrand(brandMonthlyEff, vffShoesEff), months);
   const brandList = toSortedList(brandSummed, 'brand').sort((a,b) => b[metricKey] - a[metricKey]);
   const items = brandList.map(b => ({label:brandDisplay(b.brand), key:b.brand, value:b[metricKey], color: BRAND_HEX[b.brand] || '#8E9C8F'}));
@@ -2238,7 +2295,7 @@ function fillModelTable(id, rows, cls){
 function renderModelRanking(){
   mountPeriodSelect('modelRankPeriodSel', modelRankPeriod, renderModelRanking);
   const months = monthsFor(modelRankPeriod.key);
-  const modelSummed = sumKeyed(withoutExport(DATA.model_monthly, DATA.export_breakdown.model_monthly), months);
+  const modelSummed = sumKeyed(withoutExport(DATA.model_monthly, DATA.export_breakdown.model_monthly, 'brandModel'), months);
   const modelList = toSortedList(modelSummed, 'model');
   const zeroQty = modelList.filter(r => r.qty <= 0);
   const zeroAmount = modelList.filter(r => r.qty > 0 && r.amount <= 0);
@@ -2280,13 +2337,13 @@ let brandDetailShowAll = false;
 function renderBrandDetail(brand, months){
   let modelMonthly;
   if (brand === 'VFF_SHOES') {
-    modelMonthly = withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly);
+    modelMonthly = withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly, 'brandDetail');
   } else if (brand === 'VFF_SOCKS') {
     // Sock/accessory models never appear in export_breakdown (Export ships shoes
     // only), so withoutExport leaves every row here untouched either way.
-    modelMonthly = withoutExport(vffSocksModelMonthly(), (DATA.export_breakdown.brand_model_monthly || {}).VFF);
+    modelMonthly = withoutExport(vffSocksModelMonthly(), (DATA.export_breakdown.brand_model_monthly || {}).VFF, 'brandDetail');
   } else {
-    modelMonthly = withoutExport(DATA.brand_model_monthly[brand] || {}, (DATA.export_breakdown.brand_model_monthly || {})[brand]);
+    modelMonthly = withoutExport(DATA.brand_model_monthly[brand] || {}, (DATA.export_breakdown.brand_model_monthly || {})[brand], 'brandDetail');
   }
   const summed = sumKeyed(modelMonthly, months);
   // Models with 0 (or negative) net quantity in the selected period carry no
@@ -2313,8 +2370,8 @@ function setupBrandSelect(){
   mountPeriodSelect('brandDetailPeriodSel', brandDetailPeriod, setupBrandSelect);
   const months = monthsFor(brandDetailPeriod.key);
   const sel = document.getElementById('brandSelect');
-  const brandMonthlyEff = withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly);
-  const vffShoesEff = withoutExport({VFF: VFF_SHOES_MONTHLY}, DATA.export_breakdown.brand_monthly).VFF;
+  const brandMonthlyEff = withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly, 'brandDetail');
+  const vffShoesEff = withoutExport({VFF: VFF_SHOES_MONTHLY}, DATA.export_breakdown.brand_monthly, 'brandDetail').VFF;
   const brandList = toSortedList(sumKeyed(splitVffBrand(brandMonthlyEff, vffShoesEff), months), 'brand')
     .filter(b => b.brand !== 'Unknown' && b.brand !== 'Others');
   sel.innerHTML = '';
@@ -2393,7 +2450,7 @@ function vffGroupMonthlyTotals(){
   const out = {};
   GROUP_ORDER.forEach(g => { out[g] = {}; });
   Object.entries(DATA.vff_shoes.store_monthly).forEach(([store, months]) => {
-    if (excludeExport && store === 'Export') return;
+    if (exportToggleState.vffStore && store === 'Export') return;
     const g = STORE_TO_GROUP[store];
     if (!g || !out[g]) return;
     Object.entries(months).forEach(([m, v]) => {
@@ -2412,8 +2469,11 @@ function renderVffStoreStackChart(){
 
   const gm = vffGroupMonthlyTotals();
   const monthTotals = MONTHS.map(m => VFF_ACTIVE_GROUPS.reduce((s,g) => s + (gm[g][m] ? gm[g][m].qty : 0), 0));
-  // Fixed axis max (per user request) so the scale stays put across months.
-  const maxV = 2000, step = 400;
+  // Fixed axis max (per user request) so the scale stays put across months --
+  // lower when Export is excluded from this block, since it's a large share
+  // of some months' totals.
+  const maxV = exportToggleState.vffStore ? 1000 : 2000;
+  const step = maxV / 5;
   const y = v => padT + plotH - (v/maxV)*plotH;
 
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" preserveAspectRatio="xMinYMin meet">`;
@@ -2492,7 +2552,7 @@ function buildVffStoreDetailTable(){
 
   const storesByGroup = {};
   VFF_ACTIVE_GROUPS_DETAIL.forEach(g => { storesByGroup[g] = []; });
-  DATA.stores.forEach(s => { if (storesByGroup[s.group] && sm[s.store] && !(excludeExport && s.store === 'Export')) storesByGroup[s.group].push(s); });
+  DATA.stores.forEach(s => { if (storesByGroup[s.group] && sm[s.store] && !(exportToggleState.vffStore && s.store === 'Export')) storesByGroup[s.group].push(s); });
   VFF_ACTIVE_GROUPS_DETAIL.forEach(g => { storesByGroup[g] = sortStoresForDetail(g, storesByGroup[g]); });
   const allMo = MONTHS.concat(prevMonthsFor('H1'), twoYearsAgoMonthsFor('H1'));
   const onlineChannels = Object.entries(DATA.vff_shoes.online_channel_monthly || {})
@@ -2535,7 +2595,7 @@ function buildVffStoreDetailTable(){
   // The 2 annual-qty columns have no amount equivalent, so those cells are blank.
   const VFF_MONTH_MAP = Object.fromEntries(
     DATA.vff_shoes.monthly.concat(DATA.vff_shoes.monthly_prev || []).concat(DATA.vff_shoes.monthly_2024h1 || []).map(m => [m.month, m]));
-  if (excludeExport) {
+  if (exportToggleState.vffStore) {
     const exp = DATA.export_breakdown.brand_monthly.VFF;
     Object.entries(exp).forEach(([m, ev]) => { if (VFF_MONTH_MAP[m]) VFF_MONTH_MAP[m] = {...VFF_MONTH_MAP[m], amount: round2(VFF_MONTH_MAP[m].amount - ev.amount)}; });
   }
@@ -2570,7 +2630,7 @@ function vffChannelBreakdown(metricKey, months){
   const storeGroup = Object.fromEntries(DATA.stores.map(s => [s.store, s.group]));
   const sums = {}; GROUP_ORDER.forEach(g => sums[g] = {qty:0, amount:0});
   Object.entries(sm).forEach(([store, monthly]) => {
-    if (excludeExport && store === 'Export') return;
+    if (exportToggleState.vffChannel && store === 'Export') return;
     const g = storeGroup[store];
     if (!g || !(g in sums)) return;
     const p = sumMonthly(monthly, months);
@@ -2604,7 +2664,7 @@ function renderVffChannelShare(){
 function renderVffGender(){
   mountPeriodSelect('vffGenderPeriodSel', vffGenderPeriod, renderVffGender);
   const months = monthsFor(vffGenderPeriod.key);
-  const gSummed = sumKeyed(withoutExport(DATA.vff_shoes.gender_monthly, DATA.export_breakdown.gender_monthly), months);
+  const gSummed = sumKeyed(withoutExport(DATA.vff_shoes.gender_monthly, DATA.export_breakdown.gender_monthly, 'vffGender'), months);
   const gList = toSortedList(gSummed, 'gender').sort((a,b) => b.qty - a.qty);
   const gItems = gList.map(g => ({label:trLabel(g.gender), value:g.qty, color: GENDER_HEX[g.gender] || '#8E9C8F'}));
   const gTotal = gItems.reduce((a,d)=>a+d.value,0) || 1;
@@ -2621,7 +2681,7 @@ function buildVffGenderDetailTable(){
   const months = monthsFor(vffGenderPeriod.key);
   const genders = ['女性','男性','ユニセックス'];
   const rows = fixedOrderStores().map(s => {
-    if (excludeExport && s.store === 'Export') return null;
+    if (exportToggleState.vffGender && s.store === 'Export') return null;
     const sg = DATA.vff_shoes.store_gender_monthly[s.store];
     if (!sg) return null;
     const vals = genders.map(g => sumMonthly(sg[g] || {}, months).qty);
@@ -2639,7 +2699,7 @@ const vffGenderDetailHandle = makeDetailToggle('vffGenderDetailBtn', 'vffGenderD
 function renderVffModelRanking(){
   mountPeriodSelect('vffModelPeriodSel', vffModelPeriod, renderVffModelRanking);
   const months = monthsFor(vffModelPeriod.key);
-  const modelSummed = sumKeyed(withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly), months);
+  const modelSummed = sumKeyed(withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly, 'vffModel'), months);
   // Models with 0 (or negative) qty/revenue in the selected period never
   // show a bar in the chart above (the top-10 series ranking silently
   // excludes them) -- surface them behind their own link/popup instead,
@@ -2675,7 +2735,7 @@ function renderVffModelRanking(){
 function buildVffModelDetailTable(){
   const seriesMonthly = {};
   const allMonths = MONTHS.concat(prevMonthsFor('H1')).concat(twoYearsAgoMonthsFor('H1'));
-  Object.entries(withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly)).forEach(([model, monthly]) => {
+  Object.entries(withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly, 'vffModel')).forEach(([model, monthly]) => {
     const s = vffSeriesName(model);
     seriesMonthly[s] = seriesMonthly[s] || {};
     allMonths.forEach(m => { seriesMonthly[s][m] = (seriesMonthly[s][m] || 0) + (monthly[m] ? monthly[m].qty : 0); });
@@ -2730,7 +2790,7 @@ const vffModelDetailHandle = makeDetailToggle('vffModelDetailBtn', 'vffModelDeta
 function renderVffColorRanking(){
   mountPeriodSelect('vffColorPeriodSel', vffColorPeriod, renderVffColorRanking);
   const months = monthsFor(vffColorPeriod.key);
-  const colorSummed = sumKeyed(withoutExport(DATA.vff_shoes.color_monthly, DATA.export_breakdown.color_monthly), months);
+  const colorSummed = sumKeyed(withoutExport(DATA.vff_shoes.color_monthly, DATA.export_breakdown.color_monthly, 'vffColor'), months);
   const items = Object.entries(colorSummed)
     .map(([color, v]) => ({label: color, value: v.qty, amount: v.amount}))
     .filter(d => d.value > 0)
@@ -2745,7 +2805,7 @@ function renderVffColorRanking(){
   vffColorDetailHandle.refresh();
 }
 function buildVffColorDetailTable(){
-  const colorMonthlyEff = withoutExport(DATA.vff_shoes.color_monthly, DATA.export_breakdown.color_monthly);
+  const colorMonthlyEff = withoutExport(DATA.vff_shoes.color_monthly, DATA.export_breakdown.color_monthly, 'vffColor');
   const totalByColor = sumKeyed(colorMonthlyEff, MONTHS);
   const order = Object.entries(totalByColor).filter(([,v]) => v.qty > 0)
     .sort((a,b) => b[1].qty - a[1].qty).map(([c]) => c);
@@ -2787,8 +2847,8 @@ function renderVffSizeGenderChart(){
   // gender_monthly), same data source and palette as the Gender Segment
   // Split donut in section 03, so the two read consistently; scoped to this
   // section's own period selector rather than section 03's.
-  const genderMonthlyEff = withoutExport(DATA.vff_shoes.gender_monthly, DATA.export_breakdown.gender_monthly);
-  const genderSizeMonthlyEff = withoutExportNested(DATA.vff_shoes.gender_size_monthly, DATA.export_breakdown.gender_size_monthly);
+  const genderMonthlyEff = withoutExport(DATA.vff_shoes.gender_monthly, DATA.export_breakdown.gender_monthly, 'vffSize');
+  const genderSizeMonthlyEff = withoutExportNested(DATA.vff_shoes.gender_size_monthly, DATA.export_breakdown.gender_size_monthly, 'vffSize');
   const gSummed = sumKeyed(genderMonthlyEff, months);
   const gList = toSortedList(gSummed, 'gender').sort((a,b) => b.qty - a.qty);
   const gItems = gList.map(g => ({label:trLabel(g.gender), value:g.qty, color: GENDER_HEX[g.gender] || '#8E9C8F'}));
@@ -2862,7 +2922,7 @@ function renderVffSizeGenderChart(){
 }
 function buildVffSizeDetailTable(){
   const months = monthsFor(vffSizePeriod.key);
-  const genderSizeMonthlyEff = withoutExportNested(DATA.vff_shoes.gender_size_monthly, DATA.export_breakdown.gender_size_monthly);
+  const genderSizeMonthlyEff = withoutExportNested(DATA.vff_shoes.gender_size_monthly, DATA.export_breakdown.gender_size_monthly, 'vffSize');
   const GENDERS = ['女性','男性','ユニセックス'];
   const sizeSet = new Set();
   GENDERS.forEach(g => Object.keys(genderSizeMonthlyEff[g] || {}).forEach(sz => sizeSet.add(sz)));
@@ -2888,8 +2948,9 @@ function buildVffSizeDetailTable(){
 const vffSizeDetailHandle = makeDetailToggle('vffSizeDetailBtn', 'vffSizeDetailWrap', buildVffSizeDetailTable);
 
 // V-Soul's monthly share of VFF brand sales, always with Export excluded from
-// both numerator and denominator (independent of the global excludeExport
-// toggle -- this chart's whole point is the underlying retail/wholesale trend).
+// both numerator and denominator (independent of any of this dashboard's
+// per-block 輸出実績を除く toggles -- this chart's whole point is the
+// underlying retail/wholesale trend).
 const VSR_QTY_HEX = '#7FA0C4';
 function renderVSoulRatioChart(){
   const el = document.getElementById('vSoulRatioChart');
@@ -2971,10 +3032,14 @@ function renderAll(){
   renderOthersSection();
 }
 
+// Each 輸出実績を除く checkbox is independent (per block, not a single
+// dashboard-wide switch) -- only its own exportToggleState entry changes.
+// renderAll() re-renders every block regardless, but only the one whose
+// state actually changed will look any different.
 document.querySelectorAll('.export-toggle-input').forEach(el => {
   el.addEventListener('change', e => {
-    excludeExport = e.target.checked;
-    document.querySelectorAll('.export-toggle-input').forEach(other => { other.checked = excludeExport; });
+    const key = e.target.dataset.key;
+    exportToggleState[key] = e.target.checked;
     renderAll();
   });
 });
