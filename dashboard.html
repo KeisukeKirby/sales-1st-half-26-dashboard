@@ -901,7 +901,7 @@ const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'
 const T = {
   ja: {
     stockLinkText: '在庫状況ダッシュボードを見る',
-    excludeExportLabel: '輸出実績を除く',
+    excludeExportLabel: '輸出実績を除く', exportSegmentLabel: '輸出実績',
     eyebrow: 'Barefoot Inc. 2026 Performance Report',
     title: '販売実績ダッシュボード',
     periodInfo: '対象期間: <b>2026年1月1日〜7月31日</b><br>前年同期間比較: <b>一時非表示（対EDVのデータ確認待ち）</b>',
@@ -985,7 +985,7 @@ const T = {
   },
   en: {
     stockLinkText: 'View the Inventory Dashboard',
-    excludeExportLabel: 'Exclude Export results',
+    excludeExportLabel: 'Exclude Export results', exportSegmentLabel: 'Export',
     eyebrow: 'Barefoot Inc. 2026 Performance Report',
     title: 'Sales Performance Dashboard',
     periodInfo: 'Period: <b>Jan 1 – Jul 31, 2026</b><br>Same-period YoY comparison: <b>temporarily hidden (pending 対EDV data confirmation)</b>',
@@ -1068,7 +1068,7 @@ const T = {
   },
   th: {
     stockLinkText: 'ดูแดชบอร์ดสต็อกสินค้า',
-    excludeExportLabel: 'ไม่รวมยอดขายส่งออก',
+    excludeExportLabel: 'ไม่รวมยอดขายส่งออก', exportSegmentLabel: 'ยอดส่งออก',
     eyebrow: 'Barefoot Inc. รายงานผลประกอบการปี 2026',
     title: 'แดชบอร์ดผลการขาย',
     periodInfo: 'ช่วงเวลา: <b>1 ม.ค. – 31 ก.ค. 2026</b><br>เปรียบเทียบช่วงเวลาเดียวกันปีก่อน: <b>ซ่อนชั่วคราว (รอยืนยันข้อมูลต่อ EDV)</b>',
@@ -1581,6 +1581,11 @@ function renderSummaryMonthlyChart(){
     svg += `<line x1="${padL}" y1="${yy}" x2="${w-padR}" y2="${yy}" class="axis-line"></line>`;
     svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;
   }
+  // The 2026 bar splits out its Export portion in a second color (matching
+  // GROUP_HEX.export used everywhere else) whenever Export is still included
+  // in the total (i.e. the "輸出実績を除く" toggle for this block is off) --
+  // 2024/2025 never have Export data, so only ever draw as a single segment.
+  const EXPORT_BAR_COLOR = GROUP_HEX.export;
   MONTHS.forEach((m, i) => {
     svg += `<text x="${xC(i)}" y="${h-8}" text-anchor="middle">${monthLabel(m)}</text>`;
     const groupX0 = xC(i) - groupW / 2;
@@ -1588,19 +1593,39 @@ function renderSummaryMonthlyChart(){
       const rec = ys.map[ys.monthKeys[i]];
       const v = rec ? rec.amount : 0;
       const bx = groupX0 + yi * (barW + barGap);
-      const yTop = y(v);
-      svg += `<rect x="${bx}" y="${yTop}" width="${barW}" height="${Math.max(baseY-yTop,0)}" fill="${ys.color}" class="ybar" data-i="${i}" data-yi="${yi}"></rect>`;
+      const expAmt = (ys.label === '2026' && !exportToggleState.overviewMonthly) ? ((EXPORT_STORE_MONTHLY[m] || {}).amount || 0) : 0;
+      if (expAmt > 0) {
+        const baseAmt = v - expAmt;
+        const yBaseTop = y(baseAmt), yExpTop = y(v);
+        svg += `<rect x="${bx}" y="${yBaseTop}" width="${barW}" height="${Math.max(baseY-yBaseTop,0)}" fill="${ys.color}" class="ybar" data-i="${i}" data-yi="${yi}" data-seg="base"></rect>`;
+        svg += `<rect x="${bx}" y="${yExpTop}" width="${barW}" height="${Math.max(yBaseTop-yExpTop,0)}" fill="${EXPORT_BAR_COLOR}" class="ybar" data-i="${i}" data-yi="${yi}" data-seg="export"></rect>`;
+      } else {
+        const yTop = y(v);
+        svg += `<rect x="${bx}" y="${yTop}" width="${barW}" height="${Math.max(baseY-yTop,0)}" fill="${ys.color}" class="ybar" data-i="${i}" data-yi="${yi}"></rect>`;
+      }
     });
   });
   svg += `</svg>`;
   const el = document.getElementById('summaryMonthlyChart');
-  const legendHtml = YEAR_SERIES.map(ys => `<div class="item"><span class="k"><span class="swatch" style="background:${ys.color}"></span>${esc(ys.label)}</span></div>`).join('');
+  const hasExportSegment = YEAR_SERIES.some(ys => ys.label === '2026' && !exportToggleState.overviewMonthly
+    && ys.monthKeys.some(mk => ((EXPORT_STORE_MONTHLY[mk] || {}).amount || 0) > 0));
+  const legendHtml = YEAR_SERIES.map(ys => `<div class="item"><span class="k"><span class="swatch" style="background:${ys.color}"></span>${esc(ys.label)}</span></div>`).join('')
+    + (hasExportSegment ? `<div class="item"><span class="k"><span class="swatch" style="background:${EXPORT_BAR_COLOR}"></span>${esc(t('exportSegmentLabel'))}</span></div>` : '');
   el.innerHTML = svg + `<div class="legend" style="flex-direction:row;gap:18px;margin-top:10px;justify-content:center;flex-wrap:wrap">${legendHtml}</div>`;
   el.querySelectorAll('.ybar').forEach(node => {
     node.addEventListener('mousemove', e => {
       const i = +node.dataset.i, yi = +node.dataset.yi, ys = YEAR_SERIES[yi];
       const rec = ys.map[ys.monthKeys[i]];
-      showTip(e, `<b>${esc(ys.label)}</b> ・ ${monthLabel(MONTHS[i])}<br>${fmt(rec ? rec.amount : 0)} THB`);
+      const total = rec ? rec.amount : 0;
+      if (node.dataset.seg === 'export') {
+        const expAmt = (EXPORT_STORE_MONTHLY[ys.monthKeys[i]] || {}).amount || 0;
+        showTip(e, `<b>${esc(ys.label)}</b> ・ ${monthLabel(MONTHS[i])}<br>${esc(t('exportSegmentLabel'))}: ${fmt(expAmt)} THB`);
+      } else if (node.dataset.seg === 'base') {
+        const expAmt = (EXPORT_STORE_MONTHLY[ys.monthKeys[i]] || {}).amount || 0;
+        showTip(e, `<b>${esc(ys.label)}</b> ・ ${monthLabel(MONTHS[i])}<br>${fmt(total - expAmt)} THB<br>${esc(t('thTotal'))}: ${fmt(total)} THB`);
+      } else {
+        showTip(e, `<b>${esc(ys.label)}</b> ・ ${monthLabel(MONTHS[i])}<br>${fmt(total)} THB`);
+      }
     });
     node.addEventListener('mouseleave', hideTip);
   });
