@@ -62,6 +62,15 @@ h1{margin:0;font-size:28px;font-weight:700;letter-spacing:0;}
 .lang-btn:hover{color:var(--ink);}
 .lang-btn.active{background:var(--accent);color:#16241C;}
 .lang-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.global-period-ctrl{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:12px;color:var(--ink-dim);
+}
+.global-period-ctrl select.period-select{border:1px solid var(--accent);color:var(--accent);font-weight:700;}
+@media (max-width:860px){
+  .head-right{align-items:stretch;}
+  .global-period-ctrl{justify-content:space-between;}
+}
 
 nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:26px;overflow-x:auto;}
 nav.tabs button{
@@ -212,6 +221,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true">日本語</button>
         <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">English</button>
         <button type="button" class="lang-btn" data-lang="th" aria-pressed="false">ไทย</button>
+      </div>
+      <div class="global-period-ctrl">
+        <span data-i18n="globalPeriodLabel">全ブロックの期間をまとめて変更:</span>
+        <div id="globalPeriodSel"></div>
       </div>
     </div>
   </header>
@@ -977,6 +990,7 @@ const T = {
     brandSummary: (n,q,net) => `${n} モデル ・ ${fmt(q)} 点 ・ ${fmt(net)} THB`,
     periodLabels: {'2026-01':'1月','2026-02':'2月','2026-03':'3月','2026-04':'4月','2026-05':'5月','2026-06':'6月','2026-07':'7月','2026-08':'8月','2026-09':'9月','Q1':'Q1','Q2':'Q2','Q3':'Q3','H1':'半期(H1)','YTD':'26年暫定'},
     periodRangeText: {'H1':'2026年1〜6月','Q1':'2026年1〜3月','Q2':'2026年4〜6月','Q3':'2026年7〜9月'},
+    globalPeriodLabel: '全ブロックの期間をまとめて変更:',
     metricAmount: '金額', metricQty: '点数', metricPairs: '足数',
     optMetricAmount: '金額', optMetricQty: '数量',
     stackTooltipShare: '',
@@ -1060,6 +1074,7 @@ const T = {
     brandSummary: (n,q,net) => `${n} models · ${fmt(q)} units · ${fmt(net)} THB`,
     periodLabels: {'2026-01':'Jan','2026-02':'Feb','2026-03':'Mar','2026-04':'Apr','2026-05':'May','2026-06':'Jun','2026-07':'Jul','2026-08':'Aug','2026-09':'Sep','Q1':'Q1','Q2':'Q2','Q3':'Q3','H1':'H1 (Full)','YTD':'2026 YTD'},
     periodRangeText: {'H1':'Jan – Jun 2026','Q1':'Jan – Mar 2026','Q2':'Apr – Jun 2026','Q3':'Jul – Sep 2026'},
+    globalPeriodLabel: 'Change period for all blocks:',
     metricAmount: 'Amount', metricQty: 'Units', metricPairs: 'Pairs',
     optMetricAmount: 'Amount', optMetricQty: 'Qty',
     stackTooltipShare: '',
@@ -1143,6 +1158,7 @@ const T = {
     brandSummary: (n,q,net) => `${n} รุ่น · ${fmt(q)} ชิ้น · ${fmt(net)} บาท`,
     periodLabels: {'2026-01':'ม.ค.','2026-02':'ก.พ.','2026-03':'มี.ค.','2026-04':'เม.ย.','2026-05':'พ.ค.','2026-06':'มิ.ย.','2026-07':'ก.ค.','2026-08':'ส.ค.','2026-09':'ก.ย.','Q1':'Q1','Q2':'Q2','Q3':'Q3','H1':'ครึ่งปีแรก (เต็ม)','YTD':'ปี 2026 (ชั่วคราว)'},
     periodRangeText: {'H1':'ม.ค. – มิ.ย. 2026','Q1':'ม.ค. – มี.ค. 2026','Q2':'เม.ย. – มิ.ย. 2026','Q3':'ก.ค. – ก.ย. 2026'},
+    globalPeriodLabel: 'เปลี่ยนช่วงเวลาของทุกบล็อกพร้อมกัน:',
     metricAmount: 'ยอดขาย', metricQty: 'จำนวน', metricPairs: 'คู่',
     optMetricAmount: 'ยอดขาย', optMetricQty: 'จำนวน',
     stackTooltipShare: '',
@@ -1293,6 +1309,22 @@ const brandCompPeriod = {key:'YTD'};
 const modelRankPeriod = {key:'H1'};
 const brandDetailPeriod = {key:'H1'};
 const othersPeriod = {key:'H1'};
+
+// Global period control, mounted below the language toggle: picking a
+// period here pushes it onto every section's own {key} state above and
+// re-renders everything, but each section's own dropdown (mountPeriodSelect)
+// is untouched otherwise -- switching ONE section afterward only moves that
+// section, same as before this control existed.
+const globalPeriodState = {key:'H1'};
+const ALL_PERIOD_STATES = [
+  summaryPeriod, channelBrandPeriod, vffChannelPeriod, vffGenderPeriod, vffModelPeriod,
+  vffColorPeriod, vffSizePeriod, storeTablePeriod, paymentOverallPeriod, storeDetailPeriod,
+  brandCompPeriod, modelRankPeriod, brandDetailPeriod, othersPeriod,
+];
+function applyGlobalPeriod(){
+  ALL_PERIOD_STATES.forEach(st => { st.key = globalPeriodState.key; });
+  renderAll();
+}
 
 // ============================================================== monthly-data summing helpers
 function sumMonthly(monthlyMap, months){
@@ -3043,6 +3075,7 @@ function renderVSoulRatioChart(){
 
 // ============================================================== master render
 function renderAll(){
+  mountPeriodSelect('globalPeriodSel', globalPeriodState, applyGlobalPeriod);
   renderSummarySection();
   renderComboChart();
   renderChannelBrandDonut();
