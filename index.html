@@ -1291,31 +1291,31 @@ function mountPeriodSelect(containerId, state, onChangeFn){
   el.querySelector('select').addEventListener('change', e => { state.key = e.target.value; onChangeFn(); });
 }
 
-// per-section period state (all default to the full half-year)
+// per-section period state (all default to this year's YTD/"26年暫定")
 // 全体サマリー is a single period-picker-driven block, same pattern as every
 // other section (mountPeriodSelect), so switching between month/Q1/Q2/H1
 // doesn't require stacking multiple blocks on screen at once.
-const summaryPeriod = {key:'H1'};
-const channelBrandPeriod = {key:'H1'};
-const vffChannelPeriod = {key:'H1'};
-const vffGenderPeriod = {key:'H1'};
-const vffModelPeriod = {key:'H1'};
-const vffColorPeriod = {key:'H1'};
-const vffSizePeriod = {key:'H1'};
-const storeTablePeriod = {key:'H1'};
-const paymentOverallPeriod = {key:'H1'};
-const storeDetailPeriod = {key:'H1'};
+const summaryPeriod = {key:'YTD'};
+const channelBrandPeriod = {key:'YTD'};
+const vffChannelPeriod = {key:'YTD'};
+const vffGenderPeriod = {key:'YTD'};
+const vffModelPeriod = {key:'YTD'};
+const vffColorPeriod = {key:'YTD'};
+const vffSizePeriod = {key:'YTD'};
+const storeTablePeriod = {key:'YTD'};
+const paymentOverallPeriod = {key:'YTD'};
+const storeDetailPeriod = {key:'YTD'};
 const brandCompPeriod = {key:'YTD'};
-const modelRankPeriod = {key:'H1'};
-const brandDetailPeriod = {key:'H1'};
-const othersPeriod = {key:'H1'};
+const modelRankPeriod = {key:'YTD'};
+const brandDetailPeriod = {key:'YTD'};
+const othersPeriod = {key:'YTD'};
 
 // Global period control, mounted below the language toggle: picking a
 // period here pushes it onto every section's own {key} state above and
 // re-renders everything, but each section's own dropdown (mountPeriodSelect)
 // is untouched otherwise -- switching ONE section afterward only moves that
 // section, same as before this control existed.
-const globalPeriodState = {key:'H1'};
+const globalPeriodState = {key:'YTD'};
 const ALL_PERIOD_STATES = [
   summaryPeriod, channelBrandPeriod, vffChannelPeriod, vffGenderPeriod, vffModelPeriod,
   vffColorPeriod, vffSizePeriod, storeTablePeriod, paymentOverallPeriod, storeDetailPeriod,
@@ -2738,7 +2738,7 @@ function renderVffGender(){
 }
 // Detail table behind the gender donut's own "実績詳細を表示": per-store
 // gender ratio for whatever period is currently selected above (defaults to
-// this year's H1) -- the donut above is the blended total across every store.
+// this year's YTD) -- the donut above is the blended total across every store.
 function buildVffGenderDetailTable(){
   const months = monthsFor(vffGenderPeriod.key);
   const genders = ['女性','男性','ユニセックス'];
