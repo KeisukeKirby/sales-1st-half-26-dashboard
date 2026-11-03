@@ -272,6 +272,16 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <div id="summaryMonthlyDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
       <div id="exportDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
     </div>
+
+    <div class="panel" style="margin-top:20px">
+      <h3 data-i18n="directSalesRatioTitle">直販比率推移（月別）</h3>
+      <div class="section-note" data-i18n="directSalesRatioNote">イベント・Paradise Park（直営実店舗）の合算売上が、全体売上に占める比率（月別）</div>
+      <label class="export-toggle">
+        <input type="checkbox" class="export-toggle-input" data-key="directSalesRatio">
+        <span data-i18n="excludeExportLabel">輸出実績を除く</span>
+      </label>
+      <div id="directSalesRatioChart"></div>
+    </div>
   </section>
 
   <!-- ============================================================ VFFシューズ -->
@@ -962,6 +972,8 @@ const T = {
     vffShoesLabel: 'VFFシューズ', vffSocksLabel: 'VFFソックス他',
     vSoulRatioTitle: 'V-Soul 販売比率推移（月別）', vSoulRatioNote: 'VFFブランド内におけるV-Soulの売上構成比・販売足数（月別）。輸出分は除いて算出しています',
     vSoulRatioLegendRatio: '構成比', vSoulRatioLegendQty: '販売足数',
+    directSalesRatioTitle: '直販比率推移（月別）', directSalesRatioNote: 'イベント・Paradise Park（直営実店舗）の合算売上が、全体売上に占める比率（月別）',
+    directSalesRatioLegendRatio: '直販比率', directSalesRatioLegendAmount: 'イベント+Paradise Park 売上',
     br03Title: 'Others 内訳（ブランド別比率）', br03Note: 'Klean Kanteen / Swans / Knockaround / LUNA / Tube の構成比',
     correctionLabel: '訂正履歴:',
     correctionText: '当初「BFT委託」の合計を 1,316,111.80 THB と報告しましたが、元データ末尾の合計行（รวม）を通常の明細行と誤認して二重計上していたため、正しくは <b>658,055.60 THB</b> です。本ダッシュボードは訂正後の値を使用しています。',
@@ -1047,6 +1059,8 @@ const T = {
     vffShoesLabel: 'VFF Shoes', vffSocksLabel: 'VFF Socks & Other',
     vSoulRatioTitle: 'V-Soul Sales Ratio Trend (Monthly)', vSoulRatioNote: "V-Soul's share of VFF brand sales and units sold, by month. Export figures are excluded from this calculation.",
     vSoulRatioLegendRatio: 'Share', vSoulRatioLegendQty: 'Units Sold',
+    directSalesRatioTitle: 'Direct Sales Ratio Trend (Monthly)', directSalesRatioNote: "Event + Paradise Park (directly-operated store) combined sales as a share of total sales, by month.",
+    directSalesRatioLegendRatio: 'Direct Sales Ratio', directSalesRatioLegendAmount: 'Event + Paradise Park Sales',
     br03Title: 'Others Breakdown (by Brand)', br03Note: 'Composition of Klean Kanteen / Swans / Knockaround / LUNA / Tube',
     correctionLabel: 'Correction:',
     correctionText: 'We originally reported "BFT Consignment" total sales as 1,316,111.80 THB. A trailing "รวม" (total) row in the source sheet had been mistaken for a regular line item and double-counted; the correct figure is <b>658,055.60 THB</b>. This dashboard uses the corrected value.',
@@ -1131,6 +1145,8 @@ const T = {
     vffShoesLabel: 'VFF (รองเท้า)', vffSocksLabel: 'VFF (ถุงเท้าและอื่นๆ)',
     vSoulRatioTitle: 'แนวโน้มสัดส่วนยอดขาย V-Soul (รายเดือน)', vSoulRatioNote: 'สัดส่วนยอดขายและจำนวนที่ขายของ V-Soul ในแบรนด์ VFF แยกตามเดือน ไม่รวมยอดส่งออกในการคำนวณนี้',
     vSoulRatioLegendRatio: 'สัดส่วน', vSoulRatioLegendQty: 'จำนวนที่ขาย',
+    directSalesRatioTitle: 'แนวโน้มสัดส่วนยอดขายตรง (รายเดือน)', directSalesRatioNote: 'สัดส่วนยอดขายรวมของอีเวนต์และ Paradise Park (ร้านที่บริษัทดำเนินการเอง) เทียบกับยอดขายรวมทั้งหมด แยกตามเดือน',
+    directSalesRatioLegendRatio: 'สัดส่วนยอดขายตรง', directSalesRatioLegendAmount: 'ยอดขายอีเวนต์ + Paradise Park',
     br03Title: 'รายละเอียด Others (ตามแบรนด์)', br03Note: 'สัดส่วนของ Klean Kanteen / Swans / Knockaround / LUNA / Tube',
     correctionLabel: 'การแก้ไข:',
     correctionText: 'เดิมเรารายงานยอดขายรวมของ "BFT Consignment" ไว้ที่ 1,316,111.80 บาท แต่แถว "รวม" ท้ายชีทข้อมูลต้นฉบับถูกเข้าใจผิดว่าเป็นรายการสินค้าปกติและถูกนับซ้ำ ตัวเลขที่ถูกต้องคือ <b>658,055.60 บาท</b> แดชบอร์ดนี้ใช้ค่าที่แก้ไขแล้ว',
@@ -3073,11 +3089,72 @@ function renderVSoulRatioChart(){
   });
 }
 
+// ============================================================== 全体: 直販比率推移（月別）
+// "直販" here means Event + Paradise Park (the one directly_operated-group
+// store) combined -- Barefoot's own staffed selling, as opposed to
+// marketplace/online, department-store concessions, consignment, Siam
+// Discovery, 対EDV wholesale, or Export. Same dual-axis line+bar pattern as
+// renderVSoulRatioChart() above (ratio on the left axis, THB amount bars on
+// the right), but with its own "輸出実績を除く" toggle since Export is part
+// of the denominator (monthly_overall) even though it's never part of the
+// numerator (Event/Paradise Park are separate stores from Export).
+const DSR_AMT_HEX = VSR_QTY_HEX;
+function renderDirectSalesRatioChart(){
+  const el = document.getElementById('directSalesRatioChart');
+  if (!el) return;
+  const eventMonthly = (DATA.stores.find(s => s.store === 'Event') || {}).monthly || {};
+  const ppMonthly = (DATA.stores.find(s => s.store === 'Paradise Park') || {}).monthly || {};
+  const overallMap = Object.fromEntries(monthlyOverallEff('directSalesRatio').map(m => [m.month, m]));
+  const amounts = MONTHS.map(m => (eventMonthly[m] ? eventMonthly[m].amount : 0) + (ppMonthly[m] ? ppMonthly[m].amount : 0));
+  const ratios = MONTHS.map((m,i) => {
+    const total = overallMap[m] ? overallMap[m].amount : 0;
+    return total > 0 ? amounts[i] / total * 100 : 0;
+  });
+  const steps = 4;
+  const {max: maxRatio} = niceAxis(Math.max(...ratios, 1), steps);
+  const {max: maxAmt} = niceAxis(Math.max(...amounts, 1), steps);
+  const w=500,h=220,padL=44,padR=52,padT=16,padB=26,plotW=w-padL-padR,plotH=h-padT-padB;
+  const x = i => padL + plotW*i/(MONTHS.length-1);
+  const y = v => padT+plotH-(v/maxRatio)*plotH;
+  const bandW = plotW / MONTHS.length;
+  const barW = Math.min(bandW * 0.42, 30);
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px">`;
+  for (let s=0; s<=steps; s++){
+    const yy = padT + plotH*(1 - s/steps);
+    svg += `<line x1="${padL}" y1="${yy}" x2="${w-padR}" y2="${yy}" class="axis-line"></line>`;
+    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${(maxRatio*s/steps).toFixed(0)}%</text>`;
+    svg += `<text x="${w-padR+8}" y="${yy+3}" text-anchor="start" fill="${DSR_AMT_HEX}">${(maxAmt*s/steps/1000).toFixed(0)}k</text>`;
+  }
+  MONTHS.forEach((m,i)=>svg+=`<text x="${x(i)}" y="${h-6}" text-anchor="middle">${monthLabel(m)}</text>`);
+  amounts.forEach((v,i)=>{
+    const barH = (v/maxAmt)*plotH;
+    svg += `<rect x="${x(i)-barW/2}" y="${padT+plotH-barH}" width="${barW}" height="${Math.max(barH,0)}" fill="${DSR_AMT_HEX}" opacity="0.55" rx="2" class="dsrbar" data-i="${i}"></rect>`;
+  });
+  let path=''; ratios.forEach((v,i)=>path+=(i===0?'M':'L')+x(i)+' '+y(v)+' ');
+  svg += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>`;
+  ratios.forEach((v,i)=>svg+=`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2" class="dsrpt" data-i="${i}"></circle>`);
+  svg += `</svg>`;
+  const legendHtml = `<div class="legend" style="flex-direction:row;gap:18px;margin-top:6px;justify-content:center;flex-wrap:wrap">
+    <div class="item"><span class="k"><span class="swatch" style="background:var(--accent)"></span>${esc(t('directSalesRatioLegendRatio'))}</span></div>
+    <div class="item"><span class="k"><span class="swatch" style="background:${DSR_AMT_HEX}"></span>${esc(t('directSalesRatioLegendAmount'))}</span></div>
+  </div>`;
+  el.innerHTML = svg + legendHtml;
+  el.querySelectorAll('.dsrpt').forEach(pt=>{
+    pt.addEventListener('mousemove', e=>showTip(e, `<b>${monthLabel(MONTHS[+pt.dataset.i])}</b><br>${t('directSalesRatioLegendRatio')}: ${ratios[+pt.dataset.i].toFixed(1)}%<br>${t('directSalesRatioLegendAmount')}: ${fmt(amounts[+pt.dataset.i])} THB`));
+    pt.addEventListener('mouseleave', hideTip);
+  });
+  el.querySelectorAll('.dsrbar').forEach(bar=>{
+    bar.addEventListener('mousemove', e=>showTip(e, `<b>${monthLabel(MONTHS[+bar.dataset.i])}</b><br>${t('directSalesRatioLegendAmount')}: ${fmt(amounts[+bar.dataset.i])} THB`));
+    bar.addEventListener('mouseleave', hideTip);
+  });
+}
+
 // ============================================================== master render
 function renderAll(){
   mountPeriodSelect('globalPeriodSel', globalPeriodState, applyGlobalPeriod);
   renderSummarySection();
   renderComboChart();
+  renderDirectSalesRatioChart();
   renderChannelBrandDonut();
   renderVffStoreStackChart();
   renderVffChannelShare();
