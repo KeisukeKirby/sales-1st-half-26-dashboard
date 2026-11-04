@@ -3130,10 +3130,15 @@ function renderDirectSalesRatioChart(){
   // panel edge, since niceAxis's rounded max can otherwise land exactly on
   // (or just above) the actual tallest total.
   const {max: maxQty} = niceAxis(Math.max(...totals, 1) * 1.15, steps);
-  const w=500,h=240,padL=48,padR=20,padT=20,padB=26,plotW=w-padL-padR,plotH=h-padT-padB;
-  const x = i => padL + plotW*i/(MONTHS.length-1);
+  const w=500,h=240,padL=56,padR=20,padT=20,padB=26,plotW=w-padL-padR,plotH=h-padT-padB;
   const bandW = plotW / MONTHS.length;
   const barW = Math.min(bandW * 0.55, 36);
+  // Bar centers are spaced across [padL + barW/2, w-padR - barW/2], not
+  // [padL, w-padR], so the leftmost bar's own left edge lands exactly at
+  // padL instead of straddling it -- otherwise it visually overlaps the
+  // left-axis quantity labels (anchored at padL-8, extending further left).
+  const xSpan = plotW - barW;
+  const x = i => padL + barW/2 + xSpan*i/(MONTHS.length-1);
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px">`;
   for (let s=0; s<=steps; s++){
     const yy = padT + plotH*(1 - s/steps);
