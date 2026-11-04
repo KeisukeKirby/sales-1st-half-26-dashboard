@@ -974,6 +974,7 @@ const T = {
     vSoulRatioLegendRatio: '構成比', vSoulRatioLegendQty: '販売足数',
     directSalesRatioTitle: '直販比率推移（月別）', directSalesRatioNote: 'イベント・Paradise Park（直営実店舗）のVFFシューズ合算販売足数が、VFFシューズ全体の販売足数に占める比率（月別）',
     directSalesRatioLegendRatio: '直販比率', directSalesRatioLegendAmount: 'イベント+Paradise Park 販売足数',
+    directSalesRatioLegendTotal: 'VFFシューズ全体 販売足数',
     directSalesRatioAxisRatio: '左軸：比率(%)', directSalesRatioAxisQty: '右軸：販売足数',
     br03Title: 'Others 内訳（ブランド別比率）', br03Note: 'Klean Kanteen / Swans / Knockaround / LUNA / Tube の構成比',
     correctionLabel: '訂正履歴:',
@@ -1062,6 +1063,7 @@ const T = {
     vSoulRatioLegendRatio: 'Share', vSoulRatioLegendQty: 'Units Sold',
     directSalesRatioTitle: 'Direct Sales Ratio Trend (Monthly)', directSalesRatioNote: "Event + Paradise Park (directly-operated store) combined VFF shoe pairs sold as a share of total VFF shoe pairs sold, by month.",
     directSalesRatioLegendRatio: 'Direct Sales Ratio', directSalesRatioLegendAmount: 'Event + Paradise Park Pairs Sold',
+    directSalesRatioLegendTotal: 'Total VFF Shoe Pairs Sold',
     directSalesRatioAxisRatio: 'Left axis: Ratio (%)', directSalesRatioAxisQty: 'Right axis: Pairs Sold',
     br03Title: 'Others Breakdown (by Brand)', br03Note: 'Composition of Klean Kanteen / Swans / Knockaround / LUNA / Tube',
     correctionLabel: 'Correction:',
@@ -1149,6 +1151,7 @@ const T = {
     vSoulRatioLegendRatio: 'สัดส่วน', vSoulRatioLegendQty: 'จำนวนที่ขาย',
     directSalesRatioTitle: 'แนวโน้มสัดส่วนยอดขายตรง (รายเดือน)', directSalesRatioNote: 'จำนวนคู่รองเท้า VFF ที่ขายรวมของอีเวนต์และ Paradise Park (ร้านที่บริษัทดำเนินการเอง) เทียบกับจำนวนคู่รองเท้า VFF ที่ขายรวมทั้งหมด แยกตามเดือน',
     directSalesRatioLegendRatio: 'สัดส่วนยอดขายตรง', directSalesRatioLegendAmount: 'จำนวนคู่ที่ขายของอีเวนต์ + Paradise Park',
+    directSalesRatioLegendTotal: 'จำนวนคู่รองเท้า VFF ที่ขายทั้งหมด',
     directSalesRatioAxisRatio: 'แกนซ้าย: สัดส่วน (%)', directSalesRatioAxisQty: 'แกนขวา: จำนวนคู่ที่ขาย',
     br03Title: 'รายละเอียด Others (ตามแบรนด์)', br03Note: 'สัดส่วนของ Klean Kanteen / Swans / Knockaround / LUNA / Tube',
     correctionLabel: 'การแก้ไข:',
@@ -3117,11 +3120,12 @@ function renderDirectSalesRatioChart(){
   const exportVffMonthly = DATA.vff_shoes.store_monthly['Export'] || {};
   const vffMonthlyMap = Object.fromEntries(DATA.vff_shoes.monthly.map(m => [m.month, m]));
   const qtys = MONTHS.map(m => (eventVffMonthly[m] ? eventVffMonthly[m].qty : 0) + (ppVffMonthly[m] ? ppVffMonthly[m].qty : 0));
-  const ratios = MONTHS.map((m,i) => {
+  const totals = MONTHS.map(m => {
     let total = vffMonthlyMap[m] ? vffMonthlyMap[m].qty : 0;
     if (exportToggleState.directSalesRatio) total -= (exportVffMonthly[m] ? exportVffMonthly[m].qty : 0);
-    return total > 0 ? qtys[i] / total * 100 : 0;
+    return total;
   });
+  const ratios = MONTHS.map((m,i) => totals[i] > 0 ? qtys[i] / totals[i] * 100 : 0);
   const steps = 4;
   const {max: maxRatio} = niceAxis(Math.max(...ratios, 1), steps);
   const {max: maxQty} = niceAxis(Math.max(...qtys, 1), steps);
@@ -3153,12 +3157,13 @@ function renderDirectSalesRatioChart(){
     <div class="item"><span class="k"><span class="swatch" style="background:${DSR_QTY_HEX}"></span>${esc(t('directSalesRatioLegendAmount'))}</span></div>
   </div>`;
   el.innerHTML = svg + legendHtml;
+  const dsrTipHtml = i => `<b>${monthLabel(MONTHS[i])}</b><br>${t('directSalesRatioLegendRatio')}: ${ratios[i].toFixed(1)}%<br>${t('directSalesRatioLegendAmount')}: ${fmt(qtys[i])} ${t('unitPairs')}<br>${t('directSalesRatioLegendTotal')}: ${fmt(totals[i])} ${t('unitPairs')}`;
   el.querySelectorAll('.dsrpt').forEach(pt=>{
-    pt.addEventListener('mousemove', e=>showTip(e, `<b>${monthLabel(MONTHS[+pt.dataset.i])}</b><br>${t('directSalesRatioLegendRatio')}: ${ratios[+pt.dataset.i].toFixed(1)}%<br>${t('directSalesRatioLegendAmount')}: ${fmt(qtys[+pt.dataset.i])} ${t('unitPairs')}`));
+    pt.addEventListener('mousemove', e=>showTip(e, dsrTipHtml(+pt.dataset.i)));
     pt.addEventListener('mouseleave', hideTip);
   });
   el.querySelectorAll('.dsrbar').forEach(bar=>{
-    bar.addEventListener('mousemove', e=>showTip(e, `<b>${monthLabel(MONTHS[+bar.dataset.i])}</b><br>${t('directSalesRatioLegendAmount')}: ${fmt(qtys[+bar.dataset.i])} ${t('unitPairs')}`));
+    bar.addEventListener('mousemove', e=>showTip(e, dsrTipHtml(+bar.dataset.i)));
     bar.addEventListener('mouseleave', hideTip);
   });
 }
