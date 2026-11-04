@@ -975,7 +975,6 @@ const T = {
     directSalesRatioTitle: '直販比率推移（月別）', directSalesRatioNote: 'イベント・Paradise Park（直営実店舗）のVFFシューズ合算販売足数が、VFFシューズ全体の販売足数に占める比率（月別）',
     directSalesRatioLegendRatio: '直販比率', directSalesRatioLegendAmount: 'イベント+Paradise Park 販売足数',
     directSalesRatioLegendTotal: 'VFFシューズ全体 販売足数',
-    directSalesRatioAxisRatio: '左軸：比率(%)', directSalesRatioAxisQty: '右軸：販売足数',
     br03Title: 'Others 内訳（ブランド別比率）', br03Note: 'Klean Kanteen / Swans / Knockaround / LUNA / Tube の構成比',
     correctionLabel: '訂正履歴:',
     correctionText: '当初「BFT委託」の合計を 1,316,111.80 THB と報告しましたが、元データ末尾の合計行（รวม）を通常の明細行と誤認して二重計上していたため、正しくは <b>658,055.60 THB</b> です。本ダッシュボードは訂正後の値を使用しています。',
@@ -1064,7 +1063,6 @@ const T = {
     directSalesRatioTitle: 'Direct Sales Ratio Trend (Monthly)', directSalesRatioNote: "Event + Paradise Park (directly-operated store) combined VFF shoe pairs sold as a share of total VFF shoe pairs sold, by month.",
     directSalesRatioLegendRatio: 'Direct Sales Ratio', directSalesRatioLegendAmount: 'Event + Paradise Park Pairs Sold',
     directSalesRatioLegendTotal: 'Total VFF Shoe Pairs Sold',
-    directSalesRatioAxisRatio: 'Left axis: Ratio (%)', directSalesRatioAxisQty: 'Right axis: Pairs Sold',
     br03Title: 'Others Breakdown (by Brand)', br03Note: 'Composition of Klean Kanteen / Swans / Knockaround / LUNA / Tube',
     correctionLabel: 'Correction:',
     correctionText: 'We originally reported "BFT Consignment" total sales as 1,316,111.80 THB. A trailing "รวม" (total) row in the source sheet had been mistaken for a regular line item and double-counted; the correct figure is <b>658,055.60 THB</b>. This dashboard uses the corrected value.',
@@ -1152,7 +1150,6 @@ const T = {
     directSalesRatioTitle: 'แนวโน้มสัดส่วนยอดขายตรง (รายเดือน)', directSalesRatioNote: 'จำนวนคู่รองเท้า VFF ที่ขายรวมของอีเวนต์และ Paradise Park (ร้านที่บริษัทดำเนินการเอง) เทียบกับจำนวนคู่รองเท้า VFF ที่ขายรวมทั้งหมด แยกตามเดือน',
     directSalesRatioLegendRatio: 'สัดส่วนยอดขายตรง', directSalesRatioLegendAmount: 'จำนวนคู่ที่ขายของอีเวนต์ + Paradise Park',
     directSalesRatioLegendTotal: 'จำนวนคู่รองเท้า VFF ที่ขายทั้งหมด',
-    directSalesRatioAxisRatio: 'แกนซ้าย: สัดส่วน (%)', directSalesRatioAxisQty: 'แกนขวา: จำนวนคู่ที่ขาย',
     br03Title: 'รายละเอียด Others (ตามแบรนด์)', br03Note: 'สัดส่วนของ Klean Kanteen / Swans / Knockaround / LUNA / Tube',
     correctionLabel: 'การแก้ไข:',
     correctionText: 'เดิมเรารายงานยอดขายรวมของ "BFT Consignment" ไว้ที่ 1,316,111.80 บาท แต่แถว "รวม" ท้ายชีทข้อมูลต้นฉบับถูกเข้าใจผิดว่าเป็นรายการสินค้าปกติและถูกนับซ้ำ ตัวเลขที่ถูกต้องคือ <b>658,055.60 บาท</b> แดชบอร์ดนี้ใช้ค่าที่แก้ไขแล้ว',
@@ -3099,18 +3096,19 @@ function renderVSoulRatioChart(){
 // "直販" here means Event + Paradise Park (the one directly_operated-group
 // store) combined -- Barefoot's own staffed selling, as opposed to
 // marketplace/online, department-store concessions, consignment, Siam
-// Discovery, 対EDV wholesale, or Export. Ratio is VFF-shoe pairs-sold based
-// (販売足数 -- DATA.vff_shoes, not the all-product DATA.stores/
-// monthly_overall qty), per user request 2026-11: "足数" specifically means
-// VFF shoe pairs in this dashboard's vocabulary (see unitPairs/足 used
-// throughout the VFFシューズ tab), distinct from the all-brand/all-product
-// 点数 used elsewhere -- using the wrong one silently mixed socks/towels/
-// bottles/other brands into what was meant to be a VFF-shoes-only read.
-// Same dual-axis line+bar pattern as renderVSoulRatioChart() above (ratio
-// on the left axis, pairs-sold bars on the right), but with its own
+// Discovery, 対EDV wholesale, or Export. Figures are VFF-shoe pairs-sold
+// based (販売足数 -- DATA.vff_shoes, not the all-product DATA.stores/
+// monthly_overall qty): "足数" specifically means VFF shoe pairs in this
+// dashboard's vocabulary (see unitPairs/足 used throughout the VFFシューズ
+// tab), distinct from the all-brand/all-product 点数 used elsewhere.
+// Single-series stacked bar per month (per user request 2026-11, replacing
+// the earlier dual-axis line+bar design): each bar's full height is that
+// month's total VFF pairs sold, split into the 直販 (Event+Paradise Park)
+// segment on top in the accent color and the rest of the channels below in
+// the muted color, with the 直販比率 % labeled above each bar. Has its own
 // "輸出実績を除く" toggle since Export sells VFF shoes too and is part of
-// the denominator (vff_shoes.monthly) even though it's never part of the
-// numerator (Event/Paradise Park are separate stores from Export).
+// the total bar height even though it's never part of the 直販 segment
+// (Event/Paradise Park are separate stores from Export).
 const DSR_QTY_HEX = VSR_QTY_HEX;
 function renderDirectSalesRatioChart(){
   const el = document.getElementById('directSalesRatioChart');
@@ -3126,42 +3124,40 @@ function renderDirectSalesRatioChart(){
     return total;
   });
   const ratios = MONTHS.map((m,i) => totals[i] > 0 ? qtys[i] / totals[i] * 100 : 0);
+  const rests = totals.map((v,i) => Math.max(v - qtys[i], 0));
   const steps = 4;
-  const {max: maxRatio} = niceAxis(Math.max(...ratios, 1), steps);
-  const {max: maxQty} = niceAxis(Math.max(...qtys, 1), steps);
-  const w=500,h=230,padL=44,padR=44,padT=28,padB=26,plotW=w-padL-padR,plotH=h-padT-padB;
+  // 15% headroom above the tallest bar so its ratio-% label never clips the
+  // panel edge, since niceAxis's rounded max can otherwise land exactly on
+  // (or just above) the actual tallest total.
+  const {max: maxQty} = niceAxis(Math.max(...totals, 1) * 1.15, steps);
+  const w=500,h=240,padL=48,padR=20,padT=20,padB=26,plotW=w-padL-padR,plotH=h-padT-padB;
   const x = i => padL + plotW*i/(MONTHS.length-1);
-  const y = v => padT+plotH-(v/maxRatio)*plotH;
   const bandW = plotW / MONTHS.length;
-  const barW = Math.min(bandW * 0.42, 30);
+  const barW = Math.min(bandW * 0.55, 36);
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px">`;
-  svg += `<text x="${padL}" y="14" text-anchor="start" fill="var(--accent)" font-weight="600">${esc(t('directSalesRatioAxisRatio'))}</text>`;
-  svg += `<text x="${w-padR}" y="14" text-anchor="end" fill="${DSR_QTY_HEX}" font-weight="600">${esc(t('directSalesRatioAxisQty'))}</text>`;
   for (let s=0; s<=steps; s++){
     const yy = padT + plotH*(1 - s/steps);
     svg += `<line x1="${padL}" y1="${yy}" x2="${w-padR}" y2="${yy}" class="axis-line"></line>`;
-    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${(maxRatio*s/steps).toFixed(0)}%</text>`;
-    svg += `<text x="${w-padR+8}" y="${yy+3}" text-anchor="start" fill="${DSR_QTY_HEX}">${fmt(Math.round(maxQty*s/steps))}</text>`;
+    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${fmt(Math.round(maxQty*s/steps))}</text>`;
   }
   MONTHS.forEach((m,i)=>svg+=`<text x="${x(i)}" y="${h-6}" text-anchor="middle">${monthLabel(m)}</text>`);
-  qtys.forEach((v,i)=>{
-    const barH = (v/maxQty)*plotH;
-    svg += `<rect x="${x(i)-barW/2}" y="${padT+plotH-barH}" width="${barW}" height="${Math.max(barH,0)}" fill="${DSR_QTY_HEX}" opacity="0.55" rx="2" class="dsrbar" data-i="${i}"></rect>`;
+  MONTHS.forEach((m,i)=>{
+    const xC = x(i), bx = xC - barW/2;
+    const restH = (rests[i]/maxQty)*plotH;
+    const directH = (qtys[i]/maxQty)*plotH;
+    const yRestTop = padT + plotH - restH;
+    const yDirectTop = yRestTop - directH;
+    svg += `<rect x="${bx}" y="${yRestTop}" width="${barW}" height="${Math.max(restH,0)}" fill="${DSR_QTY_HEX}" opacity="0.5" rx="2" class="dsrbar" data-i="${i}"></rect>`;
+    svg += `<rect x="${bx}" y="${yDirectTop}" width="${barW}" height="${Math.max(directH,0)}" fill="var(--accent)" rx="2" class="dsrbar" data-i="${i}"></rect>`;
+    svg += `<text x="${xC}" y="${yDirectTop-6}" text-anchor="middle" fill="var(--accent)" font-weight="700" font-size="10.5">${ratios[i].toFixed(1)}%</text>`;
   });
-  let path=''; ratios.forEach((v,i)=>path+=(i===0?'M':'L')+x(i)+' '+y(v)+' ');
-  svg += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>`;
-  ratios.forEach((v,i)=>svg+=`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2" class="dsrpt" data-i="${i}"></circle>`);
   svg += `</svg>`;
   const legendHtml = `<div class="legend" style="flex-direction:row;gap:18px;margin-top:6px;justify-content:center;flex-wrap:wrap">
-    <div class="item"><span class="k"><span class="swatch" style="background:var(--accent)"></span>${esc(t('directSalesRatioLegendRatio'))}</span></div>
-    <div class="item"><span class="k"><span class="swatch" style="background:${DSR_QTY_HEX}"></span>${esc(t('directSalesRatioLegendAmount'))}</span></div>
+    <div class="item"><span class="k"><span class="swatch" style="background:var(--accent)"></span>${esc(t('directSalesRatioLegendAmount'))}</span></div>
+    <div class="item"><span class="k"><span class="swatch" style="background:${DSR_QTY_HEX}"></span>${esc(t('directSalesRatioLegendTotal'))}</span></div>
   </div>`;
   el.innerHTML = svg + legendHtml;
   const dsrTipHtml = i => `<b>${monthLabel(MONTHS[i])}</b><br>${t('directSalesRatioLegendRatio')}: ${ratios[i].toFixed(1)}%<br>${t('directSalesRatioLegendAmount')}: ${fmt(qtys[i])} ${t('unitPairs')}<br>${t('directSalesRatioLegendTotal')}: ${fmt(totals[i])} ${t('unitPairs')}`;
-  el.querySelectorAll('.dsrpt').forEach(pt=>{
-    pt.addEventListener('mousemove', e=>showTip(e, dsrTipHtml(+pt.dataset.i)));
-    pt.addEventListener('mouseleave', hideTip);
-  });
   el.querySelectorAll('.dsrbar').forEach(bar=>{
     bar.addEventListener('mousemove', e=>showTip(e, dsrTipHtml(+bar.dataset.i)));
     bar.addEventListener('mouseleave', hideTip);
