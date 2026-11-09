@@ -62,14 +62,14 @@ h1{margin:0;font-size:28px;font-weight:700;letter-spacing:0;}
 .lang-btn:hover{color:var(--ink);}
 .lang-btn.active{background:var(--accent);color:#16241C;}
 .lang-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-.global-period-ctrl{
-  display:flex;align-items:center;gap:8px;
+.tab-period-ctrl{
+  display:flex;align-items:center;gap:8px;margin-bottom:18px;
   font-family:var(--mono);font-size:12px;color:var(--ink-dim);
 }
-.global-period-ctrl select.period-select{border:1px solid var(--accent);color:var(--accent);font-weight:700;}
+.tab-period-ctrl select.period-select{border:1px solid var(--accent);color:var(--accent);font-weight:700;}
 @media (max-width:860px){
   .head-right{align-items:stretch;}
-  .global-period-ctrl{justify-content:space-between;}
+  .tab-period-ctrl{justify-content:space-between;}
 }
 
 nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:26px;overflow-x:auto;}
@@ -230,10 +230,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">English</button>
         <button type="button" class="lang-btn" data-lang="th" aria-pressed="false">ไทย</button>
       </div>
-      <div class="global-period-ctrl">
-        <span data-i18n="globalPeriodLabel">全ブロックの期間をまとめて変更:</span>
-        <div id="globalPeriodSel"></div>
-      </div>
     </div>
   </header>
 
@@ -294,6 +290,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <!-- ============================================================ VFFシューズ -->
   <section class="tabpanel" id="tab-vffshoes">
+    <div class="tab-period-ctrl">
+      <label for="vffPeriodSelSelect" data-i18n="tabPeriodLabel">このタブの集計期間</label>
+      <div id="vffPeriodSel"></div>
+    </div>
     <div class="section-title"><span class="n">01</span><span data-i18n="vff01Title">月次 販売足数推移（店舗別）</span></div>
     <label class="export-toggle">
       <input type="checkbox" class="export-toggle-input" data-key="vffStore">
@@ -309,7 +309,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <span class="n">02</span><span data-i18n="vff02Title">販売チャネルシェア</span>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <div class="metric-toggle" id="vffChannelMetricToggle" role="group"></div>
-        <div id="vffChannelPeriodSel"></div>
       </div>
     </div>
     <label class="export-toggle">
@@ -333,7 +332,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="section-title" style="margin-top:26px">
       <span class="n">03</span><span data-i18n="vff03Title">性別セグメント分布（推定）</span>
-      <div id="vffGenderPeriodSel" style="margin-left:auto"></div>
     </div>
     <div class="section-note" data-i18n="vff03Note">サイズ表記のW/Mから推定した参考値</div>
     <label class="export-toggle">
@@ -351,9 +349,8 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="section-title" style="margin-top:26px">
       <span class="n">04</span><span data-i18n="vff04Title">モデル別販売ランキング</span>
-      <div id="vffModelPeriodSel" style="margin-left:auto"></div>
     </div>
-    <div class="section-note" data-i18n="vff04Note">各モデルシリーズ別の販売足数（上位10シリーズ、サイズ/カラー・派生モデルは合算）</div>
+    <div class="section-note" data-i18n="vff04Note">上位10シリーズの足数と全シリーズに占める比率。サイズ・カラー・派生モデルはシリーズごとに合算します。</div>
     <label class="export-toggle">
       <input type="checkbox" class="export-toggle-input" data-key="vffModel">
       <span data-i18n="excludeExportLabel">輸出実績を除く</span>
@@ -369,9 +366,8 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="section-title" style="margin-top:26px">
       <span class="n">05</span><span data-i18n="vff05Title">売れたカラー</span>
-      <div id="vffColorPeriodSel" style="margin-left:auto"></div>
     </div>
-    <div class="section-note" data-i18n="vff05Note">カラー別の販売足数（上位10色）。実績詳細では全色を確認できます</div>
+    <div class="section-note" data-i18n="vff05Note">上位10色の足数と全カラーに占める比率。実績詳細では全カラーを確認できます。</div>
     <label class="export-toggle">
       <input type="checkbox" class="export-toggle-input" data-key="vffColor">
       <span data-i18n="excludeExportLabel">輸出実績を除く</span>
@@ -384,9 +380,8 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="section-title" style="margin-top:26px">
       <span class="n">06</span><span data-i18n="vff06Title">男女別 サイズ分布</span>
-      <div id="vffSizePeriodSel" style="margin-left:auto"></div>
     </div>
-    <div class="section-note" data-i18n="vff06Note">サイズ表記から推定した性別区分ごとの販売足数</div>
+    <div class="section-note" data-i18n="vff06Note">性別区分はサイズ表記から推定。比率は同じ性別区分の全サイズの販売足数に対する割合です。</div>
     <label class="export-toggle">
       <input type="checkbox" class="export-toggle-input" data-key="vffSize">
       <span data-i18n="excludeExportLabel">輸出実績を除く</span>
@@ -396,7 +391,8 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
         <div id="vffSizeGenderDonut"></div>
         <div class="legend" id="vffSizeGenderLegend"></div>
       </div>
-      <div id="vffSizeGenderChart" style="margin-top:20px"></div>
+      <div class="metric-toggle" id="vffSizeMetricToggle" role="group" style="margin-top:20px"></div>
+      <div id="vffSizeGenderChart" style="margin-top:12px"></div>
       <button type="button" class="show-more-btn" id="vffSizeDetailBtn" style="margin-top:16px"></button>
       <div id="vffSizeDetailWrap" class="detail-scroll" style="display:none;margin-top:16px;overflow-x:auto"></div>
     </div>
@@ -404,6 +400,10 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <!-- ============================================================ 店舗別 -->
   <section class="tabpanel" id="tab-stores">
+    <div class="tab-period-ctrl">
+      <label for="storesPeriodSelSelect" data-i18n="tabPeriodLabel">このタブの集計期間</label>
+      <div id="storesPeriodSel"></div>
+    </div>
     <div class="section-title">
       <span class="n">01</span><span data-i18n="st01TitleTable">店舗・チャネル別 売上テーブル</span>
     </div>
@@ -427,7 +427,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="section-title" style="margin-top:26px">
       <span class="n">02</span><span data-i18n="ov04Title">決済方法別比率（全体）</span>
-      <div id="paymentOverallPeriodSel" style="margin-left:auto"></div>
     </div>
     <div class="section-note"><span data-i18n="payTargetPrefix">対象</span> <span id="payCoverageAmt" style="font-family:var(--mono);color:var(--ink-dim)"></span> THB <span data-i18n="payOverviewNote">（現状Central Ladprao 3F・Thaniya・K Village・Paradise Parkの店舗別台帳のみ決済方法を記録。店舗ごとの内訳は下の「店舗ごとの詳細」で確認できます）</span></div>
     <div class="panel">
@@ -453,7 +452,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="section-title" style="margin-top:26px">
       <span class="n">03</span><span data-i18n="st01Title">店舗ごとの詳細</span>
-      <div id="storeDetailPeriodSel" style="margin-left:auto"></div>
     </div>
     <div class="panel">
       <div class="detail-head">
@@ -477,11 +475,14 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
   <!-- ============================================================ 商品・ブランド別 -->
   <section class="tabpanel" id="tab-brand">
+    <div class="tab-period-ctrl">
+      <label for="brandPeriodSelSelect" data-i18n="tabPeriodLabel">このタブの集計期間</label>
+      <div id="brandPeriodSel"></div>
+    </div>
     <div class="section-title">
       <span class="n">01</span><span data-i18n="ov04TitleBrand">ブランド別 売上構成（全体）</span>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <select id="brandCompMetricSelect" class="compact-select"></select>
-        <div id="brandCompPeriodSel"></div>
       </div>
     </div>
     <label class="export-toggle">
@@ -507,7 +508,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
       <span class="n">02</span><span data-i18n="ov03TitleDonut">チャネル別 ブランド構成</span>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <select id="channelBrandSelect" class="compact-select"></select>
-        <div id="channelBrandPeriodSel"></div>
       </div>
     </div>
     <div class="section-note" data-i18n="ov03NoteDonut">プルダウンでチャネルを選択すると、そのチャネル内でのブランド別売上構成比（金額ベース）を表示します</div>
@@ -524,7 +524,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="section-title" style="margin-top:26px">
       <span class="n">03</span><span data-i18n="br01Title">モデル別ランキング（全ブランド合算・サイズ/カラー合算）</span>
-      <div id="modelRankPeriodSel" style="margin-left:auto"></div>
     </div>
     <label class="export-toggle">
       <input type="checkbox" class="export-toggle-input" data-key="brandModel">
@@ -549,7 +548,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
 
     <div class="section-title" style="margin-top:26px">
       <span class="n">04</span><span data-i18n="br02Title">ブランド別 売上詳細</span>
-      <div id="brandDetailPeriodSel" style="margin-left:auto"></div>
     </div>
     <label class="export-toggle">
       <input type="checkbox" class="export-toggle-input" data-key="brandDetail">
@@ -580,7 +578,6 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
     <div style="display:none">
       <div class="section-title" style="margin-top:26px">
         <span class="n">06</span><span data-i18n="br03Title">Others 内訳（ブランド別比率）</span>
-        <div id="othersPeriodSel" style="margin-left:auto"></div>
       </div>
       <div class="section-note" data-i18n="br03Note">Klean Kanteen / Swans / Knockaround / LUNA / Tube の構成比</div>
       <div class="panel">
@@ -959,9 +956,9 @@ const T = {
     channelShareTitle: 'チャネル別 シェア', channelBreakdownTitle: 'チャネル別 内訳',
     thChannel: 'チャネル', thPairs: '足数', thAmountPlain2: '売上金額', thMetric: '項目',
     vff03Title: '性別セグメント分布（推定）', vff03Note: 'サイズ表記のW/Mから推定した参考値',
-    vff04Title: 'モデル別販売ランキング', vff04Note: '各モデルシリーズ別の販売足数（上位10シリーズ、サイズ/カラー・派生モデルは合算）',
-    vff05Title: '売れたカラー', vff05Note: 'カラー別の販売足数（上位10色）。実績詳細では全色を確認できます',
-    vff06Title: '男女別 サイズ分布', vff06Note: 'サイズ表記から推定した性別区分ごとの販売足数',
+    vff04Title: 'モデル別販売ランキング', vff04Note: '上位10シリーズの足数と全シリーズに占める比率。サイズ・カラー・派生モデルはシリーズごとに合算します。',
+    vff05Title: '売れたカラー', vff05Note: '上位10色の足数と全カラーに占める比率。実績詳細では全カラーを確認できます。',
+    vff06Title: '男女別 サイズ分布', vff06Note: '性別区分はサイズ表記から推定。比率は同じ性別区分の全サイズの販売足数に対する割合です。',
     thColor: 'カラー', thSize: 'サイズ',
     thInvoiceNo: 'インボイス番号', thStyleNo: '品番', thUnitPrice: '単価',
     st01TitleTable: '店舗・チャネル別 売上テーブル',
@@ -1011,7 +1008,7 @@ const T = {
     brandSummary: (n,q,net) => `${n} モデル ・ ${fmt(q)} 点 ・ ${fmt(net)} THB`,
     periodLabels: {'2026-01':'1月','2026-02':'2月','2026-03':'3月','2026-04':'4月','2026-05':'5月','2026-06':'6月','2026-07':'7月','2026-08':'8月','2026-09':'9月','2026-10':'10月','Q1':'Q1','Q2':'Q2','Q3':'Q3','H1':'半期(H1)','YTD':'26年暫定'},
     periodRangeText: {'H1':'2026年1〜6月','Q1':'2026年1〜3月','Q2':'2026年4〜6月','Q3':'2026年7〜9月'},
-    globalPeriodLabel: '全ブロックの期間をまとめて変更:',
+    tabPeriodLabel: 'このタブの集計期間',
     metricAmount: '金額', metricQty: '点数', metricPairs: '足数',
     optMetricAmount: '金額', optMetricQty: '数量',
     stackTooltipShare: '',
@@ -1047,9 +1044,9 @@ const T = {
     channelShareTitle: 'Channel Share', channelBreakdownTitle: 'Channel Breakdown',
     thChannel: 'Channel', thPairs: 'Pairs', thAmountPlain2: 'Sales Amount', thMetric: 'Metric',
     vff03Title: 'Gender Segment Split (Estimated)', vff03Note: 'Estimated from the W/M size code',
-    vff04Title: 'Model Sales Ranking', vff04Note: 'Pairs sold by model series (top 10, sizes/colors and version variants combined)',
-    vff05Title: 'Colors Sold', vff05Note: 'Pairs sold by color (top 10). See all colors in the detail table',
-    vff06Title: 'Size Distribution by Gender', vff06Note: 'Pairs sold by size, split by the gender segment estimated from the size code',
+    vff04Title: 'Model Sales Ranking', vff04Note: 'Top 10 series by pairs sold and their shares of all series. Sizes, colors and variants are grouped by series.',
+    vff05Title: 'Colors Sold', vff05Note: 'Top 10 colors by pairs sold and their shares of all colors. See all colors in the detail table.',
+    vff06Title: 'Size Distribution by Gender', vff06Note: 'Gender segments are inferred from size codes. Each size share uses all sizes sold in the same segment.',
     thColor: 'Color', thSize: 'Size',
     thInvoiceNo: 'Invoice No.', thStyleNo: 'Style No.', thUnitPrice: 'Unit Price',
     st01TitleTable: 'Store / Channel Sales Table',
@@ -1098,7 +1095,7 @@ const T = {
     brandSummary: (n,q,net) => `${n} models · ${fmt(q)} units · ${fmt(net)} THB`,
     periodLabels: {'2026-01':'Jan','2026-02':'Feb','2026-03':'Mar','2026-04':'Apr','2026-05':'May','2026-06':'Jun','2026-07':'Jul','2026-08':'Aug','2026-09':'Sep','2026-10':'Oct','Q1':'Q1','Q2':'Q2','Q3':'Q3','H1':'H1 (Full)','YTD':'2026 YTD'},
     periodRangeText: {'H1':'Jan – Jun 2026','Q1':'Jan – Mar 2026','Q2':'Apr – Jun 2026','Q3':'Jul – Sep 2026'},
-    globalPeriodLabel: 'Change period for all blocks:',
+    tabPeriodLabel: 'Period for this tab',
     metricAmount: 'Amount', metricQty: 'Units', metricPairs: 'Pairs',
     optMetricAmount: 'Amount', optMetricQty: 'Qty',
     stackTooltipShare: '',
@@ -1134,9 +1131,9 @@ const T = {
     channelShareTitle: 'สัดส่วนช่องทาง', channelBreakdownTitle: 'รายละเอียดช่องทาง',
     thChannel: 'ช่องทาง', thPairs: 'คู่', thAmountPlain2: 'ยอดขาย', thMetric: 'ตัวชี้วัด',
     vff03Title: 'สัดส่วนเพศ (ประมาณการ)', vff03Note: 'ประมาณการจากรหัสไซส์ W/M',
-    vff04Title: 'อันดับยอดขายตามรุ่น', vff04Note: 'จำนวนคู่ที่ขายตามรุ่น (10 อันดับแรก รวมไซส์/สีและรุ่นย่อย)',
-    vff05Title: 'สีที่ขายได้', vff05Note: 'จำนวนคู่ที่ขายตามสี (10 อันดับแรก) ดูสีทั้งหมดได้ในตารางรายละเอียด',
-    vff06Title: 'การกระจายไซส์ตามเพศ', vff06Note: 'จำนวนคู่ที่ขายตามไซส์ แยกตามเพศที่ประมาณการจากรหัสไซส์',
+    vff04Title: 'อันดับยอดขายตามรุ่น', vff04Note: 'จำนวนคู่และสัดส่วนของ 10 รุ่นแรกเทียบกับทุกรุ่น โดยรวมไซส์ สี และรุ่นย่อย',
+    vff05Title: 'สีที่ขายได้', vff05Note: 'จำนวนคู่และสัดส่วนของ 10 สีแรกเทียบกับทุกสี ดูสีทั้งหมดได้ในตารางรายละเอียด',
+    vff06Title: 'การกระจายไซส์ตามเพศ', vff06Note: 'ประมาณกลุ่มเพศจากรหัสไซส์ สัดส่วนของแต่ละไซส์เทียบกับยอดขายทุกไซส์ในกลุ่มเดียวกัน',
     thColor: 'สี', thSize: 'ไซส์',
     thInvoiceNo: 'เลขที่ใบแจ้งหนี้', thStyleNo: 'รหัสสินค้า', thUnitPrice: 'ราคาต่อหน่วย',
     st01TitleTable: 'ตารางยอดขายแยกตามร้าน/ช่องทาง',
@@ -1185,7 +1182,7 @@ const T = {
     brandSummary: (n,q,net) => `${n} รุ่น · ${fmt(q)} ชิ้น · ${fmt(net)} บาท`,
     periodLabels: {'2026-01':'ม.ค.','2026-02':'ก.พ.','2026-03':'มี.ค.','2026-04':'เม.ย.','2026-05':'พ.ค.','2026-06':'มิ.ย.','2026-07':'ก.ค.','2026-08':'ส.ค.','2026-09':'ก.ย.','2026-10':'ต.ค.','Q1':'Q1','Q2':'Q2','Q3':'Q3','H1':'ครึ่งปีแรก (เต็ม)','YTD':'ปี 2026 (ชั่วคราว)'},
     periodRangeText: {'H1':'ม.ค. – มิ.ย. 2026','Q1':'ม.ค. – มี.ค. 2026','Q2':'เม.ย. – มิ.ย. 2026','Q3':'ก.ค. – ก.ย. 2026'},
-    globalPeriodLabel: 'เปลี่ยนช่วงเวลาของทุกบล็อกพร้อมกัน:',
+    tabPeriodLabel: 'ช่วงเวลาสำหรับแท็บนี้',
     metricAmount: 'ยอดขาย', metricQty: 'จำนวน', metricPairs: 'คู่',
     optMetricAmount: 'ยอดขาย', optMetricQty: 'จำนวน',
     stackTooltipShare: '',
@@ -1279,20 +1276,7 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
 });
 
 // ============================================================== per-section period control
-// There is no single global period anymore -- each section that needs one owns
-// its own {key} state object and mounts a small dropdown in its own heading
-// (mountPeriodSelect), independent of every other section's selection.
-// Individual-month entries are derived from MONTHS (whatever's been loaded
-// so far), not hardcoded to 6 -- new monthly batches (Aug 2026 and beyond)
-// automatically get their own period-picker entry with no further edits
-// here. Q1/Q2/H1 stay fixed, well-defined calendar groupings (Jan-Mar/
-// Apr-Jun/Jan-Jun) independent of how many months beyond June are loaded --
-// H1 always means H1, even once the report covers more than a half year.
-// YTD ("26年暫定") is the one period that's NOT fixed: its month list is
-// MONTHS itself, so as new monthly batches get appended to DATA.months
-// (loaded once into MONTHS at startup), this period automatically grows
-// from Jan through whatever the latest loaded month is -- no edits needed
-// here when a new month arrives, same as the individual-month entries above.
+// Tab period selectors share state within a tab. Monthly trend charts retain the full timeline.
 const PERIOD_DEFS = MONTHS.map(m => ({key: m, months: [m]})).concat([
   {key:'Q1', months:['2026-01','2026-02','2026-03']}, {key:'Q2', months:['2026-04','2026-05','2026-06']},
   {key:'Q3', months:['2026-07','2026-08','2026-09'].filter(m => MONTHS.includes(m))},
@@ -1313,45 +1297,15 @@ function prevMonthsFor(key){
 function mountPeriodSelect(containerId, state, onChangeFn){
   const el = document.getElementById(containerId);
   if (!el) return;
-  el.innerHTML = `<select class="period-select">` + PERIOD_DEFS.map(p =>
+  el.innerHTML = `<select class="period-select" id="${containerId}Select">` + PERIOD_DEFS.map(p =>
     `<option value="${p.key}"${p.key===state.key?' selected':''}>${esc(t('periodLabels')[p.key])}</option>`).join('') + `</select>`;
   el.querySelector('select').addEventListener('change', e => { state.key = e.target.value; onChangeFn(); });
 }
 
-// per-section period state (all default to this year's YTD/"26年暫定")
-// 全体サマリー is a single period-picker-driven block, same pattern as every
-// other section (mountPeriodSelect), so switching between month/Q1/Q2/H1
-// doesn't require stacking multiple blocks on screen at once.
 const summaryPeriod = {key:'YTD'};
-const channelBrandPeriod = {key:'YTD'};
-const vffChannelPeriod = {key:'YTD'};
-const vffGenderPeriod = {key:'YTD'};
-const vffModelPeriod = {key:'YTD'};
-const vffColorPeriod = {key:'YTD'};
-const vffSizePeriod = {key:'YTD'};
-const storeTablePeriod = {key:'YTD'};
-const paymentOverallPeriod = {key:'YTD'};
-const storeDetailPeriod = {key:'YTD'};
-const brandCompPeriod = {key:'YTD'};
-const modelRankPeriod = {key:'YTD'};
-const brandDetailPeriod = {key:'YTD'};
-const othersPeriod = {key:'YTD'};
-
-// Global period control, mounted below the language toggle: picking a
-// period here pushes it onto every section's own {key} state above and
-// re-renders everything, but each section's own dropdown (mountPeriodSelect)
-// is untouched otherwise -- switching ONE section afterward only moves that
-// section, same as before this control existed.
-const globalPeriodState = {key:'YTD'};
-const ALL_PERIOD_STATES = [
-  summaryPeriod, channelBrandPeriod, vffChannelPeriod, vffGenderPeriod, vffModelPeriod,
-  vffColorPeriod, vffSizePeriod, storeTablePeriod, paymentOverallPeriod, storeDetailPeriod,
-  brandCompPeriod, modelRankPeriod, brandDetailPeriod, othersPeriod,
-];
-function applyGlobalPeriod(){
-  ALL_PERIOD_STATES.forEach(st => { st.key = globalPeriodState.key; });
-  renderAll();
-}
+const vffPeriod = {key:'YTD'};
+const storesPeriod = {key:'YTD'};
+const brandPeriod = {key:'YTD'};
 
 // ============================================================== monthly-data summing helpers
 function sumMonthly(monthlyMap, months){
@@ -2118,8 +2072,7 @@ const comboDetailHandle = makeDetailToggle('comboDetailBtn', 'comboDetailWrap', 
 
 // ============================================================== 03: チャネル別 ブランド構成 (donut + channel dropdown)
 function renderChannelBrandDonut(){
-  mountPeriodSelect('channelBrandPeriodSel', channelBrandPeriod, renderChannelBrandDonut);
-  const months = monthsFor(channelBrandPeriod.key);
+  const months = monthsFor(brandPeriod.key);
   const sel = document.getElementById('channelBrandSelect');
   const options = [{value:'ALL', label:t('allChannelsOption')}].concat(GROUP_ORDER.map(g => ({value:g, label:trLabel(DATA.group_label[g])})));
   sel.innerHTML = options.map(o => `<option value="${o.value}">${esc(o.label)}</option>`).join('');
@@ -2155,7 +2108,7 @@ document.getElementById('channelBrandSelect').addEventListener('change', e => {
 // (fixedOrderStores()) regardless of which period is selected, so a reader
 // switching periods to compare figures isn't also fighting a reshuffled list.
 function buildStoreQtyDetailTable(){
-  const months = monthsFor(storeTablePeriod.key);
+  const months = monthsFor(storesPeriod.key);
   const rows = fixedOrderStores().map(s => {
     const p = sumMonthly(s.monthly, months);
     const avg = p.orders ? p.amount / p.orders : null;
@@ -2170,13 +2123,12 @@ function buildStoreQtyDetailTable(){
   const head = `<th>${esc(t('thStoreChannel'))}</th><th>${esc(t('thGroup'))}</th>`
     + `<th style="text-align:right">${esc(t('thQtyPlain'))}</th><th style="text-align:right">${esc(t('thOrders'))}</th><th style="text-align:right">${esc(t('thAvgTicket'))}</th>`;
   return {
-    html: `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><div id="storeQtyDetailPeriodSel"></div></div>
-      <div class="section-note" style="margin-bottom:10px">${esc(t('st02Note'))}</div>
+    html: `<div class="section-note" style="margin-bottom:10px">${esc(t('st02Note'))}</div>
       <table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`,
   };
 }
 const storeQtyDetailHandle = makeDetailToggle('storeQtyDetailBtn', 'storeQtyDetailWrap', buildStoreQtyDetailTable,
-  () => mountPeriodSelect('storeQtyDetailPeriodSel', storeTablePeriod, () => storeQtyDetailHandle.refresh()),
+  null,
   {show: 'storeQtyDetailBtn', hide: 'storeQtyDetailBtnHide'});
 
 // ============================================================== 店舗別: 決済方法別比率（全体）
@@ -2220,11 +2172,10 @@ function buildPaymentDetailTable(){
 }
 const paymentDetailHandle = makeDetailToggle('paymentDetailBtn', 'paymentDetailWrap', buildPaymentDetailTable);
 function renderPaymentOverall(){
-  mountPeriodSelect('paymentOverallPeriodSel', paymentOverallPeriod, renderPaymentOverall);
-  const months = monthsFor(paymentOverallPeriod.key);
+  const months = monthsFor(storesPeriod.key);
   const coverage = renderPaymentDonut('paymentDonut', 'paymentLegend', months);
   document.getElementById('payCoverageAmt').textContent = fmt(coverage);
-  renderPaymentDonut('paymentDonutPrev', 'paymentLegendPrev', prevMonthsFor(paymentOverallPeriod.key));
+  renderPaymentDonut('paymentDonutPrev', 'paymentLegendPrev', prevMonthsFor(storesPeriod.key));
   paymentDetailHandle.refresh();
 }
 
@@ -2273,7 +2224,7 @@ function renderStoreDetail(storeName, months){
   const payTotalFor = mo => Object.values(sumKeyed(s.payment_monthly || {}, mo)).reduce((a,d)=>a+d.amount,0);
   const curPayTotal = s.payment_monthly ? payTotalFor(months) : 0;
   if (curPayTotal > 0) {
-    const prevMo = prevMonthsFor(storeDetailPeriod.key);
+    const prevMo = prevMonthsFor(storesPeriod.key);
     payBlock.innerHTML = `<h3 style="margin-bottom:10px">${esc(t('paymentRatioTitle'))}</h3>
       <div class="grid2">
         <div>
@@ -2311,8 +2262,7 @@ function renderStoreDetail(storeName, months){
   }
 }
 function setupStoreSelect(){
-  mountPeriodSelect('storeDetailPeriodSel', storeDetailPeriod, setupStoreSelect);
-  const months = monthsFor(storeDetailPeriod.key);
+  const months = monthsFor(storesPeriod.key);
   const sel = document.getElementById('storeSelect');
   const groups = {};
   DATA.stores.forEach(s => { (groups[s.group] = groups[s.group] || []).push(s); });
@@ -2334,13 +2284,12 @@ function setupStoreSelect(){
 }
 document.getElementById('storeSelect').addEventListener('change', e => {
   e.target.dataset.selected = e.target.value;
-  renderStoreDetail(e.target.value, monthsFor(storeDetailPeriod.key));
+  renderStoreDetail(e.target.value, monthsFor(storesPeriod.key));
 });
 
 // ============================================================== 商品・ブランド別: ブランド別 売上構成（全体、金額/数量プルダウン）
 function renderBrandComp(){
-  mountPeriodSelect('brandCompPeriodSel', brandCompPeriod, renderBrandComp);
-  const months = monthsFor(brandCompPeriod.key);
+  const months = monthsFor(brandPeriod.key);
   const sel = document.getElementById('brandCompMetricSelect');
   const opts = [['amount','optMetricAmount'],['qty','optMetricQty']];
   sel.innerHTML = opts.map(([k,lbl]) => `<option value="${k}">${esc(t(lbl))}</option>`).join('');
@@ -2382,8 +2331,7 @@ function fillModelTable(id, rows, cls){
 // link/popup instead, so Worst-10 always shows 10 models that actually both
 // sold >=1 unit and generated >0 revenue.
 function renderModelRanking(){
-  mountPeriodSelect('modelRankPeriodSel', modelRankPeriod, renderModelRanking);
-  const months = monthsFor(modelRankPeriod.key);
+  const months = monthsFor(brandPeriod.key);
   const modelSummed = sumKeyed(withoutExport(DATA.model_monthly, DATA.export_breakdown.model_monthly, 'brandModel'), months);
   const modelList = toSortedList(modelSummed, 'model');
   const zeroQty = modelList.filter(r => r.qty <= 0);
@@ -2456,8 +2404,7 @@ function renderBrandDetail(brand, months){
   }
 }
 function setupBrandSelect(){
-  mountPeriodSelect('brandDetailPeriodSel', brandDetailPeriod, setupBrandSelect);
-  const months = monthsFor(brandDetailPeriod.key);
+  const months = monthsFor(brandPeriod.key);
   const sel = document.getElementById('brandSelect');
   const brandMonthlyEff = withoutExport(DATA.brand_monthly, DATA.export_breakdown.brand_monthly, 'brandDetail');
   const vffShoesEff = withoutExport({VFF: VFF_SHOES_MONTHLY}, DATA.export_breakdown.brand_monthly, 'brandDetail').VFF;
@@ -2477,13 +2424,12 @@ function setupBrandSelect(){
 document.getElementById('brandSelect').addEventListener('change', e => {
   e.target.dataset.selected = e.target.value;
   brandDetailShowAll = false;
-  renderBrandDetail(e.target.value, monthsFor(brandDetailPeriod.key));
+  renderBrandDetail(e.target.value, monthsFor(brandPeriod.key));
 });
 
 // ============================================================== 商品・ブランド別: Others 内訳
 function renderOthersSection(){
-  mountPeriodSelect('othersPeriodSel', othersPeriod, renderOthersSection);
-  const months = monthsFor(othersPeriod.key);
+  const months = monthsFor(brandPeriod.key);
   const summed = sumKeyed(DATA.others_sub_monthly, months);
   const list = toSortedList(summed, 'brand');
   const items = list.map((o,i) => ({label:o.brand, value:o.amount, color: OTHERS_SUB_HEX[i % OTHERS_SUB_HEX.length]}));
@@ -2510,7 +2456,7 @@ function hBarChartAxis(items, opts){
   const padB = 30, padT = 8;
   const steps = 5;
   const maxV = opts.maxOverride || niceAxis(Math.max(...items.map(d => d.value), 1), steps).max;
-  const chartW = w - labelW - 16;
+  const chartW = w - labelW - 132;
   const h = padT + items.length * (barH + gap) + padB;
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" preserveAspectRatio="xMinYMin meet">`;
   for (let s = 0; s <= steps; s++){
@@ -2524,6 +2470,7 @@ function hBarChartAxis(items, opts){
     const bw = Math.max((d.value/maxV) * chartW, 2);
     svg += `<text x="${labelW-10}" y="${y+barH/2+5}" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:12.5px">${esc(d.label)}</text>`;
     svg += `<rect x="${labelW}" y="${y}" width="${bw}" height="${barH}" rx="4" fill="var(--accent)" class="vbar" data-i="${i}"></rect>`;
+    svg += `<text x="${w-6}" y="${y+barH/2+5}" text-anchor="end" style="fill:var(--ink);font-size:13px">${fmt(d.value)} ${esc(t('unitPairs'))} · ${fmtPct(d.share)}</text>`;
   });
   svg += `</svg>`;
   return svg;
@@ -2730,8 +2677,7 @@ function vffChannelBreakdown(metricKey, months){
 }
 function renderVffChannelShare(){
   renderVffChannelMetricToggle();
-  mountPeriodSelect('vffChannelPeriodSel', vffChannelPeriod, renderVffChannelShare);
-  const months = monthsFor(vffChannelPeriod.key);
+  const months = monthsFor(vffPeriod.key);
   const chMetricKey = vffChannelMetric; // 'qty' | 'amount'
   // Fixed GROUP_ORDER sequence (not sorted by value) so a category's position
   // stays put across period/metric changes -- makes period-to-period shifts
@@ -2751,8 +2697,7 @@ function renderVffChannelShare(){
 }
 
 function renderVffGender(){
-  mountPeriodSelect('vffGenderPeriodSel', vffGenderPeriod, renderVffGender);
-  const months = monthsFor(vffGenderPeriod.key);
+  const months = monthsFor(vffPeriod.key);
   const gSummed = sumKeyed(withoutExport(DATA.vff_shoes.gender_monthly, DATA.export_breakdown.gender_monthly, 'vffGender'), months);
   const gList = toSortedList(gSummed, 'gender').sort((a,b) => b.qty - a.qty);
   const gItems = gList.map(g => ({label:trLabel(g.gender), value:g.qty, color: GENDER_HEX[g.gender] || '#8E9C8F'}));
@@ -2767,7 +2712,7 @@ function renderVffGender(){
 // gender ratio for whatever period is currently selected above (defaults to
 // this year's YTD) -- the donut above is the blended total across every store.
 function buildVffGenderDetailTable(){
-  const months = monthsFor(vffGenderPeriod.key);
+  const months = monthsFor(vffPeriod.key);
   const genders = ['女性','男性','ユニセックス'];
   const rows = fixedOrderStores().map(s => {
     if (exportToggleState.vffGender && s.store === 'Export') return null;
@@ -2786,8 +2731,7 @@ function buildVffGenderDetailTable(){
 const vffGenderDetailHandle = makeDetailToggle('vffGenderDetailBtn', 'vffGenderDetailWrap', buildVffGenderDetailTable);
 
 function renderVffModelRanking(){
-  mountPeriodSelect('vffModelPeriodSel', vffModelPeriod, renderVffModelRanking);
-  const months = monthsFor(vffModelPeriod.key);
+  const months = monthsFor(vffPeriod.key);
   const modelSummed = sumKeyed(withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly, 'vffModel'), months);
   // Models with 0 (or negative) qty/revenue in the selected period never
   // show a bar in the chart above (the top-10 series ranking silently
@@ -2802,15 +2746,17 @@ function renderVffModelRanking(){
     seriesMap[s].value += v.qty;
     seriesMap[s].amount += v.amount;
   });
-  const seriesItems = Object.values(seriesMap).sort((a,b) => b.value - a.value).slice(0, 10);
+  const ranked = Object.values(seriesMap).filter(d => d.value > 0).sort((a,b) => b.value - a.value);
+  const total = ranked.reduce((sum, d) => sum + d.value, 0);
+  const seriesItems = ranked.slice(0, 10).map(d => ({...d, share:d.value/total}));
   // Fixed axis max when showing the full half (H1) so the chart's scale
   // doesn't jump around relative to the other period views -- 2000 comfortably
   // covers the current top model's H1 pairs sold.
-  const maxOverride = vffModelPeriod.key === 'H1' ? 2000 : null;
+  const maxOverride = vffPeriod.key === 'H1' ? 2000 : null;
   document.getElementById('vffModelChart').innerHTML = hBarChartAxis(seriesItems, {width: 860, maxOverride});
   document.querySelectorAll('#vffModelChart .vbar').forEach(el => {
     const d = seriesItems[+el.dataset.i];
-    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmt(d.value)} ${t('unitPairs')}<br>${fmt(d.amount)} THB`));
+    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmt(d.value)} ${t('unitPairs')} (${fmtPct(d.share)})<br>${fmt(d.amount)} THB`));
     el.addEventListener('mouseleave', hideTip);
   });
   vffModelDetailHandle.refresh();
@@ -2877,18 +2823,18 @@ const vffModelDetailHandle = makeDetailToggle('vffModelDetailBtn', 'vffModelDeta
 // shape as the model ranking chart otherwise (top 10 bar chart + a detail
 // table listing every color).
 function renderVffColorRanking(){
-  mountPeriodSelect('vffColorPeriodSel', vffColorPeriod, renderVffColorRanking);
-  const months = monthsFor(vffColorPeriod.key);
+  const months = monthsFor(vffPeriod.key);
   const colorSummed = sumKeyed(withoutExport(DATA.vff_shoes.color_monthly, DATA.export_breakdown.color_monthly, 'vffColor'), months);
   const items = Object.entries(colorSummed)
     .map(([color, v]) => ({label: color, value: v.qty, amount: v.amount}))
     .filter(d => d.value > 0)
     .sort((a,b) => b.value - a.value);
-  const top = items.slice(0, 10);
+  const total = items.reduce((sum, d) => sum + d.value, 0);
+  const top = items.slice(0, 10).map(d => ({...d, share:d.value/total}));
   document.getElementById('vffColorChart').innerHTML = hBarChartAxis(top, {width: 860});
   document.querySelectorAll('#vffColorChart .vbar').forEach(el => {
     const d = top[+el.dataset.i];
-    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmt(d.value)} ${t('unitPairs')}<br>${fmt(d.amount)} THB`));
+    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmt(d.value)} ${t('unitPairs')} (${fmtPct(d.share)})<br>${fmt(d.amount)} THB`));
     el.addEventListener('mouseleave', hideTip);
   });
   vffColorDetailHandle.refresh();
@@ -2928,16 +2874,33 @@ const vffColorDetailHandle = makeDetailToggle('vffColorDetailBtn', 'vffColorDeta
 // same SVG-building approach as renderSummaryMonthlyChart's year clusters.
 // Gender colors reuse GENDER_HEX (the same palette as the Gender Segment
 // donut in 03) so a reader can connect the two sections visually.
+let vffSizeMetric = 'share';
+function vffSizeBreakdown(months){
+  const data = withoutExportNested(DATA.vff_shoes.gender_size_monthly, DATA.export_breakdown.gender_size_monthly, 'vffSize');
+  const genders = Object.keys(GENDER_HEX);
+  const sizes = [...new Set(genders.flatMap(g => Object.keys(data[g] || {})))].sort((a,b) => +a - +b);
+  const series = genders.map(gender => {
+    const values = sizes.map(size => sumMonthly(data[gender]?.[size], months).qty);
+    const total = values.reduce((sum, value) => sum + value, 0);
+    return {gender, color:GENDER_HEX[gender], values, total};
+  });
+  return {sizes, series};
+}
 function renderVffSizeGenderChart(){
-  mountPeriodSelect('vffSizePeriodSel', vffSizePeriod, renderVffSizeGenderChart);
-  const months = monthsFor(vffSizePeriod.key);
+  const toggle = document.getElementById('vffSizeMetricToggle');
+  toggle.innerHTML = [['share','thShare'],['qty','metricPairs']].map(([key, label]) =>
+    `<button type="button" data-metric="${key}" class="${key===vffSizeMetric?'active':''}" aria-pressed="${key===vffSizeMetric}">${esc(t(label))}</button>`).join('');
+  toggle.querySelectorAll('button').forEach(button => {
+    button.onclick = () => { vffSizeMetric = button.dataset.metric; renderVffSizeGenderChart(); };
+  });
+  const showShare = vffSizeMetric === 'share';
+  const months = monthsFor(vffPeriod.key);
 
   // Gender ratio donut for this same period -- overall split (DATA.vff_shoes.
   // gender_monthly), same data source and palette as the Gender Segment
   // Split donut in section 03, so the two read consistently; scoped to this
-  // section's own period selector rather than section 03's.
+  // shared VFF tab period.
   const genderMonthlyEff = withoutExport(DATA.vff_shoes.gender_monthly, DATA.export_breakdown.gender_monthly, 'vffSize');
-  const genderSizeMonthlyEff = withoutExportNested(DATA.vff_shoes.gender_size_monthly, DATA.export_breakdown.gender_size_monthly, 'vffSize');
   const gSummed = sumKeyed(genderMonthlyEff, months);
   const gList = toSortedList(gSummed, 'gender').sort((a,b) => b.qty - a.qty);
   const gItems = gList.map(g => ({label:trLabel(g.gender), value:g.qty, color: GENDER_HEX[g.gender] || '#8E9C8F'}));
@@ -2947,15 +2910,8 @@ function renderVffSizeGenderChart(){
   document.getElementById('vffSizeGenderLegend').innerHTML = gItems.map(d =>
     `<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span><span class="v">${fmtPct(d.value/gTotal)}</span></div>`).join('');
 
-  const GENDERS = ['女性','男性','ユニセックス'];
-  const sizeSet = new Set();
-  GENDERS.forEach(g => Object.keys(genderSizeMonthlyEff[g] || {}).forEach(sz => sizeSet.add(sz)));
-  const sizes = Array.from(sizeSet).sort((a,b) => +a - +b);
-  const series = GENDERS.map(g => {
-    const bySizes = genderSizeMonthlyEff[g] || {};
-    return {gender: g, color: GENDER_HEX[g] || '#8E9C8F',
-             values: sizes.map(sz => sumMonthly(bySizes[sz], months).qty)};
-  });
+  const {sizes, series} = vffSizeBreakdown(months);
+  const plotted = (s, i) => showShare ? (s.total ? s.values[i] / s.total * 100 : 0) : s.values[i];
 
   const w = 1080, h = 300, padL = 50, padR = 20, padT = 20, padB = 30;
   const plotW = w - padL - padR, plotH = h - padT - padB;
@@ -2967,14 +2923,14 @@ function renderVffSizeGenderChart(){
   const xC = i => padL + bandW * i + bandW / 2;
 
   let maxV = 1;
-  sizes.forEach((sz, i) => { series.forEach(s => { if (s.values[i] > maxV) maxV = s.values[i]; }); });
+  sizes.forEach((_, i) => { series.forEach(s => { maxV = Math.max(maxV, plotted(s, i)); }); });
   // Fixed axis max per period (per user request), so the scale doesn't jump
   // around between period views -- June is excluded from the monthly-period
   // 200 cap since its actuals run well above every other individual month.
-  const sizeMaxOverride = vffSizePeriod.key === 'YTD' ? 1500
-    : vffSizePeriod.key === 'H1' ? 800
-    : vffSizePeriod.key === 'Q1' ? 400
-    : (/^2026-\d{2}$/.test(vffSizePeriod.key) && vffSizePeriod.key !== '2026-06') ? 200
+  const sizeMaxOverride = showShare ? null : vffPeriod.key === 'YTD' ? 1500
+    : vffPeriod.key === 'H1' ? 800
+    : vffPeriod.key === 'Q1' ? 400
+    : (/^2026-\d{2}$/.test(vffPeriod.key) && vffPeriod.key !== '2026-06') ? 200
     : null;
   const {max: axisMax, step} = sizeMaxOverride ? {max: sizeMaxOverride, step: sizeMaxOverride/5} : niceAxis(maxV, 5);
   const y = v => padT + plotH - (v / axisMax) * plotH;
@@ -2984,13 +2940,13 @@ function renderVffSizeGenderChart(){
   for (let s = 0; s * step <= axisMax; s++) {
     const v = step * s, yy = y(v);
     svg += `<line x1="${padL}" y1="${yy}" x2="${w-padR}" y2="${yy}" class="axis-line"></line>`;
-    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${fmt(v)}</text>`;
+    svg += `<text x="${padL-8}" y="${yy+3}" text-anchor="end">${showShare ? fmtPct(v/100) : fmt(v)}</text>`;
   }
   sizes.forEach((sz, i) => {
     svg += `<text x="${xC(i)}" y="${h-8}" text-anchor="middle">${esc(sz)}</text>`;
     const groupX0 = xC(i) - groupW / 2;
     series.forEach((s, si) => {
-      const v = s.values[i];
+      const v = plotted(s, i);
       const bx = groupX0 + si * (barW + barGap);
       const yTop = y(v);
       svg += `<rect x="${bx}" y="${yTop}" width="${barW}" height="${Math.max(baseY-yTop,0)}" fill="${s.color}" class="szbar" data-si="${i}" data-gi="${si}"></rect>`;
@@ -3003,32 +2959,24 @@ function renderVffSizeGenderChart(){
   el.querySelectorAll('.szbar').forEach(node => {
     node.addEventListener('mousemove', e => {
       const si = +node.dataset.si, gi = +node.dataset.gi;
-      showTip(e, `<b>${esc(trLabel(series[gi].gender))}</b> ・ ${esc(t('thSize'))} ${esc(sizes[si])}<br>${fmt(series[gi].values[si])} ${t('unitPairs')}`);
+      showTip(e, `<b>${esc(trLabel(series[gi].gender))}</b> ・ ${esc(t('thSize'))} ${esc(sizes[si])}<br>${fmt(series[gi].values[si])} ${t('unitPairs')}${series[gi].total ? ' (' + fmtPct(series[gi].values[si]/series[gi].total) + ')' : ''}`);
     });
     node.addEventListener('mouseleave', hideTip);
   });
   vffSizeDetailHandle.refresh();
 }
 function buildVffSizeDetailTable(){
-  const months = monthsFor(vffSizePeriod.key);
-  const genderSizeMonthlyEff = withoutExportNested(DATA.vff_shoes.gender_size_monthly, DATA.export_breakdown.gender_size_monthly, 'vffSize');
-  const GENDERS = ['女性','男性','ユニセックス'];
-  const sizeSet = new Set();
-  GENDERS.forEach(g => Object.keys(genderSizeMonthlyEff[g] || {}).forEach(sz => sizeSet.add(sz)));
-  const sizes = Array.from(sizeSet).sort((a,b) => +a - +b);
-  let colTotals = GENDERS.map(() => 0), grand = 0;
-  const rows = sizes.map(sz => {
-    let rowTotal = 0;
-    const cells = GENDERS.map((g,gi) => {
-      const monthly = (genderSizeMonthlyEff[g] || {})[sz];
-      const v = monthly ? sumMonthly(monthly, months).qty : 0;
-      rowTotal += v; colTotals[gi] += v;
-      return `<td class="num">${fmt(v)}</td>`;
-    }).join('');
-    grand += rowTotal;
-    return `<tr><td>${esc(sz)}</td>${cells}<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(rowTotal)}</td></tr>`;
+  const months = monthsFor(vffPeriod.key);
+  const {sizes, series} = vffSizeBreakdown(months);
+  const colTotals = series.map(s => s.total);
+  const grand = colTotals.reduce((sum, value) => sum + value, 0);
+  const rows = sizes.map((size, i) => {
+    const rowTotal = series.reduce((sum, s) => sum + s.values[i], 0);
+    const cells = series.map(s =>
+      `<td class="num">${fmt(s.values[i])}${s.total ? ' (' + fmtPct(s.values[i]/s.total) + ')' : ''}</td>`).join('');
+    return `<tr><td>${esc(size)}</td>${cells}<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(rowTotal)}</td></tr>`;
   }).join('');
-  const head = `<th>${esc(t('thSize'))}</th>` + GENDERS.map(g => `<th style="text-align:right">${esc(trLabel(g))}</th>`).join('')
+  const head = `<th>${esc(t('thSize'))}</th>` + series.map(s => `<th style="text-align:right">${esc(trLabel(s.gender))}</th>`).join('')
     + `<th style="text-align:right;border-left:2px solid var(--line)">${esc(t('thTotal'))}</th>`;
   const footer = `<tr><td style="font-weight:700">${esc(t('thTotal'))}</td>` + colTotals.map(v => `<td class="num" style="font-weight:700">${fmt(v)}</td>`).join('')
     + `<td class="num" style="font-weight:700;border-left:2px solid var(--line)">${fmt(grand)}</td></tr>`;
@@ -3178,26 +3126,37 @@ function renderDirectSalesRatioChart(){
 }
 
 // ============================================================== master render
-function renderAll(){
-  mountPeriodSelect('globalPeriodSel', globalPeriodState, applyGlobalPeriod);
-  renderSummarySection();
-  renderComboChart();
-  renderDirectSalesRatioChart();
-  renderChannelBrandDonut();
+function renderVffTab(){
   renderVffStoreStackChart();
   renderVffChannelShare();
   renderVffGender();
   renderVffModelRanking();
   renderVffColorRanking();
   renderVffSizeGenderChart();
+}
+function renderStoresTab(){
+  renderComboChart();
   storeQtyDetailHandle.refresh();
   renderPaymentOverall();
   setupStoreSelect();
+}
+function renderBrandTab(){
   renderBrandComp();
+  renderChannelBrandDonut();
   renderModelRanking();
   setupBrandSelect();
   renderVSoulRatioChart();
   renderOthersSection();
+}
+function renderAll(){
+  mountPeriodSelect('vffPeriodSel', vffPeriod, renderVffTab);
+  mountPeriodSelect('storesPeriodSel', storesPeriod, renderStoresTab);
+  mountPeriodSelect('brandPeriodSel', brandPeriod, renderBrandTab);
+  renderSummarySection();
+  renderDirectSalesRatioChart();
+  renderVffTab();
+  renderStoresTab();
+  renderBrandTab();
 }
 
 // Each 輸出実績を除く checkbox is independent (per block, not a single
