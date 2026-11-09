@@ -140,6 +140,14 @@ tr:last-child td{border-bottom:none;}
 .rank{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;font-size:12px;font-family:var(--mono);background:var(--panel-2);color:var(--ink-dim);margin-right:8px;}
 .detail-scroll{max-height:480px;overflow-y:auto;}
 .detail-scroll thead th{position:sticky;top:0;background:var(--panel);z-index:2;}
+:is(.detail-scroll:not(#avgTicketDetailWrap),#summaryDetailWrap) > table > :is(thead,tbody) > tr > :first-child:not([colspan]),
+#avgTicketDetailWrap > table > thead > tr > th:first-child,
+#avgTicketDetailWrap > table > tbody > tr > td[rowspan]{
+  position:sticky;left:0;z-index:var(--pinned-cell-z,1);background-color:var(--panel);
+  max-width:clamp(7rem,36vw,17rem);overflow-wrap:anywhere;
+  box-shadow:inset -1px 0 var(--line);
+}
+.detail-scroll > table > thead{--pinned-cell-z:3;}
 .zero-qty-link{background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;padding:8px 0 0;text-decoration:underline;font-family:inherit;}
 .zero-qty-link:hover{opacity:.8;}
 .invoice-link{background:none;border:none;color:var(--accent);font-size:inherit;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit;}
