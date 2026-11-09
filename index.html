@@ -932,7 +932,7 @@ const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'
 const T = {
   ja: {
     stockLinkText: '在庫状況ダッシュボードを見る',
-    excludeExportLabel: '輸出実績を除く', exportSegmentLabel: '輸出実績',
+    excludeExportLabel: '輸出実績を除く', exportSegmentLabel: '輸出実績', nonExportSegmentLabel: '輸出以外',
     eyebrow: 'Barefoot Inc. 2026 Performance Report',
     title: '販売実績ダッシュボード',
     periodInfo: '対象期間: <b>2026年1月1日〜10月31日</b><br>前年同期間比較: <b>一時非表示（対EDVのデータ確認待ち）</b>',
@@ -1020,7 +1020,7 @@ const T = {
   },
   en: {
     stockLinkText: 'View the Inventory Dashboard',
-    excludeExportLabel: 'Exclude Export results', exportSegmentLabel: 'Export',
+    excludeExportLabel: 'Exclude Export results', exportSegmentLabel: 'Export', nonExportSegmentLabel: 'Non-export',
     eyebrow: 'Barefoot Inc. 2026 Performance Report',
     title: 'Sales Performance Dashboard',
     periodInfo: 'Period: <b>Jan 1 – Oct 31, 2026</b><br>Same-period YoY comparison: <b>temporarily hidden (pending 対EDV data confirmation)</b>',
@@ -1107,7 +1107,7 @@ const T = {
   },
   th: {
     stockLinkText: 'ดูแดชบอร์ดสต็อกสินค้า',
-    excludeExportLabel: 'ไม่รวมยอดขายส่งออก', exportSegmentLabel: 'ยอดส่งออก',
+    excludeExportLabel: 'ไม่รวมยอดขายส่งออก', exportSegmentLabel: 'ยอดส่งออก', nonExportSegmentLabel: 'ยอดขายอื่น',
     eyebrow: 'Barefoot Inc. รายงานผลประกอบการปี 2026',
     title: 'แดชบอร์ดผลการขาย',
     periodInfo: 'ช่วงเวลา: <b>1 ม.ค. – 31 ต.ค. 2026</b><br>เปรียบเทียบช่วงเวลาเดียวกันปีก่อน: <b>ซ่อนชั่วคราว (รอยืนยันข้อมูลต่อ EDV)</b>',
@@ -2469,7 +2469,14 @@ function hBarChartAxis(items, opts){
     const y = padT + i * (barH + gap);
     const bw = Math.max((d.value/maxV) * chartW, 2);
     svg += `<text x="${labelW-10}" y="${y+barH/2+5}" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:12.5px">${esc(d.label)}</text>`;
-    svg += `<rect x="${labelW}" y="${y}" width="${bw}" height="${barH}" rx="4" fill="var(--accent)" class="vbar" data-i="${i}"></rect>`;
+    const exportWidth = bw * (d.exportQty || 0) / d.value;
+    const baseWidth = bw - exportWidth;
+    if (baseWidth > 0) {
+      svg += `<rect x="${labelW}" y="${y}" width="${baseWidth}" height="${barH}" rx="${exportWidth ? 0 : 4}" fill="var(--accent)" class="vbar" data-i="${i}"></rect>`;
+    }
+    if (exportWidth > 0) {
+      svg += `<rect x="${labelW+baseWidth}" y="${y}" width="${exportWidth}" height="${barH}" rx="${baseWidth ? 0 : 4}" fill="${GROUP_HEX.export}" class="vbar export-segment" data-i="${i}"></rect>`;
+    }
     svg += `<text x="${w-6}" y="${y+barH/2+5}" text-anchor="end" style="fill:var(--ink);font-size:13px">${fmt(d.value)} ${esc(t('unitPairs'))} · ${fmtPct(d.share)}</text>`;
   });
   svg += `</svg>`;
@@ -2732,7 +2739,9 @@ const vffGenderDetailHandle = makeDetailToggle('vffGenderDetailBtn', 'vffGenderD
 
 function renderVffModelRanking(){
   const months = monthsFor(vffPeriod.key);
-  const modelSummed = sumKeyed(withoutExport(DATA.vff_shoes.model_monthly, DATA.export_breakdown.model_monthly, 'vffModel'), months);
+  const exportModels = DATA.export_breakdown.model_monthly;
+  const modelSummed = sumKeyed(withoutExport(DATA.vff_shoes.model_monthly, exportModels, 'vffModel'), months);
+  const includeExport = !exportToggleState.vffModel;
   // Models with 0 (or negative) qty/revenue in the selected period never
   // show a bar in the chart above (the top-10 series ranking silently
   // excludes them) -- surface them behind their own link/popup instead,
@@ -2742,9 +2751,10 @@ function renderVffModelRanking(){
   const seriesMap = {};
   Object.entries(modelSummed).forEach(([model, v]) => {
     const s = vffSeriesName(model);
-    if (!seriesMap[s]) seriesMap[s] = {label: s, value: 0, amount: 0};
+    if (!seriesMap[s]) seriesMap[s] = {label: s, value: 0, amount: 0, exportQty: 0};
     seriesMap[s].value += v.qty;
     seriesMap[s].amount += v.amount;
+    if (includeExport) seriesMap[s].exportQty += sumMonthly(exportModels[model], months).qty;
   });
   const ranked = Object.values(seriesMap).filter(d => d.value > 0).sort((a,b) => b.value - a.value);
   const total = ranked.reduce((sum, d) => sum + d.value, 0);
@@ -2753,10 +2763,20 @@ function renderVffModelRanking(){
   // doesn't jump around relative to the other period views -- 2000 comfortably
   // covers the current top model's H1 pairs sold.
   const maxOverride = vffPeriod.key === 'H1' ? 2000 : null;
-  document.getElementById('vffModelChart').innerHTML = hBarChartAxis(seriesItems, {width: 860, maxOverride});
-  document.querySelectorAll('#vffModelChart .vbar').forEach(el => {
+  const chart = document.getElementById('vffModelChart');
+  const showExport = seriesItems.some(d => d.exportQty > 0);
+  const legend = showExport ? [
+    {label: t('nonExportSegmentLabel'), color: 'var(--accent)'},
+    {label: t('exportSegmentLabel'), color: GROUP_HEX.export},
+  ].map(d => `<div class="item"><span class="k"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</span></div>`).join('') : '';
+  chart.innerHTML = hBarChartAxis(seriesItems, {width: 860, maxOverride})
+    + (legend ? `<div class="legend" style="flex-direction:row;gap:18px;margin-top:10px;flex-wrap:wrap">${legend}</div>` : '');
+  chart.querySelectorAll('.vbar').forEach(el => {
     const d = seriesItems[+el.dataset.i];
-    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmt(d.value)} ${t('unitPairs')} (${fmtPct(d.share)})<br>${fmt(d.amount)} THB`));
+    const split = showExport
+      ? `<br>${esc(t('nonExportSegmentLabel'))}: ${fmt(d.value-d.exportQty)} ${esc(t('unitPairs'))}<br>${esc(t('exportSegmentLabel'))}: ${fmt(d.exportQty)} ${esc(t('unitPairs'))}`
+      : '';
+    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(d.label)}</b><br>${fmt(d.value)} ${t('unitPairs')} (${fmtPct(d.share)})<br>${fmt(d.amount)} THB${split}`));
     el.addEventListener('mouseleave', hideTip);
   });
   vffModelDetailHandle.refresh();
