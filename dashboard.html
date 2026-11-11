@@ -148,6 +148,17 @@ tr:last-child td{border-bottom:none;}
   box-shadow:inset -1px 0 var(--line);
 }
 .detail-scroll > table > thead{--pinned-cell-z:3;}
+/* Wide multi-column detail tables (many month/period columns) must not be squeezed
+   to the card width -- that forces the pinned label column above to wrap onto 2+
+   lines for some rows but not others, producing ragged row heights. Let the table
+   grow past 100% (the container already scrolls horizontally) so columns have
+   room, and keep these two tables' labels (short, fixed category/store names, not
+   long free text) on one line so every row comes out the same height. */
+.detail-scroll table{width:auto;min-width:100%;}
+#vffStoreDetailWrap > table > :is(thead,tbody) > tr > :first-child:not([colspan]),
+#comboDetailWrap > table > :is(thead,tbody) > tr > :first-child:not([colspan]){
+  white-space:nowrap;max-width:none;
+}
 .zero-qty-link{background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;padding:8px 0 0;text-decoration:underline;font-family:inherit;}
 .zero-qty-link:hover{opacity:.8;}
 .invoice-link{background:none;border:none;color:var(--accent);font-size:inherit;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit;}
