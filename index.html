@@ -159,6 +159,8 @@ tr:last-child td{border-bottom:none;}
 #comboDetailWrap > table > :is(thead,tbody) > tr > :first-child:not([colspan]){
   white-space:nowrap;max-width:none;
 }
+#bpSection #bpProducts > table > :is(thead,tbody) > tr > :first-child{overflow-wrap:normal;min-width:9rem;}
+#bpMonthTable td:first-child{white-space:nowrap;}
 .zero-qty-link{background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;padding:8px 0 0;text-decoration:underline;font-family:inherit;}
 .zero-qty-link:hover{opacity:.8;}
 .invoice-link{background:none;border:none;color:var(--accent);font-size:inherit;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit;}
@@ -2550,7 +2552,7 @@ function renderBftPartner(name){
   }).sort((a, b) => b.amt - a.amt);
   let ph = `<table><thead><tr><th>${esc(t('thModel'))}</th>${ms.map(m => `<th ${R}>${esc(bpMonthLabel(m))}</th>`).join('')}<th ${R}>${esc(t('thBpNet'))}</th><th ${R}>${esc(t('thQtyPlain'))}</th><th ${R}>${esc(t('thShare'))}</th></tr></thead><tbody>`;
   prods.forEach(x => {
-    ph += `<tr><td><span style="display:inline-flex;align-items:center;gap:8px"><span class="swatch" style="width:10px;height:10px;border-radius:3px;background:${BRAND_HEX[x.brand] || 'var(--ink-faint)'}"></span>${esc(x.model)}</span></td>`
+    ph += `<tr><td><span style="display:inline-flex;align-items:center;gap:8px"><span class="swatch" style="width:10px;height:10px;border-radius:3px;flex-shrink:0;background:${BRAND_HEX[x.brand] || 'var(--ink-faint)'}"></span>${esc(x.model)}</span></td>`
       + ms.map(m => { const v = sum(x.ls.filter(l => l[0] === m), l => l[4]); return `<td class="num">${v ? fmt(v) : '–'}</td>`; }).join('')
       + `<td class="num"><b>${fmt(x.amt)}</b></td><td class="num">${fmt(x.qty)}</td><td class="num">${net ? fmtPct(x.amt / net) : '–'}</td></tr>`;
   });
