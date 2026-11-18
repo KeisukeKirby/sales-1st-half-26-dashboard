@@ -90751,5 +90751,518 @@
    "2026-10-08": 6168.78,
    "2026-10-01": 5620.56
   }
+ },
+ "bft_partners": {
+  "Pathwild": {
+   "source": "Pathwild.xlsx",
+   "exported": "17/11/2026 10:23:43",
+   "invoices": [
+    [
+     "IVT-20260100029",
+     "2026-01",
+     "Paid",
+     9271.03,
+     9920.0,
+     11588.78
+    ],
+    [
+     "IVT-20260200008",
+     "2026-02",
+     "Paid",
+     8714.02,
+     9324.0,
+     12448.6
+    ],
+    [
+     "IVT-20260200017",
+     "2026-02",
+     "Paid",
+     16044.86,
+     17168.0,
+     20056.08
+    ],
+    [
+     "IVT-20260300015",
+     "2026-03",
+     "Paid",
+     22160.75,
+     23712.0,
+     27700.93
+    ],
+    [
+     "IVT-20260400013",
+     "2026-04",
+     "Paid",
+     13906.54,
+     14880.0,
+     17383.17
+    ],
+    [
+     "IVT-20260500015",
+     "2026-05",
+     "Paid",
+     9271.03,
+     9920.0,
+     11588.79
+    ],
+    [
+     "IVT-20260600014",
+     "2026-06",
+     "Paid",
+     4635.51,
+     4960.0,
+     5794.39
+    ],
+    [
+     "IVT-20260700011",
+     "2026-07",
+     "Paid",
+     51512.15,
+     55118.0,
+     73588.7
+    ],
+    [
+     "IVT-20260800009",
+     "2026-08",
+     "Paid",
+     19822.43,
+     21210.0,
+     28317.75
+    ],
+    [
+     "IVT-20260800018",
+     "2026-08",
+     "Paid",
+     9420.56,
+     10080.0,
+     11775.7
+    ],
+    [
+     "IVT-20260900012",
+     "2026-09",
+     "Paid",
+     18226.17,
+     19502.0,
+     26037.38
+    ],
+    [
+     "IVT-20261000011",
+     "2026-10",
+     "Overdue",
+     4635.51,
+     4960.0,
+     5794.39
+    ],
+    [
+     "IVT-20261100004",
+     "2026-11",
+     "Paid",
+     20476.64,
+     21910.0,
+     29252.33
+    ]
+   ],
+   "lines": [
+    [
+     "2026-01",
+     "VFF",
+     "VFF Trailope",
+     2,
+     9271.03
+    ],
+    [
+     "2026-02",
+     "Oleno",
+     "Oleno Arm Sleeve UL",
+     4,
+     1831.788
+    ],
+    [
+     "2026-02",
+     "Oleno",
+     "Oleno Arm Sleeve UL With Thumb Hole",
+     2,
+     1046.724
+    ],
+    [
+     "2026-02",
+     "Oleno",
+     "Oleno Calf Protection",
+     3,
+     1766.352
+    ],
+    [
+     "2026-02",
+     "Oleno",
+     "Oleno Calf Supporter Plain",
+     2,
+     1046.724
+    ],
+    [
+     "2026-02",
+     "Oleno",
+     "Oleno Ultimate",
+     4,
+     2302.804
+    ],
+    [
+     "2026-02",
+     "Oleno",
+     "Oleno Ultimate TNG",
+     1,
+     719.628
+    ],
+    [
+     "2026-02",
+     "VFF",
+     "VFF Trailope",
+     1,
+     4635.5108
+    ],
+    [
+     "2026-02",
+     "VFF",
+     "VFF V-Trail 2.0",
+     2,
+     6938.3182
+    ],
+    [
+     "2026-02",
+     "VFF",
+     "VFF V-Trek",
+     1,
+     4471.0309
+    ],
+    [
+     "2026-03",
+     "VFF",
+     "VFF Scramkey",
+     1,
+     4785.0493
+    ],
+    [
+     "2026-03",
+     "VFF",
+     "VFF Trailope",
+     3,
+     13906.5399
+    ],
+    [
+     "2026-03",
+     "VFF",
+     "VFF V-Trail 2.0",
+     1,
+     3469.1609
+    ],
+    [
+     "2026-04",
+     "VFF",
+     "VFF Trailope",
+     3,
+     13906.5399
+    ],
+    [
+     "2026-05",
+     "VFF",
+     "VFF Trailope",
+     2,
+     9271.03
+    ],
+    [
+     "2026-06",
+     "VFF",
+     "VFF Trailope",
+     1,
+     4635.51
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Arm Sleeve UL",
+     12,
+     5495.3562
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Arm Sleeve UL With Thumb Hole",
+     9,
+     4710.2634
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Calf Protection",
+     2,
+     1177.5694
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Calf Supporter Bicolor",
+     4,
+     2093.4504
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Calf Supporter Pixel Map",
+     2,
+     1046.7252
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Calf Supporter Plain",
+     4,
+     2093.4504
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Performance Wool Crew Heavyweight",
+     3,
+     2747.6643
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Performance Wool Crew Middle Thickness",
+     3,
+     1844.8521
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno S-70",
+     13,
+     7994.3941
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Ultimate",
+     5,
+     2878.5083
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Ultimate ASO",
+     3,
+     1844.8521
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Ultimate ASO Long",
+     2,
+     1674.766
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Ultimate SHR",
+     13,
+     7994.3941
+    ],
+    [
+     "2026-07",
+     "Oleno",
+     "Oleno Ultimate TNG",
+     11,
+     7915.903
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Arm Sleeve UL",
+     5,
+     2289.7285
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Arm Sleeve UL With Thumb Hole",
+     2,
+     1046.7313
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Calf Protection",
+     1,
+     588.7841
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Calf Supporter Bicolor",
+     3,
+     1570.0934
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Calf Supporter Plain",
+     4,
+     2093.4484
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Ultimate",
+     8,
+     4605.6091
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Ultimate ASO Long",
+     2,
+     1674.7644
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Ultimate SHR",
+     5,
+     3074.7648
+    ],
+    [
+     "2026-08",
+     "Oleno",
+     "Oleno Ultimate TNG",
+     4,
+     2878.5057
+    ],
+    [
+     "2026-08",
+     "VFF",
+     "VFF Scramkey",
+     1,
+     4785.048
+    ],
+    [
+     "2026-08",
+     "VFF",
+     "VFF Trailope",
+     1,
+     4635.512
+    ],
+    [
+     "2026-09",
+     "Oleno",
+     "Oleno Arm Sleeve UL",
+     3,
+     1373.8413
+    ],
+    [
+     "2026-09",
+     "Oleno",
+     "Oleno Arm Sleeve UL With Thumb Hole",
+     1,
+     523.3621
+    ],
+    [
+     "2026-09",
+     "Oleno",
+     "Oleno Calf Protection",
+     1,
+     588.7841
+    ],
+    [
+     "2026-09",
+     "Oleno",
+     "Oleno Calf Supporter Pixel Map",
+     4,
+     2093.4624
+    ],
+    [
+     "2026-09",
+     "Oleno",
+     "Oleno Calf Supporter Plain",
+     6,
+     3140.1866
+    ],
+    [
+     "2026-09",
+     "Oleno",
+     "Oleno Ultimate",
+     4,
+     2302.8045
+    ],
+    [
+     "2026-09",
+     "Oleno",
+     "Oleno Ultimate SHR",
+     11,
+     6764.4795
+    ],
+    [
+     "2026-09",
+     "Oleno",
+     "Oleno Ultimate TNG",
+     2,
+     1439.2493
+    ],
+    [
+     "2026-10",
+     "VFF",
+     "VFF Trailope",
+     1,
+     4635.51
+    ],
+    [
+     "2026-11",
+     "Oleno",
+     "Oleno Arm Sleeve UL",
+     5,
+     2289.722
+    ],
+    [
+     "2026-11",
+     "Oleno",
+     "Oleno Calf Protection",
+     5,
+     2943.9213
+    ],
+    [
+     "2026-11",
+     "Oleno",
+     "Oleno Calf Supporter Pixel Map",
+     1,
+     523.3622
+    ],
+    [
+     "2026-11",
+     "Oleno",
+     "Oleno Ultimate",
+     9,
+     5181.3113
+    ],
+    [
+     "2026-11",
+     "Oleno",
+     "Oleno Ultimate ASO",
+     1,
+     614.9503
+    ],
+    [
+     "2026-11",
+     "Oleno",
+     "Oleno Ultimate SHR",
+     11,
+     6764.4878
+    ],
+    [
+     "2026-11",
+     "Oleno",
+     "Oleno Ultimate TNG",
+     3,
+     2158.8849
+    ]
+   ]
+  }
  }
 }
