@@ -183,20 +183,23 @@ tr:last-child td{border-bottom:none;}
 .bar-val{font-family:var(--mono);text-align:right;color:var(--ink-dim);font-size:12.5px;}
 .detail-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
 .detail-head label{font-size:13px;color:var(--ink-dim);}
-.daily-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-.daily-cal-head{text-align:center;font-size:11px;color:var(--ink-dim);font-weight:600;padding:4px 0;letter-spacing:.02em;}
+.daily-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;}
+.daily-cal-head{text-align:center;font-size:11.5px;color:var(--ink-dim);font-weight:600;padding:2px 0;letter-spacing:.02em;}
 .daily-cal-head.sat{color:var(--accent-4);}
 .daily-cal-head.sun{color:var(--danger);}
-.daily-cal-cell{min-height:58px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);padding:5px 6px;}
+.daily-cal-cell{min-height:50px;border-radius:6px;border:1px solid var(--line);padding:4px 6px;display:flex;flex-direction:column;justify-content:space-between;}
 .daily-cal-cell.empty{background:none;border:none;}
-.daily-cal-cell.sat{border-color:rgba(127,160,196,0.45);}
-.daily-cal-cell.sun{border-color:rgba(196,103,79,0.45);}
-.daily-cal-date{font-size:11px;color:var(--ink-dim);}
+.daily-cal-date{font-size:11px;color:var(--ink-dim);font-weight:600;}
 .daily-cal-cell.sat .daily-cal-date{color:var(--accent-4);}
 .daily-cal-cell.sun .daily-cal-date{color:var(--danger);}
-.daily-cal-amt{font-family:var(--mono);font-size:13px;font-weight:700;margin-top:4px;}
+.daily-cal-amt{font-family:var(--mono);font-size:13px;text-align:right;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+.daily-cal-cell.zero .daily-cal-amt{color:var(--ink-faint);font-weight:400;}
+.daily-cal-wd-table table{width:100%;}
+.daily-cal-wd-table th.sat,.daily-cal-wd-table td.sat{color:var(--accent-4);}
+.daily-cal-wd-table th.sun,.daily-cal-wd-table td.sun{color:var(--danger);}
+.daily-cal-wd-table tr.sub td{color:var(--ink-dim);}
 @media (max-width:860px){
-  .daily-cal-cell{min-height:44px;padding:3px 4px;}
+  .daily-cal-cell{min-height:42px;padding:3px 4px;}
   .daily-cal-amt{font-size:11px;}
 }
 select{font-family:var(--sans);font-size:14px;font-weight:500;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;min-width:160px;}
@@ -502,18 +505,26 @@ svg .axis-line{stroke:var(--line);stroke-width:1;}
     <div class="section-title" style="margin-top:26px">
       <span class="n">04</span><span data-i18n="dailyCalTitle">日次売上カレンダー</span>
     </div>
-    <div class="section-note" data-i18n="dailyCalNote">Chidlom・Siam Discovery・Paradise Parkの日別売上（単位: 千THB）。月曜始まり・土曜は青・日曜は赤で表示します</div>
+    <div class="section-note" data-i18n="dailyCalNote">月曜始まり。土曜は青、日曜は赤。マスの色が濃いほど売上が多い日です。金額の単位は千バーツ（税抜）</div>
     <div class="panel">
       <div class="detail-head">
         <label for="dailyCalStoreSelect" data-i18n="dailyCalStoreLabel">対象店舗</label>
         <select id="dailyCalStoreSelect"></select>
         <label for="dailyCalMonthSelect" style="margin-left:14px" data-i18n="dailyCalMonthLabel">対象月</label>
         <select id="dailyCalMonthSelect"></select>
-        <span class="detail-summary" id="dailyCalSummary"></span>
       </div>
-      <div id="dailyCalGrid" style="margin-top:16px"></div>
-      <h3 style="margin:24px 0 10px" data-i18n="dailyCalDowTitle">曜日別売上（選択月）</h3>
-      <div class="chart-box" id="dailyCalDowChart" style="height:220px"></div>
+      <div class="section-note" id="dailyCalSummary" style="margin:0 0 14px"></div>
+      <div class="grid2">
+        <div>
+          <h3 data-i18n="dailyCalGridTitle">日別売上（千THB）</h3>
+          <div id="dailyCalGrid"></div>
+        </div>
+        <div>
+          <h3 data-i18n="dailyCalDowTitle">曜日別売上（千THB）</h3>
+          <div class="chart-box" id="dailyCalDowChart" style="height:200px"></div>
+          <div class="daily-cal-wd-table detail-scroll" id="dailyCalDowTable" style="margin-top:10px"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1009,10 +1020,13 @@ const T = {
     st01Title: '店舗ごとの詳細',
     selectStoreLabel: '店舗・チャネルを選択',
     monthlySalesTitle: '月次売上推移', brandMixTitle: 'ブランド構成比',
-    dailyCalTitle: '日次売上カレンダー',
-    dailyCalNote: 'Chidlom・Siam Discovery・Paradise Parkの日別売上（単位: 千THB）。月曜始まり・土曜は青・日曜は赤で表示します',
+    dailyCalTitle: '店舗別 日別売上カレンダー',
+    dailyCalNote: '月曜始まり。土曜は青、日曜は赤。マスの色が濃いほど売上が多い日です。金額の単位は千バーツ（税抜）。',
     dailyCalStoreLabel: '対象店舗', dailyCalMonthLabel: '対象月',
-    dailyCalDowTitle: '曜日別売上（選択月）',
+    dailyCalGridTitle: '日別売上(千THB)', dailyCalDowTitle: '曜日別売上(千THB)',
+    dailyCalWdTotal: '合計', dailyCalWdAvg: '1日平均', dailyCalWdDays: '日数', dailyCalWdCol: '曜日',
+    dailyCalSummaryFmt: (tot,n,avg,best) => `月合計 ${tot} 千THB ・ 販売日数 ${n} 日 ・ 1日平均 ${avg} 千THB ・ 最高 ${best}`,
+    dailyCalNoData: 'この期間のデータはありません',
     st02Note: '伝票数がないカテゴリ（Central百貨店内は月次集計のみ）は「—」表示。店舗の並び順は期間を変えても固定です',
     thStoreChannel: '店舗・チャネル', thGroup: '区分', thQtyPlain: '点数', thOrders: '伝票数', thAvgTicket: '客単価',
     br01Title: 'モデル別ランキング（全ブランド合算・サイズ/カラー合算）',
@@ -1101,10 +1115,13 @@ const T = {
     st01Title: 'Per-Store Detail',
     selectStoreLabel: 'Select a store / channel',
     monthlySalesTitle: 'Monthly Sales Trend', brandMixTitle: 'Brand Composition',
-    dailyCalTitle: 'Daily Sales Calendar',
-    dailyCalNote: 'Daily sales for Chidlom, Siam Discovery and Paradise Park (in thousand THB). Weeks start Monday; Saturdays are blue, Sundays are red.',
+    dailyCalTitle: 'Daily sales calendar by store',
+    dailyCalNote: 'Weeks start on Monday; Saturday in blue, Sunday in red. Darker cells are higher-sales days. Amounts in THB thousand (ex-VAT).',
     dailyCalStoreLabel: 'Store', dailyCalMonthLabel: 'Month',
-    dailyCalDowTitle: 'Sales by Day of Week (Selected Month)',
+    dailyCalGridTitle: 'Daily sales (THB thousand)', dailyCalDowTitle: 'Sales by weekday (THB thousand)',
+    dailyCalWdTotal: 'Total', dailyCalWdAvg: 'Avg/day', dailyCalWdDays: 'Days', dailyCalWdCol: 'Weekday',
+    dailyCalSummaryFmt: (tot,n,avg,best) => `Month ${tot}k THB · ${n} selling days · avg ${avg}k THB/day · best ${best}`,
+    dailyCalNoData: 'No data for this period',
     st02Note: 'Categories with no receipt data (Central dept. stores report monthly totals only) show "—". Store order stays fixed regardless of the selected period.',
     thStoreChannel: 'Store / Channel', thGroup: 'Group', thQtyPlain: 'Units', thOrders: 'Orders', thAvgTicket: 'Avg. Ticket',
     br01Title: 'Model Ranking (All Brands, Sizes/Colors Combined)',
@@ -1192,10 +1209,13 @@ const T = {
     st01Title: 'รายละเอียดแต่ละร้าน',
     selectStoreLabel: 'เลือกร้าน/ช่องทาง',
     monthlySalesTitle: 'แนวโน้มยอดขายรายเดือน', brandMixTitle: 'สัดส่วนแบรนด์',
-    dailyCalTitle: 'ปฏิทินยอดขายรายวัน',
-    dailyCalNote: 'ยอดขายรายวันของ Chidlom, Siam Discovery และ Paradise Park (หน่วย: พันบาท) เริ่มสัปดาห์วันจันทร์ วันเสาร์สีฟ้า วันอาทิตย์สีแดง',
+    dailyCalTitle: 'ปฏิทินยอดขายรายวันตามร้าน',
+    dailyCalNote: 'สัปดาห์เริ่มวันจันทร์ วันเสาร์สีน้ำเงิน วันอาทิตย์สีแดง ช่องสีเข้มคือวันที่ขายได้มาก หน่วยเป็นพันบาท (ไม่รวม VAT)',
     dailyCalStoreLabel: 'ร้านค้า', dailyCalMonthLabel: 'เดือน',
-    dailyCalDowTitle: 'ยอดขายตามวันในสัปดาห์ (เดือนที่เลือก)',
+    dailyCalGridTitle: 'ยอดขายรายวัน (พันบาท)', dailyCalDowTitle: 'ยอดขายตามวันในสัปดาห์ (พันบาท)',
+    dailyCalWdTotal: 'รวม', dailyCalWdAvg: 'เฉลี่ย/วัน', dailyCalWdDays: 'จำนวนวัน', dailyCalWdCol: 'วัน',
+    dailyCalSummaryFmt: (tot,n,avg,best) => `รวมเดือน ${tot} พันบาท · ขาย ${n} วัน · เฉลี่ย ${avg} พันบาท/วัน · สูงสุด ${best}`,
+    dailyCalNoData: 'ไม่มีข้อมูลในช่วงเวลานี้',
     st02Note: 'หมวดที่ไม่มีข้อมูลจำนวนใบเสร็จ (ห้างเซ็นทรัลรายงานเฉพาะยอดรวมรายเดือน) จะแสดง "—" ลำดับร้านค้าคงที่แม้เปลี่ยนช่วงเวลา',
     thStoreChannel: 'ร้าน/ช่องทาง', thGroup: 'กลุ่ม', thQtyPlain: 'จำนวน', thOrders: 'จำนวนบิล', thAvgTicket: 'ยอดเฉลี่ย/บิล',
     br01Title: 'อันดับรุ่นสินค้า (รวมทุกแบรนด์ ไซส์/สี)',
@@ -2385,6 +2405,7 @@ document.getElementById('dailyCalMonthSelect').addEventListener('change', e => {
   e.target.dataset.selected = e.target.value;
   renderDailyCalendar(document.getElementById('dailyCalStoreSelect').value, e.target.value);
 });
+const dailyCalK1 = v => (v/1000).toFixed(1); // THB -> THB thousand, one decimal
 function renderDailyCalendar(store, monthKey){
   const days = (DATA.daily_sales && DATA.daily_sales[store]) || {};
   const [y, mo] = monthKey.split('-').map(Number);
@@ -2392,14 +2413,10 @@ function renderDailyCalendar(store, monthKey){
   const firstDow = (new Date(y, mo-1, 1).getDay() + 6) % 7; // Mon=0 .. Sun=6
   const dowLabels = DOW_LABELS_BY_LANG[LANG];
   const dayVals = [];
-  let total = 0, maxDay = 0;
   for (let d=1; d<=daysInMonth; d++){
-    const v = days[`${monthKey}-${String(d).padStart(2,'0')}`] || 0;
-    dayVals.push(v);
-    total += v;
-    if (v > maxDay) maxDay = v;
+    dayVals.push(days[`${monthKey}-${String(d).padStart(2,'0')}`] || 0);
   }
-  document.getElementById('dailyCalSummary').textContent = `${fmt(Math.round(total))} THB`;
+  const maxDay = Math.max(0, ...dayVals);
 
   let html = `<div class="daily-cal-grid">` +
     dowLabels.map((lbl,i) => `<div class="daily-cal-head${i===5?' sat':i===6?' sun':''}">${esc(lbl)}</div>`).join('');
@@ -2407,10 +2424,12 @@ function renderDailyCalendar(store, monthKey){
   for (let d=1; d<=daysInMonth; d++){
     const dow = (firstDow + d - 1) % 7;
     const v = dayVals[d-1];
-    const cls = dow===5 ? ' sat' : dow===6 ? ' sun' : '';
-    html += `<div class="daily-cal-cell${cls}" data-d="${d}">
+    const cls = (dow===5 ? ' sat' : dow===6 ? ' sun' : '') + (v > 0 ? '' : ' zero');
+    // tint = sales relative to the month's best day (accent hue, so it never competes with Sat/Sun colors)
+    const alpha = maxDay && v > 0 ? 0.06 + 0.34*v/maxDay : 0;
+    html += `<div class="daily-cal-cell${cls}" data-d="${d}" style="background:rgba(232,163,61,${alpha.toFixed(3)})">
       <div class="daily-cal-date">${d}</div>
-      <div class="daily-cal-amt">${v ? fmt(Math.round(v/100)/10) : ''}</div>
+      <div class="daily-cal-amt">${v > 0 ? dailyCalK1(v) : '–'}</div>
     </div>`;
   }
   const trailing = (7 - ((firstDow + daysInMonth) % 7)) % 7;
@@ -2421,17 +2440,30 @@ function renderDailyCalendar(store, monthKey){
   gridEl.querySelectorAll('.daily-cal-cell[data-d]').forEach(el => {
     const d = +el.dataset.d;
     const v = dayVals[d-1];
-    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(monthLabel(monthKey))} ${d}</b><br>${fmt(Math.round(v))} THB`));
+    el.addEventListener('mousemove', e => showTip(e, `<b>${esc(storeDisplay(store))} · ${esc(monthLabel(monthKey))}${d}</b><br>${fmt(Math.round(v))} THB`));
     el.addEventListener('mouseleave', hideTip);
   });
+
+  const sold = dayVals.map((v,i) => ({v, d:i+1, wd:(firstDow+i)%7})).filter(x => x.v > 0);
+  const total = sold.reduce((a,x) => a+x.v, 0);
+  if (sold.length){
+    const best = sold.reduce((b,x) => (!b || x.v > b.v ? x : b), null);
+    const bestLabel = `${monthLabel(monthKey)}${best.d}${LANG==='ja'?'日':''} (${dowLabels[best.wd]}) ${dailyCalK1(best.v)}`;
+    document.getElementById('dailyCalSummary').textContent = t('dailyCalSummaryFmt')(dailyCalK1(total), sold.length, dailyCalK1(total/sold.length), bestLabel);
+  } else {
+    document.getElementById('dailyCalSummary').textContent = t('dailyCalNoData');
+  }
 
   renderDailyCalDowChart(dayVals, firstDow);
 }
 function renderDailyCalDowChart(dayVals, firstDow){
   const dowLabels = DOW_LABELS_BY_LANG[LANG];
-  const dowTotals = [0,0,0,0,0,0,0];
-  dayVals.forEach((v,i) => { dowTotals[(firstDow+i)%7] += v; });
-  const {max: maxV, step: axisStep} = niceAxis(Math.max(...dowTotals,1), 4);
+  const wd = [...Array(7)].map((_,i) => {
+    let tot = 0, n = 0;
+    dayVals.forEach((v,idx) => { if ((firstDow+idx)%7 === i){ tot += v; n++; } });
+    return {tot, n};
+  });
+  const {max: maxV, step: axisStep} = niceAxis(Math.max(...wd.map(w => w.tot),1), 4);
   const w=500,h=200,padL=56,padR=16,padT=16,padB=26,plotW=w-padL-padR,plotH=h-padT-padB;
   const barW = plotW/7*0.6;
   const x = i => padL + plotW*(i+0.5)/7;
@@ -2444,7 +2476,7 @@ function renderDailyCalDowChart(dayVals, firstDow){
   }
   dowLabels.forEach((lbl,i) => {
     const color = i===5 ? 'var(--accent-4)' : i===6 ? 'var(--danger)' : 'var(--accent)';
-    const h2 = barH(dowTotals[i]);
+    const h2 = barH(wd[i].tot);
     svg += `<rect x="${x(i)-barW/2}" y="${padT+plotH-h2}" width="${barW}" height="${h2}" fill="${color}" rx="3" class="dowbar" data-i="${i}"></rect>`;
     svg += `<text x="${x(i)}" y="${h-6}" text-anchor="middle">${esc(lbl)}</text>`;
   });
@@ -2453,9 +2485,15 @@ function renderDailyCalDowChart(dayVals, firstDow){
   el.innerHTML = svg;
   el.querySelectorAll('.dowbar').forEach(bar => {
     const i = +bar.dataset.i;
-    bar.addEventListener('mousemove', e => showTip(e, `<b>${esc(dowLabels[i])}</b><br>${fmt(Math.round(dowTotals[i]))} THB`));
+    bar.addEventListener('mousemove', e => showTip(e, `<b>${esc(dowLabels[i])}</b><div>${t('dailyCalWdTotal')}: ${fmt(Math.round(wd[i].tot))} THB</div><div>${t('dailyCalWdDays')}: ${wd[i].n}</div><div>${t('dailyCalWdAvg')}: ${wd[i].n ? fmt(Math.round(wd[i].tot/wd[i].n)) : '–'} THB</div>`));
     bar.addEventListener('mouseleave', hideTip);
   });
+
+  const cls = i => i===5 ? ' sat' : i===6 ? ' sun' : '';
+  document.getElementById('dailyCalDowTable').innerHTML = `<table><thead><tr><th>${esc(t('dailyCalWdCol'))}</th>${dowLabels.map((lbl,i) => `<th class="${cls(i).trim()}">${esc(lbl)}</th>`).join('')}</tr></thead><tbody>
+    <tr><td>${esc(t('dailyCalWdTotal'))}</td>${wd.map(w => `<td>${dailyCalK1(w.tot)}</td>`).join('')}</tr>
+    <tr class="sub"><td>${esc(t('dailyCalWdAvg'))}</td>${wd.map(w => `<td>${w.n ? dailyCalK1(w.tot/w.n) : '–'}</td>`).join('')}</tr>
+  </tbody></table>`;
 }
 
 // ============================================================== 商品・ブランド別: ブランド別 売上構成（全体、金額/数量プルダウン）
